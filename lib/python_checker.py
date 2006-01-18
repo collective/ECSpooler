@@ -129,7 +129,8 @@ class PythonChecker(checker.Checker):
     
             except Exception, e:
                 # FIXME: use log
-                print "Internal Error during semantic check: %s" % repr(e)
+                self._log('Internal Error during semantic check: %s' % str(e))
+                #print "Internal Error during semantic check: %s" % str(e)
                 
                 # import traceback
                 # traceback.print_exc()
@@ -151,7 +152,7 @@ class PythonChecker(checker.Checker):
             # hase the students' solution passed this tests?
             else:
                 # FIXME: use _log
-                print result
+                #print result
                 
                 msgItems = result.split(';;')
                 
