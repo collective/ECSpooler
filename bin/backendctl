@@ -1,0 +1,9 @@
+#! /bin/sh
+
+PYTHON="python"
+HOME="/home/amelung/ecspooler"
+CONFIG="$HOME/etc/spooler.conf"
+
+BDCTL="$HOME/startup/backendctl.py"
+
+exec "$PYTHON" "$BDCTL" "$HOME" "$CONFIG" "$@"
