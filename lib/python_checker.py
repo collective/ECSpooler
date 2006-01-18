@@ -16,7 +16,7 @@ import checker
 
 # resourcestring
 PROCESS_WAIT_TIME = 15
-INTERPRETER = 'systrace -a -f /home/amelung/.systrace/opt_python_bin_python /opt/python/bin/python'
+INTERPRETER = 'systrace -a -f ../.systrace/opt_python_bin_python /opt/python/bin/python'
 #INTERPRETER = '/opt/python/bin/python'
 
 ID = 'python'
