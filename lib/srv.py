@@ -1,5 +1,7 @@
-from SimpleXMLRPCServer import SimpleXMLRPCServer
 import sys, time, socket, syslog
+
+from SimpleXMLRPCServer import SimpleXMLRPCServer
+from config import *
 
 
 class XMLRPCServer(SimpleXMLRPCServer):
@@ -58,11 +60,9 @@ This class is a SimpleXMLRPCServer with following modifications:
         return 1
 
 
-    def _log(self, msg):
-        #t = time.localtime()
-        #print("[%d-%02d-%02d %02d:%02d:%02d] %s"\
-        #    %(t[0], t[1], t[2], t[3], t[4], t[5], msg))
+    def _log(self, msg, level=INFO):
         """
+        Logs messages to syslog if level is higher than currently set loglevel.
         """
-        #sys.argv[0] = 'spooler'
-        syslog.syslog('%s: %s' % (self.__class__.__name__, msg))
+        if level >= LOGLEVEL:
+            syslog.syslog('%s: %s' % (self.__class__.__name__, msg))
