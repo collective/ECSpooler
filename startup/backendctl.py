@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# $Id$
+#
+# Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
+#
+# This file is part of ECSpooler.
 
 import os, sys, time
 import xmlrpclib

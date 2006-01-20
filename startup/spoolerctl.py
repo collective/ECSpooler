@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# $Id$
+#
+# Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
+#
+# This file is part of ECSpooler.
 
 import os, sys, time, signal, socket, xmlrpclib
 import ConfigParser
@@ -22,6 +28,7 @@ def _stopSpooler(host, port, AUTH):
     spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
     pid = spooler.getStatus(AUTH)['pid']
     
+    #spooler.stop()
     os.kill(pid, signal.SIGTERM)         
 
 
