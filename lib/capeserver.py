@@ -1,21 +1,23 @@
-import os, srv
+# -*- coding: utf-8 -*-
+# $Id$
+#
+# Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
+#
+# This file is part of ECSpooler.
+import os, random, md5
+import time, socket, xmlrpclib, thread, threading, signal
+
+import srv
 from data import *
 from util import *
-
-import time
-import socket, xmlrpclib
-import thread, threading
-import signal
-
-import random,md5
+from config import *
 
 # resourcestring
 ERROR_AUTH_FAILED = "Authorization failed"
 
-
 class CapeServer(srv.XMLRPCServer):
     """
-    The Cape XMLRPC Server.
+    The ECSpooler XMLRPC Server.
 
     future development proposals:
     - auth backend for LDAP
@@ -62,24 +64,19 @@ class CapeServer(srv.XMLRPCServer):
         self._results  = checkresultCache.CheckResultCache()
         self._auth     = auth.initAuthBackend({'filename':self._opt["pwd_file"]})
 
-        # doqueue thread
+        # doqueue thread (we will use only one thread)
         self._doqueue_thread = None
         self._doqueue_thread_stop = False
         
-        #self.threadPool = []
-
         # signal handler
         signal.signal(signal.SIGHUP, self.reconfig)
         signal.signal(signal.SIGTERM, self.stop)
         #signal.signal(signal.SIGINT,  self.stop)
         
-        self.scheduleWakeupCounter = 0
-        self.doqueueCounter = 0
-
 
     def reconfig(self, signal, stack):
         """
-        Does nothing
+        Does nothing yet.
         """
         return
        
@@ -108,11 +105,13 @@ class CapeServer(srv.XMLRPCServer):
 
     def run(self):
         """
-        Starts the server.
+        Starts the server and runs it forever, i.e., until the server
+        is stoped in method stop.
+        @return True
         """
-        #self.scheduleWakeup(3) # give it three seconds for the first time
 
-        # start a new thread
+        # start a new thread which runs the doqueue-method until 
+        # the server is stoped
         self._doqueue_thread = threading.Thread(target=self.doqueue)
         self._doqueue_thread.start()
         
@@ -120,23 +119,9 @@ class CapeServer(srv.XMLRPCServer):
         return 1
 
 
-#    def scheduleWakeup(self, time):
-#        """
-#        Schedules the execution of the doqueue() method by using a Timer.
-#        """
-#        self.scheduleWakeupCounter += 1
-#        self._log('calling scheduleWakeup (%d)' % self.scheduleWakeupCounter)
-#        
-#        if self._doqueue_thread: 
-#            self._doqueue_thread.cancel()
-#
-#        self._doqueue_thread = threading.Timer(time, self.doqueue)
-#        self._doqueue_thread.start()
-
-
     def addChecker(self, authdata, id, name, xmlrpc_url):
         """
-        Announces a Checker to this ECSpooler.
+        Announces a Backend to this ECSpooler.
 
         Each checker calls the ECSpooler on being started, and tells 
         the server its id, name and its xmlrpc url. The server returns
@@ -164,7 +149,7 @@ class CapeServer(srv.XMLRPCServer):
 
     def removeChecker(self, authdata, name, xmlrpc_url):
         """
-        Removes a Checker from this ECSpooler.
+        Removes a Backend from this ECSpooler.
 
         @return (code, msg) with
             code == 0, removing the checker succeeded
@@ -205,10 +190,10 @@ class CapeServer(srv.XMLRPCServer):
             if not job["checker"] in self._checkers.keys():
                 return (1, "no such checker: %s" % job["checker"])
 
-            # enqueue
-            self._log("Enqueueing job %s"%job["id"])
+            # enqueue the job
+            self._log("Enqueueing job %s" % job["id"])
             self._queue.enqueue(job)
-            
+
             return (0, job["id"])
 
         except exceptions.InvalidDataException, exc:
@@ -294,47 +279,47 @@ class CapeServer(srv.XMLRPCServer):
         loop until _doqueue_thread_stop is True.
         """
         
-        self.doqueueCounter = 0
+        #doqueueCounter = 0
         
         while not self._doqueue_thread_stop:
             
-            self.doqueueCounter += 1
-            #self._log('calling doqueue (%d)' % self.doqueueCounter)
+            #doqueueCounter += 1
+            #self._log('calling doqueue (%d)' % doqueueCounter)
         
-            # queue empty?
+            # is the queue empty?
             if self._queue.isEmpty():
-                #self._log('doqueue: self._queue is empty.');
-                #self.scheduleWakeup(self.DEFAULT_DOQUEUE_WAKEUP)
+                self._log('doqueue: self._queue is empty.', DEBUG);
                 # wait a defined time before resuming
                 time.sleep(self.DEFAULT_DOQUEUE_WAKEUP)
-                #return 0
-            else:
 
+            else:
                 # get next job from the queue
                 job = self._queue.dequeue()
 
-                # locate backend
+                # get backend
                 chk = self._checkers.get(job["checker"])
                 if not chk:
                     self._log("WARNING: checkJob %s cannot be executed, no such checker: %s"\
                               %(job["id"], job["checker"]))
+                              
+                    # enqueue the job so that maybe later, if the backend
+                    # is evailable, we will check it
                     self._queue.enqueue(job)
-                     # wait some more time than usual, cape server seems not to be initialized yet
-                    #self.scheduleWakeup(10 * self.DEFAULT_DOQUEUE_WAKEUP)
+
+                    # wait some more time than usual
                     time.sleep(10 * self.DEFAULT_DOQUEUE_WAKEUP)
-                    #return 0
 
                 # is backend busy?
                 elif chk["current_job"] != 0:
                     self._log('doqueue: backend is busy (%s)' % job)
                     self._queue.enqueue(job)
                     
-                    #self.scheduleWakeup(self.DEFAULT_DOQUEUE_WAKEUP)
                     time.sleep(self.DEFAULT_DOQUEUE_WAKEUP)
-                    #return 0
+
                 else:
                     # hand over checkjob to backend
                     chk["current_job"] = job
+
                     try:
                         self._log("Dispatching job %s to checker '%s'" % (job["id"], job["checker"]))
                         res = self._callChecker(chk["url"], "execute", job.getData())
@@ -343,24 +328,24 @@ class CapeServer(srv.XMLRPCServer):
                             job["id"]
                         )
                     except (socket.error, xmlrpclib.Fault), exc:
-                        import traceback
-                        traceback.print_exc()
+                        #import traceback
+                        #traceback.print_exc()
             
-                        # XXX we might want to ping the checker?
+                        # FIXME: we might want to ping the checker?
                         self._results.addResult(
-                             checkresult.CheckResult(-5, "server error: %s" % repr(exc)),
+                             checkresult.CheckResult(-5, "server error: %s" % str(exc)),
                              job["id"]
                         )
 
                     chk["current_job"] = 0
-                    #self.scheduleWakeup(self.DEFAULT_DOQUEUE_WAKEUP)
                     time.sleep(self.DEFAULT_DOQUEUE_WAKEUP)
-                    #return 1
+
+        # end while loop
 
 
     def _callChecker(self, url, method, *kw, **args):
         """
-        Executes an xmlrpc call to a checker.
+        Executes an xmlrpc call to a backend.
         """
         s = xmlrpclib.Server(url)
         return getattr(s, method)({"srv_id": self._srv_id}, *kw, **args)
