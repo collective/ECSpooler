@@ -1,7 +1,7 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2005 Otto-von-Guericke-University, Magdeburg
+# Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
 
@@ -35,7 +35,6 @@ def test(a, b):
     return True
 """
 
-
 TEMPLATE_SEMANTIC = \
 """import sys
 import %s
@@ -44,11 +43,10 @@ import %s
 print >> sys.stdout, \"isEqual=\" + str(test(%s, %s)) + \";;expected=\" + str(%s) + \";;received=\" + str(%s)
 """
 
-
 class PythonChecker(checker.Checker):
     """
-    Simple checker class for checking Python programs.
-    This class is inherited from Checker (see checker.py):
+    Backend for checking Python programs. This class is inherited from Checker.
+    @see checker.Checker
     """
     
 
@@ -209,7 +207,7 @@ class PythonChecker(checker.Checker):
         fd.write("\n")
         fd.close()
 
-        # TODO: use sand-box environment
+        # TODO: use sand-box environment !!!
         # copy files to jail using ssh
         #executeOsCmd(sCommandCopy % (mSFilename + '.hs'))
         #executeOsCmd(sCommandCopy % (sSFilename + '.hs'))
