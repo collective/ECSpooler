@@ -7,7 +7,7 @@ import time
 import thread
 
 # wfenske 2006-01-21
-from checkjobQueue import dict_factory, possibly_create_table
+from checkjobQueue import dict_factory, possibly_create_table, get_connection
 
 class CheckResultCache:
   
@@ -51,6 +51,7 @@ class CheckResultCache:
     self._lock.acquire()
     # wfenske 2006-01-21
     #cursor = self._conn.cursor(MySQLdb.cursors.DictCursor)
+    self._conn = get_connection()
     cursor = self._conn.cursor()
     data = checkResult.getData()
     # wfenske 2006-01-21
@@ -96,6 +97,7 @@ class CheckResultCache:
       c = self._conn.cursor(MySQLdb.cursors.DictCursor)
       c.execute("create table results (id varchar(255) primary key, result int(2), message text)")
     '''
+    self._conn = get_connection()
     possibly_create_table(self._conn, "results",
                           "id text primary key, result int, message text")
       
@@ -106,6 +108,7 @@ class CheckResultCache:
     """
     # wfenske 2006-01-21
     #c = self._conn.cursor(MySQLdb.cursors.DictCursor)
+    self._conn = get_connection()
     c = self._conn.cursor()
     c.execute("select id, result, message from results")
     rows = c.fetchall()
@@ -128,11 +131,12 @@ class CheckResultCache:
 
     # wfenske 2006-01-21
     #c = self._conn.cursor(MySQLdb.cursors.DictCursor)
+    self._conn = get_connection()
     c = self._conn.cursor()
     # wfenske 2006-01-21
     #sql = "delete from results"
     #c.execute(sql)
-    c.execute("delete from results")
+    #c.execute("delete from results")
     c.close()
     self._conn.commit() # wfenske 2006-01-21
     self._lock.release()
@@ -153,11 +157,12 @@ class CheckResultCache:
         # delete CheckResult from database
         # wfenske 2006-01-21
         #c = self._conn.cursor(MySQLdb.cursors.DictCursor)
-        c = self._conn.cursor()        
+        self._conn = get_connection()
+        c = self._conn.cursor()
         # wfenske 2006-01-21
         #sql = "delete from results where id = %s" % (id,)
         #c.execute(sql)
-        c.execute("delete from results where id=?", (id,))
+        #c.execute("delete from results where id=?", (id,))
         c.close()
         self._conn.commit() # wfenske 2006-01-21
 

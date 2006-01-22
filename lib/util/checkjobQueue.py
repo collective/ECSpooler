@@ -23,6 +23,23 @@ def has_table(connection, name):
   return len([row for row in rows if row["name"] == name]) > 0
 
 
+def log(obj):
+    try:
+        f = open("log.txt", "a")
+        try:
+            f.write(str(obj))
+        finally:
+            f.close()
+    except:
+        pass
+
+
+def get_connection():
+    conn = sqlite.connect("cape")
+    conn.row_factory = dict_factory
+    return conn
+
+            
 # wfenske 2006-01-21
 def possibly_create_table(connection, name, spec):
   if not has_table(connection, name):
@@ -77,6 +94,7 @@ class CheckJobQueue:
     self._lock.acquire()
     # wfenske 2006-01-21
     #cursor = self._conn.cursor(MySQLdb.cursors.DictCursor)
+    self._conn = get_connection()
     cursor = self._conn.cursor()
 
     data = checkJob.getData()
@@ -111,13 +129,17 @@ class CheckJobQueue:
     sql.append("')")
     cursor.execute("".join(sql))
     '''
-    cursor.execute("insert into queue "
+    try:
+        cursor.execute("insert into queue "
                    "(id,checker,student_solution,sample_solution,comparator) "
                    "values (?,?,?,?,?)",
                    (key, data.get("checker"), data.get("student_solution"),
                     data.get("sample_solution"), data.get("comparator")))
-    cursor.close()
-    self._conn.commit() # wfenske 2006-01-21
+        cursor.close()
+        self._conn.commit() # wfenske 2006-01-21
+    except Exception, e:
+        log(e)
+        raise e
     
     self._queue.append(key)
     self._objs[key] = checkJob
@@ -144,6 +166,7 @@ class CheckJobQueue:
       c = self._conn.cursor(MySQLdb.cursors.DictCursor)
       c.execute("create table queue (id varchar(255) primary key, checker varchar(255), student_solution text, sample_solution text, comparator text)")
     '''
+    self._conn = get_connection()
     possibly_create_table(self._conn, "queue",
                           "id text primary key, "
                           "checker text, "
@@ -157,8 +180,12 @@ class CheckJobQueue:
     """
     # wfenske 2006-01-21
     #c = self._conn.cursor(MySQLdb.cursors.DictCursor)
+    self._conn = get_connection()
     c = self._conn.cursor()
-    c.execute("select id, checker, student_solution, sample_solution, comparator from queue")
+    try:
+        c.execute("select id, checker, student_solution, sample_solution, comparator from queue")
+    except Exception, e:
+        log(e)
     rows = c.fetchall()
     c.close()
     for row in rows:
@@ -191,11 +218,12 @@ class CheckJobQueue:
     
     # wfenske 2006-01-21
     #c = self._conn.cursor(MySQLdb.cursors.DictCursor)
+    self._conn = get_connection()
     c = self._conn.cursor()
     # wfenske 2006-01-21
     #sql = "delete from queue where id='%s'" % key
     #c.execute(sql)
-    c.execute("delete from queue where id=?", (key,))
+    #c.execute("delete from queue where id=?", (key,))
     c.close()
     self._conn.commit() # wfenske 2006-01-21
     self._lock.release()
