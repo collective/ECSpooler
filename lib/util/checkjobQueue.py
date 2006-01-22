@@ -23,17 +23,6 @@ def has_table(connection, name):
   return len([row for row in rows if row["name"] == name]) > 0
 
 
-def log(obj):
-    try:
-        f = open("log.txt", "a")
-        try:
-            f.write(str(obj))
-        finally:
-            f.close()
-    except:
-        pass
-
-
 def get_connection():
     conn = sqlite.connect("cape")
     conn.row_factory = dict_factory
@@ -61,9 +50,6 @@ class CheckJobQueue:
     # wfenske 2006-01-21
     #self._conn = MySQLdb.connect(user="cape", passwd="cape..",
     #                             host="localhost", db="cape")
-    self._conn = sqlite.connect("cape")
-    self._conn.row_factory = dict_factory
-
     self.checkForTables()
     self.initQueueFromDatabase()
     self._lock = thread.allocate_lock()
@@ -94,52 +80,54 @@ class CheckJobQueue:
     self._lock.acquire()
     # wfenske 2006-01-21
     #cursor = self._conn.cursor(MySQLdb.cursors.DictCursor)
-    self._conn = get_connection()
-    cursor = self._conn.cursor()
-
-    data = checkJob.getData()
-
-    # wfenske 2006-01-21
-    '''
-    for k,v in data.iteritems():
-      if type(v) == type(""):
-        data[k] = v.replace("'","\\'")
-      else:
-        data[k] = str(v)
-    '''
-
-    if data['id']:
-        key = data['id']
-    else:
-        key = repr(time.time())
-
-    # wfenske 2006-01-21
-    '''
-    sql = []
-    sql.append("insert into queue (id,checker,student_solution, sample_solution,comparator) values ('")
-    sql.append(key)
-    sql.append("','")
-    sql.append(data.get("checker"))
-    sql.append("','")
-    sql.append(data.get("student_solution"))
-    sql.append("','")
-    sql.append(data.get("sample_solution"))
-    sql.append("','")
-    sql.append(data.get("comparator"))
-    sql.append("')")
-    cursor.execute("".join(sql))
-    '''
+    conn = get_connection()
     try:
+        cursor = conn.cursor()
+
+        data = checkJob.getData()
+
+        # wfenske 2006-01-21
+        '''
+        for k,v in data.iteritems():
+        if type(v) == type(""):
+            data[k] = v.replace("'","\\'")
+        else:
+            data[k] = str(v)
+        '''
+
+        if data['id']:
+            key = data['id']
+        else:
+            key = repr(time.time())
+
+        # wfenske 2006-01-21
+        '''
+        sql = []
+        sql.append("insert into queue (id,checker,student_solution, sample_solution,comparator) values ('")
+        sql.append(key)
+        sql.append("','")
+        sql.append(data.get("checker"))
+        sql.append("','")
+        sql.append(data.get("student_solution"))
+        sql.append("','")
+        sql.append(data.get("sample_solution"))
+        sql.append("','")
+        sql.append(data.get("comparator"))
+        sql.append("')")
+        cursor.execute("".join(sql))
+        '''
         cursor.execute("insert into queue "
                    "(id,checker,student_solution,sample_solution,comparator) "
                    "values (?,?,?,?,?)",
                    (key, data.get("checker"), data.get("student_solution"),
                     data.get("sample_solution"), data.get("comparator")))
         cursor.close()
-        self._conn.commit() # wfenske 2006-01-21
-    except Exception, e:
-        log(e)
-        raise e
+        conn.commit() # wfenske 2006-01-21
+    finally:
+        try:
+            conn.close()
+        except:
+            pass
     
     self._queue.append(key)
     self._objs[key] = checkJob
@@ -166,13 +154,20 @@ class CheckJobQueue:
       c = self._conn.cursor(MySQLdb.cursors.DictCursor)
       c.execute("create table queue (id varchar(255) primary key, checker varchar(255), student_solution text, sample_solution text, comparator text)")
     '''
-    self._conn = get_connection()
-    possibly_create_table(self._conn, "queue",
-                          "id text primary key, "
-                          "checker text, "
-                          "student_solution text, "
-                          "sample_solution text, "
-                          "comparator text")
+    conn = get_connection()
+    try:
+        possibly_create_table(conn, "queue",
+                              "id text primary key, "
+                              "checker text, "
+                              "student_solution text, "
+                              "sample_solution text, "
+                              "comparator text")
+    finally:
+        try:
+            conn.close()
+        except:
+            pass
+
   
   def initQueueFromDatabase(self):
     """
@@ -180,26 +175,30 @@ class CheckJobQueue:
     """
     # wfenske 2006-01-21
     #c = self._conn.cursor(MySQLdb.cursors.DictCursor)
-    self._conn = get_connection()
-    c = self._conn.cursor()
+    conn = get_connection()
     try:
+        c = conn.cursor()
         c.execute("select id, checker, student_solution, sample_solution, comparator from queue")
-    except Exception, e:
-        log(e)
-    rows = c.fetchall()
-    c.close()
+        rows = c.fetchall()
+        c.close()
+    finally:
+        try:
+            conn.close()
+        except:
+            pass
+        
     for row in rows:
-      id = row["id"]
-      jobDict = {}
-      # fix of bug xy (2005-09-28, ma)
-      jobDict["id"] = str(id)
-      jobDict["checker"] = row["checker"]
-      jobDict["student_solution"] = row["student_solution"]
-      jobDict["sample_solution"] = row["sample_solution"]
-      jobDict["comparator"] = row["comparator"]
-      j = CheckJob(jobDict)
-      self._objs[id] = j
-      self._queue.append(id)
+        id = row["id"]
+        jobDict = {}
+        # fix of bug xy (2005-09-28, ma)
+        jobDict["id"] = str(id)
+        jobDict["checker"] = row["checker"]
+        jobDict["student_solution"] = row["student_solution"]
+        jobDict["sample_solution"] = row["sample_solution"]
+        jobDict["comparator"] = row["comparator"]
+        j = CheckJob(jobDict)
+        self._objs[id] = j
+        self._queue.append(id)
   
   def dequeue(self):
     """
@@ -218,14 +217,20 @@ class CheckJobQueue:
     
     # wfenske 2006-01-21
     #c = self._conn.cursor(MySQLdb.cursors.DictCursor)
-    self._conn = get_connection()
-    c = self._conn.cursor()
-    # wfenske 2006-01-21
-    #sql = "delete from queue where id='%s'" % key
-    #c.execute(sql)
-    #c.execute("delete from queue where id=?", (key,))
-    c.close()
-    self._conn.commit() # wfenske 2006-01-21
+    conn = get_connection()
+    try:
+        c = conn.cursor()
+        # wfenske 2006-01-21
+        #sql = "delete from queue where id='%s'" % key
+        #c.execute(sql)
+        c.execute("delete from queue where id=?", (key,))
+        c.close()
+        conn.commit() # wfenske 2006-01-21
+    finally:
+        try:
+            conn.close()
+        except:
+            pass
     self._lock.release()
     return val
       

@@ -20,9 +20,6 @@ class CheckResultCache:
     # wfenske 2006-01-21
     #self._conn = MySQLdb.connect(user="cape", passwd="cape..",
     #                             host="localhost", db="cape")
-    self._conn = sqlite.connect("cape")
-    self._conn.row_factory = dict_factory
-    
     self.checkForTables()
     self.initResultsFromDatabase()
     self._lock = thread.allocate_lock();
@@ -51,27 +48,33 @@ class CheckResultCache:
     self._lock.acquire()
     # wfenske 2006-01-21
     #cursor = self._conn.cursor(MySQLdb.cursors.DictCursor)
-    self._conn = get_connection()
-    cursor = self._conn.cursor()
-    data = checkResult.getData()
-    # wfenske 2006-01-21
-    '''
-    sql = []
-    sql.append("insert into results (id,result,message) values ('")
-    sql.append(jobid)
-    sql.append("','")
-    sql.append(str(data[0]))
-    sql.append("','")
-    sql.append(data[1].replace("'","\\'"))
-    sql.append("')")
-    if self.DEBUG: print ">>> %s"%("".join(sql))
-    '''
-    # wfenske 2006-01-21
-    #cursor.execute("".join(sql))
-    cursor.execute("insert into results (id,result,message) values (?,?,?)",
-                   (jobid, data[0], data[1]))
-    cursor.close()
-    self._conn.commit() # wfenske 2006-01-21
+    conn = get_connection()
+    try:
+      cursor = conn.cursor()
+      data = checkResult.getData()
+      # wfenske 2006-01-21
+      '''
+      sql = []
+      sql.append("insert into results (id,result,message) values ('")
+      sql.append(jobid)
+      sql.append("','")
+      sql.append(str(data[0]))
+      sql.append("','")
+      sql.append(data[1].replace("'","\\'"))
+      sql.append("')")
+      if self.DEBUG: print ">>> %s"%("".join(sql))
+      '''
+      # wfenske 2006-01-21
+      #cursor.execute("".join(sql))
+      cursor.execute("insert into results (id,result,message) values (?,?,?)",
+                     (jobid, data[0], data[1]))
+      cursor.close()
+      conn.commit() # wfenske 2006-01-21
+    finally:
+      try:
+        conn.close()
+      except:
+        pass
     
     self._results[jobid] = checkResult
     self._lock.release()
@@ -97,10 +100,16 @@ class CheckResultCache:
       c = self._conn.cursor(MySQLdb.cursors.DictCursor)
       c.execute("create table results (id varchar(255) primary key, result int(2), message text)")
     '''
-    self._conn = get_connection()
-    possibly_create_table(self._conn, "results",
-                          "id text primary key, result int, message text")
-      
+    conn = get_connection()
+    try:
+      possibly_create_table(conn, "results",
+                            "id text primary key, result int, message text")
+    finally:
+      try:
+        conn.close()
+      except:
+        pass
+          
   
   def initResultsFromDatabase(self):
     """
@@ -108,17 +117,25 @@ class CheckResultCache:
     """
     # wfenske 2006-01-21
     #c = self._conn.cursor(MySQLdb.cursors.DictCursor)
-    self._conn = get_connection()
-    c = self._conn.cursor()
-    c.execute("select id, result, message from results")
-    rows = c.fetchall()
-    c.close()
+    conn = get_connection()
+    try:
+      c = conn.cursor()
+      c.execute("select id, result, message from results")
+      rows = c.fetchall()
+      c.close()
+    finally:
+      try:
+        conn.close()
+      except:
+        pass
+      
     for row in rows:
       id = row["id"]
       result = row["result"]
       message = row["message"]
       r = CheckResult(int(result), message)
       self._results[id] = r
+        
   
   def pollResults(self):
     """
@@ -131,14 +148,20 @@ class CheckResultCache:
 
     # wfenske 2006-01-21
     #c = self._conn.cursor(MySQLdb.cursors.DictCursor)
-    self._conn = get_connection()
-    c = self._conn.cursor()
-    # wfenske 2006-01-21
-    #sql = "delete from results"
-    #c.execute(sql)
-    #c.execute("delete from results")
-    c.close()
-    self._conn.commit() # wfenske 2006-01-21
+    conn = get_connection()
+    try:
+      c = conn.cursor()
+      # wfenske 2006-01-21
+      #sql = "delete from results"
+      #c.execute(sql)
+      c.execute("delete from results")
+      c.close()
+      conn.commit() # wfenske 2006-01-21
+    finally:
+        try:
+          conn.close()
+        except:
+          pass
     self._lock.release()
     return obj
       
@@ -157,14 +180,20 @@ class CheckResultCache:
         # delete CheckResult from database
         # wfenske 2006-01-21
         #c = self._conn.cursor(MySQLdb.cursors.DictCursor)
-        self._conn = get_connection()
-        c = self._conn.cursor()
-        # wfenske 2006-01-21
-        #sql = "delete from results where id = %s" % (id,)
-        #c.execute(sql)
-        #c.execute("delete from results where id=?", (id,))
-        c.close()
-        self._conn.commit() # wfenske 2006-01-21
+        conn = get_connection()
+        try:
+          c = conn.cursor()
+          # wfenske 2006-01-21
+          #sql = "delete from results where id = %s" % (id,)
+          #c.execute(sql)
+          c.execute("delete from results where id=?", (id,))
+          c.close()
+          conn.commit() # wfenske 2006-01-21
+        finally:
+          try:
+            conn.close()
+          except:
+            pass
 
     except Exception, e:
         # let us return None
