@@ -104,70 +104,71 @@ class PythonChecker(checker.Checker):
         for test in tests:
             if not comparator:
                 comparator = TEST_SIMPLE
-
-            # complete the wrapper code
-            wrapper = TEMPLATE_SEMANTIC % (
-                        model['module'], 
-                        answer['module'],
-                        comparator,
-                        model['module'] + '.' + test,
-                        answer['module'] + '.' + test,
-                        model['module'] + '.' + test,
-                        answer['module'] + '.' + test,
-                    )
+            
+            if test.strip():    
+                # complete the wrapper code
+                wrapper = TEMPLATE_SEMANTIC % (
+                            model['module'], 
+                            answer['module'],
+                            comparator,
+                            model['module'] + '.' + test,
+                            answer['module'] + '.' + test,
+                            model['module'] + '.' + test,
+                            answer['module'] + '.' + test,
+                        )
+            
+           
+                # execute wrapper code in haskell interpreter
+                try:
+                    (exitcode, response) = self._runInterpreter(INTERPRETER, wrapper, '.py')
+                    assert type(response) == list
+    
+                    result = ''.join(response)
+                    assert type(result) == type('')
         
-       
-            # execute wrapper code in haskell interpreter
-            try:
-                (exitcode, response) = self._runInterpreter(INTERPRETER, wrapper, '.py')
-                assert type(response) == list
-
-                result = ''.join(response)
-                assert type(result) == type('')
-    
-            except Exception, e:
-                # FIXME: use log
-                self._log('Internal Error during semantic check: %s' % str(e))
-                #print "Internal Error during semantic check: %s" % str(e)
-                
-                # import traceback
-                # traceback.print_exc()
-                
-
-                # delete temp files because we leave this method right now
-                os.remove(model['file'])
-                os.remove(answer['file'])
-                return checkresult.CheckResult(-1, repr(e))
-    
-            # an error occured
-            if exitcode != os.EX_OK:
-                # delete temp files because we leave this method right now
-                os.remove(model['file'])
-                os.remove(answer['file'])
-    
-                return checkresult.CheckResult(exitcode, result)
+                except Exception, e:
+                    # FIXME: use log
+                    self._log('Internal Error during semantic check: %s' % str(e))
+                    #print "Internal Error during semantic check: %s" % str(e)
                     
-            # hase the students' solution passed this tests?
-            else:
-                # FIXME: use _log
-                #print result
-                
-                msgItems = result.split(';;')
-                
-                isEqual = (msgItems[0].split('=')[1])
-                expected = msgItems[1].split('=')[1]
-                received = msgItems[2].split('=')[1]
-                
-                if isEqual == 'False':
-                    feedback += '\nYour submission failed. Test case was: "%s"' \
-                                % (test,)
-                    feedback += '\n\n  Expected result: %s\n  Received result: %s' \
-                                % (expected, received,)
+                    # import traceback
+                    # traceback.print_exc()
                     
-                    solved = 1;
-                    
-                    break # means end testing right now
+    
+                    # delete temp files because we leave this method right now
+                    os.remove(model['file'])
+                    os.remove(answer['file'])
+                    return checkresult.CheckResult(-1, repr(e))
+        
+                # an error occured
+                if exitcode != os.EX_OK:
+                    # delete temp files because we leave this method right now
+                    os.remove(model['file'])
+                    os.remove(answer['file'])
+        
+                    return checkresult.CheckResult(exitcode, result)
                         
+                # hase the students' solution passed this tests?
+                else:
+                    # FIXME: use _log
+                    #print result
+                    
+                    msgItems = result.split(';;')
+                    
+                    isEqual = (msgItems[0].split('=')[1])
+                    expected = msgItems[1].split('=')[1]
+                    received = msgItems[2].split('=')[1]
+                    
+                    if isEqual == 'False':
+                        feedback += '\nYour submission failed. Test case was: "%s"' \
+                                    % (test,)
+                        feedback += '\n\n  Expected result: %s\n  Received result: %s' \
+                                    % (expected, received,)
+                        
+                        solved = 1;
+                        
+                        break # means end testing right now
+        # end for
 
         if solved == 0:
             feedback = '\nYour submission passed all tests.'
