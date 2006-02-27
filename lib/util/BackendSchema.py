@@ -141,6 +141,8 @@ class Schemata:
     def __init__(self, name='default', fields=None):
         """Initialize Schemata and add optional fields."""
 
+        print "in Schemata.__init__"
+
         self.__name__ = name
         self._names = []
         self._fields = {}
@@ -163,6 +165,8 @@ class Schemata:
         Returns a new Schemata object that contains all fields and layers
         from ``self`` and ``other``.
         """
+
+        print "in Schemata.__add__"
 
         c = Schemata()
         for field in self.fields():
@@ -234,6 +238,9 @@ class Schemata:
 
     def addField(self, field):
         """Adds a given field to my dictionary of fields."""
+        
+        print "in Schemata.addField"
+        
         #field = aq_base(field)
         self._validateOnAdd(field)
         name = field.getName()
@@ -326,6 +333,9 @@ class BasicSchema(Schemata):
 
         Keyword arguments are added to my properties.
         """
+        
+        print "in BasicSchema.__init__"
+        
         Schemata.__init__(self)
 
         self._props = self._properties.copy()
@@ -353,12 +363,16 @@ class BasicSchema(Schemata):
 
 
     def __add__(self, other):
+        
+        print "in BasicSchema.__add__"
+        
         c = BasicSchema()
         # We can't use update and keep the order so we do it manually
         for field in self.fields():
             c.addField(field)
         for field in other.fields():
             c.addField(field)
+
         # Need to be smarter when joining layers
         # and internal props
         c._props.update(self._props)
@@ -497,10 +511,14 @@ class Schema(BasicSchema):
     #__implements__ = ILayerRuntime, ILayerContainer, ISchema
 
     def __init__(self, *args, **kwargs):
+        print "in Schema.__init__"
         BasicSchema.__init__(self, *args, **kwargs)
 
 
     def __add__(self, other):
+        
+        print "in Schema.__add__"
+        
         c = Schema()
         # We can't use update and keep the order so we do it manually
         for field in self.fields():
