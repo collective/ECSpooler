@@ -1,7 +1,7 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2005 Otto-von-Guericke-University, Magdeburg
+# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 
@@ -11,34 +11,10 @@ import threading
 from data import *
 from util.utils import *
 
-from AbstractBackend import AbstractBackend
+from AbstractFPBackend import AbstractFPBackend
 
-TEST_SIMPLE = \
-"""
-test a b = a == b
-"""
-
-TEST_PERM = \
-"""
-test a b = test_ispermutation a b
-
-remove item [] = []
-remove item (head:tail)
-    | head == item = tail
-    | otherwise = (head:(remove item tail) )
-
-member item [] = False
-member item (head:tail)
-    | head == item = True
-    | otherwise = (member item tail)
-
-test_ispermutation [] [] = True
-test_ispermutation x  [] = False
-test_ispermutation [] x  = False
-test_ispermutation (head:tail) list2
-    | (member head) list2 == True = test_ispermutation tail (remove head list2)
-    | otherwise = False
-"""
+# FIXME: Put in Schema or get from  a config file.
+INTERPRETER = '/usr/local/bin/runhugs'
 
 TEMPLATE_SYNTAX = \
 """module Main where
@@ -51,22 +27,17 @@ TEMPLATE_MODULE= \
 %s
 """
 
-class AbstractHaskellBackend(AbstractBackend):
+REGEX_RUNHUGS_SPECIALS = 'Type checking\n?|Parsing\n?|[Parsing]*[Dependency analysis]*[Type checking]*[Compiling]*\x08 *'
+
+class AbstractHaskellBackend(AbstractFPBackend):
     """
     This abstract class can be used to derive subclasses for checking 
     Haskell programs.
     """
     
-    # resourcestring
-    processWaitTime = 15
-
-    interpreter = 'systrace -a -f ' + \
-        '/opt/ecspooler/.systrace/opt_hugs_bin_runhugs /opt/hugs/bin/runhugs'
-
-
     def checkSyntax(self):
         """
-        Checks syntax of a Haskell function.
+        Checks syntax of a Haskell programm.
         @return A CheckResult object with error code and message text
         """
         assert self._job
@@ -103,136 +74,19 @@ class AbstractHaskellBackend(AbstractBackend):
 
     def checkSemantics(self):
         """
-        Checks syntax and semantic of Haskell programs.
+        Checks semantic of a Haskell programs.
+        
         @return A CheckResult object with error code and message text
         """
-        assert self._job
-        
-        resultStr = ''
-        
-        modelSource = self._job["sample_solution"]
-        studentSource = self._job["student_solution"]
-        propertySource = self._job["testdata"]
-
-        # write model solution, students' solution and wrapper files
-        # 1. model solution file
-        mSModuleName = getUniqueModuleName('Model')
-        mSFileName = getTempFileName(mSModuleName, '.hs')
-        mSSource = 'module ' + mSModuleName + ' where\n\n' + modelSource
-        writeFile(mSSource, mSFileName)
-                    
-        # 2. students' solution
-        sSModuleName = getUniqueModuleName('Student')
-        sSFileName = getTempFileName(sSModuleName, '.hs')
-        sSSource = 'module ' + sSModuleName + ' where\n\n' + studentSource
-        writeFile(sSSource, sSFileName)
-        
-        # 3. write wrapper and execute it
-        # get all property names first
-        propertyNames = re.findall('prop_\S*', propertySource)
-        propertyNames = unique(propertyNames)
-        
-        # remember all properties which are passed without error
-        solvedProperties = [];
-        
-        # for each property write a wrapper 
-        for propertyName in propertyNames:
-            # 3.1 module definition and imports
-            wSource = 'module Main where\n\n' + \
-                      'import QuickCheck\n' + \
-                      'import ' + mSModuleName + '\n' + \
-                      'import ' + sSModuleName + '\n\n'
-                   
-            # 3.2 QC properties
-            propertySource = propertySource.replace(DEFAULT_STUDENT_MODULE_NAME, sSModuleName)
-            propertySource = propertySource.replace(DEFAULT_MODEL_MODULE_NAME, mSModuleName)
-            wSource += propertySource + '\n\n'
-            # main function
-            wSource += 'main = quickCheck ' + propertyName
-            #self.writeFile(wSource, wFileName)
-        
-            # TODO: use sand-box environment
-            # 4. copy files to jail using ssh
-            #executeOsCmd(sCommandCopy % (mSFilename + '.hs'))
-            #executeOsCmd(sCommandCopy % (sSFilename + '.hs'))
-            #executeOsCmd(sCommandCopy % (wFilename + '.hs'))
-        
-            # 5. exceute wrapper file
-            #print "TEST PROGRAM:\n%s"%test_code
-            data = self._runHaskell(wSource)
-
-            try:
-                (exitcode, response) = data
-                assert type(response) == list
-                
-                #print repr(''.join(response))
-                # remove all special characters wirtten by runhugs/haskell 
-                message = re.sub(REGEX_RUNHUGS_SPECIALS, '', ''.join(response))
-                assert type(message) == type('')
-                #print "EXIT CODE: %d" % exitcode
-                #print "RESULT TEXT:\n%s" % output
-
-            except:
-                print "Internal Error during Haskell execution: %s" % repr(data)
-                return checkresult.CheckResult(
-                    -1, "Haskell execution failed - internal error.")
-
-            # an error occured
-            if exitcode != os.EX_OK:
-                # delete temp files because we leave this method right now
-                os.remove(mSFileName)
-                os.remove(sSFileName)
-
-                # find line number in message
-                m = re.findall('.hs":(\d+)', message)
-                # set line number minus two lines and return
-                return checkresult.CheckResult(exitcode,
-                    re.sub('.hs":(\d+)', '.hs":%s' % (int(m[0])-2), message))
-                    
-            # check wether or not a students' solution passed all tests
-            else:
-                failed = re.search(REGEX_FAILED, message)
-                passed = re.findall(REGEX_PASSED_TESTNUMBER, message)
-                
-                if failed != None:
-                    failed_data = re.findall(REGEX_FAILED_TESTDATA, message)
-                    failed_data_str = ''
-                    
-                    for d in failed_data:
-                        failed_data_str += d + ' ';
-                    
-                    resultStr += '\nYour submission failed. Test case was: %s (%s)' \
-                            % (failed_data_str, propertyName)
-                            
-                    # get expected result for this test case
-                    #expectedResult = self._getResultFor(sMModuleName, failed_data_str)
-                    #studentResult = self._getResultFor(sSModuleName, failed_data_str)
-
-                elif len(passed) != 0:
-                    resultStr += '\nYour submission passed all %s tests. (%s)' \
-                            % (passed[0], propertyName)
-                    
-                    solvedProperties.append(propertyName)
-
-            #os.remove(wFileName)
-
-        # 6. delete temp files
-        os.remove(mSFileName)
-        os.remove(sSFileName)
-
-        # solved or not?
-        if (len(solvedProperties) == len(propertyNames)):
-            solved = 0
-        else:
-            solved = 1
-
-        return checkresult.CheckResult(solved, resultStr)
+        # overwrite this method
+        raise NotImplementedError("Method checkSemantics must be "
+                                  "implemented by subclass")
 
 
-    def _createHaskellModule(self, prefix='', source=''):
+    def _createModule(self, prefix='', source=''):
         """
-        Creates a new Haskell module using a temporary name. Returns module name
-        and filepath on disk.
+        Creates a Haskell module file using a temporary name. 
+        Returns module name and path to the file.
         """
         moduleName = getUniqueModuleName(prefix)
         fileName = getTempFileName(moduleName, '.hs')
@@ -242,52 +96,15 @@ class AbstractHaskellBackend(AbstractBackend):
         return {'module':moduleName, 'file':fileName}
 
 
-    def _runHaskell(self, source, suffix='.hs'):
+    def _runHaskell(self, source):
         """
-        Runs a program in interpreter.
+        Runs a Haskell interpreter.
 
-        @param program the source code to run
-        @return (exitcode, output lines)
+        @param source The source code to run.
+        @return A tupel: (exitcode, output lines)
         """
         
-        fname = tempfile.mktemp(suffix = suffix)
-
-        fd = open(fname, "w")
-        fd.write(source)
-        fd.write("\n")
-        fd.close()
-
-        # TODO: use sand-box environment
-        # copy files to jail using ssh
-        #executeOsCmd(sCommandCopy % (mSFilename + '.hs'))
-        #executeOsCmd(sCommandCopy % (sSFilename + '.hs'))
-        #executeOsCmd(sCommandCopy % (wFilename + '.hs'))
-
-        # Popen4 will provide both stdout and stderr on handle.fromchild
-        handle = popen2.Popen4('%s %s' % (self.interpreter, fname))
-        handle.tochild.close()
-        # we don't expect to send on stdin; instead we just wait for the process 
-        # to end, or kill it.
-
-        def interruptProcess():
-            print 'Aborting ' + self.interpreter + ' : SIGTERM -> %i' % handle.pid
-            os.kill(handle.pid, 15)
-
-        timer = threading.Timer(self.rocessWaitTime, interruptProcess)
-        timer.start()
-        exitcode = handle.wait()
-        timer.cancel()
-
-        if exitcode == 15:
-            # process has been interrupted by timer
-            os.remove(fname)
-            return (15, ['Program aborted after %i seconds' % self.processWaitTime])
-            
-        buf = handle.fromchild.readlines()
-        handle.fromchild.close()
-        os.remove(fname)
-
-        return (handle.poll(), buf)
+        return self._runInterpreter(INTERPRETER, source, '.hs')
 
 
 # -- Test section --------------------------------------------------------------
