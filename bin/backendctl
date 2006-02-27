@@ -4,8 +4,6 @@ HOME=$(dirname $_)
 HOME=${HOME%%/bin}
 
 PYTHON="python"
-CONFIG="$HOME/etc/spooler.conf"
-
 BDCTL="$HOME/startup/backendctl.py"
 
-exec "$PYTHON" "$BDCTL" "$HOME" "$CONFIG" "$@"
+exec "$PYTHON" "$BDCTL" "$@"
