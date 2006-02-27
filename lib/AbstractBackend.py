@@ -1,172 +1,195 @@
-from data import *
-import srv
+# -*- coding: utf-8 -*-
+# $Id$
+#
+# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+#
+# This file is part of ECSpooler.
 
-import socket,xmlrpclib
+import os, re, popen2, tempfile, threading
+import socket, xmlrpclib
+import logging
 
+from types import StringType, IntType, DictionaryType
 
-class AbstractBackend(srv.XMLRPCServer):
+from XMLRPCServer import XMLRPCServer
+from data import checkjob, checkresult
+from data.exceptions import AuthorizationFailedException
+from util.BackendSchema import TestEnv, InputField, Schema
+
+class AbstractBackend(XMLRPCServer):
     """
-    The AbstractBackend class is the basis of all backend programs. It
+    AbstractBackend is the basic class of all backends. It
     implements an XMLRPC server, which is waiting for check
-    jobs requested using the execute() method.
+    jobs requested using the execute method.
 
-    AbstractBackend implementations _should_ inherit this class and
-    implement the following methods:
+    Backend implementations *should* be derived from this class and
+    implement the following method:
 
-    checkSyntax(self) -> CheckResult
-    ... test the student solution for syntactical correctness
+      execute(self, authdata, jobdata):) -> CheckResult
 
-    checkSemantics(self) -> CheckResult
-    ... compare the student solution with the sample solution
-    using the given comparator function.
-
-    Both methods can access the CheckJob data instance via self._job
+    This method can access the CheckJob data instance via self._job
     """
     
     # must be set in subclasses !!
-    backendId = ''
-    backendName =  ''
-
-
+    id = ''
+    name =  ''
+    schema = None
+    
     def __init__(self, options):
         """
         """
-        assert self.backendId != '', 'backendId required.'
-        assert self.backendName != '', 'backendName required.'
+
+        self.host = options.get('host')
+        self.port = options.get('port')
+        # FIXME:
+        #self.spooler = options.get('spooler')
+        self.spooler = options.get('capeserver')
+        self.auth = options.get("srv_auth")
         
-        self._opt['id'] = self.backendId
-        self._opt['name'] = self.backendName
+        assert self.id != '', 'A Id is required for this backend.'
+        assert self.name != '', 'A name is required for this backend.'
+        assert self.schema != None, 'A schema is required for this backend'
         
+        assert self.host and type(self.host) == StringType, \
+            "Backend requires a correct 'host' option."
 
-        assert options.get("host") and type(options["host"]) == type(""),\
-            "Checker requires a correct 'host' option."
+        assert self.port and type(self.port) == IntType, \
+            "Backend requires a correct 'port' option."
 
-        assert options.get("port") and type(options["port"]) == int,\
-            "Checker requires a correct 'port' option."
+        assert self.spooler and type(self.spooler) == StringType, \
+            "Backend requires a correct 'spooler' option."
 
-        assert options.get("capeserver") and type(options["capeserver"]) == type(""),\
-            "Checker requires a correct 'capeserver' option."
+        #assert self.auth and type(self.auth) == type({}), \
+        assert self.auth and type(self.auth) == DictionaryType, \
+            "Backend requires a correct 'srv_auth' option."
 
-        assert options.get("srv_auth") and type(options["srv_auth"]) == type({}),\
-            "Checker requires a correct 'srv_auth' option."
-
-        self._opt = options.copy()
+        # set srv_id to None because it will be set in __init__ of XMLRPCServer
         self._srv_id = None
 
-        srv.XMLRPCServer.__init__(self, (self._opt["host"], self._opt["port"]), logRequests=0)
+        XMLRPCServer.__init__(self, (self.host, self.port), logRequests=0)
+
+        self.register_function(self.getId)
+        self.register_function(self.getName)
+        self.register_function(self.getSchema)
+        self.register_function(self.getStatus)
 
         self.register_function(self.stop)
         self.register_function(self.execute)
+
         self.register_introspection_functions()
 
 
-    def _checkAuthData(self, data):
+    def _authenticate(self, data):
+        """Checks the authorization information. 
+        @return True if given authorization data are valid, otherwise False.
         """
-        Checks the authorization data. Returns True or False.
-        """
-        #return 1
+        # FIXME: 
+        return 1
 
         if self._srv_id == None: 
-            s = "Cannot authorize connection without valid cape server connection"
-            self._log(s)
-            raise exceptions.AuthorizationFailedException(s)
+            s = "Authorization failed: Invalid spooler connection settings."
+            logging.error(msg)
+            raise AuthorizationFailedException(s)
 
         if not data or type(data) != dict or data.get("srv_id") != self._srv_id:
-            s = "Authorization failed for current connection."
-            self._log(s)
-            raise exceptions.AuthorizationFailedException(s)
+            s = "Authorization failed: Invalid data."
+            logging.error(s)
+            raise AuthorizationFailedException(s)
 
-        return 1
+        return True
 
 
     def run(self):
-        # register at capeserver
+        """Registers the backend using the given spooler data and 
+        runs it 'forever'.
+        @return False in case of an error, True instead.
+        """
+
+        # 1. register this backend at ecspooler
         try:
-            srv = xmlrpclib.Server(self._opt["capeserver"])
-            (code,msg) = srv.addChecker(
-                    self._opt["srv_auth"],
-                    self._opt["id"],
-                    self._opt["name"],
-                    "http://%s:%i"%(self._opt["host"], self._opt["port"])
-                )
+            spooler = xmlrpclib.Server(self.spooler)
+
+            (code, msg) = spooler.addChecker(self.auth, self.id, self.name,
+                            'http://%s:%i' % (self.host, self.port))
 
             if code != 0:
-                self._log("Cannot add checker to CapeServer: %s (%i)" % (msg, code))
+                logging.error("Can't add backend to spooler: %s (%i)" % (msg, code))
                 return 0
             elif not msg:
-                self._log("Internal Error - CapeServer returned invalid id. STOP.")
+                logging.error("Internal Error: Spooler returned an invalid id.")
                 return 0
             else:
                 self._srv_id = msg
 
-        except (socket.error, xmlrpclib.Fault), exc:
-            self._log("Cannot connect to CapeServer at '%s': %s"\
-                %(self._opt["capeserver"], exc))
+        except socket.error, e:
+            logging.error("Socket Error: %s (%s)" % (e, self.spooler))
             return 0
 
-        # run ourselves
+        except xmlrpclib.Fault, e:
+            logging.error("XMLRPC Error: %s (%s)" % (e, self.spooler,))
+            return 0
+
+        # 2. run this backend
         self.serve_forever()
         return 1
 
 
     def stop(self, authdata):
+        """Stops the backend. In case the authentication fails, a 
+        AuthorizationFailedException will be raised.
+        
+        @param authdata The authorization information
         """
-        Stops the checker.
+        self._authenticate(authdata)
 
-        @param authdata authorization data
-        """
-        self._checkAuthData(authdata)
         self.server_close()
         return 1
 
     
     def getId(self):
-        return self._opt.get("id")
-
+        """Returns the id of this backend.
+        @return The backend's id
+        """
+        return self.id + self.get
 
     def getName(self):
-        return self._opt.get("name")
+        """Returns the name of this backend.
+        @return The backend's name
+        """
+        return self.name + self.get
+
+    def getSchema(self):
+        """Returns the schema defined for this backend.
+        @return A Schema object
+        """
+        return self.schema
+
+    def getStatus(self, authdata):
+        """Returns a dictionary with some status information about 
+        this backend. In case the authentication fails, a 
+        AuthorizationFailedException will be raised.
+        
+        @param authdata The authorization information
+        @return A dictionary with id, name, host, and port settings
+        """
+        
+        self._authenticate(authdata)
+
+        return {
+            'id': self.id,
+            'name': self.name,
+            'host': self.host,
+            'port': self.port,
+        }
 
 
     def execute(self, authdata, jobdata):
+        """Executes a check job using the fiven job data.
+
+        @param authdata The authorization information.
+        @param jobdata All relevant job data, see class CheckJob for details
+        @return A CheckResult object
         """
-        Executes a check job.
 
-        @param authdata authorization information
-        @param jobdata relevant job data, see CheckJob docu for details
-        @return CheckResult data
-        """
-        self._checkAuthData(authdata)
-
-        try:
-            self._job = checkjob.CheckJob(jobdata)
-
-            result = self.checkSyntax()
-            #print 'checkSyntax:\n', result.getData()[1]
-            if result.isFailure(): return result.getData()
-
-            result = self.checkSemantics()
-            #print 'checkSemantics:\n', result.getData()[1]
-            
-            return result.getData()
-
-        except exceptions.InvalidDataException, exc:
-            return checkresult.CheckResult(-1, "invalid job data").getData()
-
-        return checkresult.CheckResult(-10, "implementation error").getData()
-
-
-    def checkSyntax(self):
-        # overwrite this method
-        return checkresult.CheckResult(-20, "Method checkSyntax must be implemented in subclasses.")
-
-
-    def checkSemantics(self):
-        # overwrite this method
-        return checkresult.CheckResult(-21, "Method checkSemantics must be implemented in subclasses.")
-    
-
-    def getComparatorTemplate(self):
-        # overwrite this method
-        return checkresult.CheckResult(-21, "Method getComparatorTemplate must be implemented in subclasses.")
-        
+        raise NotImplementedError("Method execute must be "
+                                  "implemented by subclass.")
