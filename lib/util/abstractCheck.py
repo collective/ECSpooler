@@ -1,6 +1,18 @@
-from pysqlite2 import dbapi2 as sqlite
-import thread
+# -*- coding: utf-8 -*-
+# $Id$
+#
+# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+#
+# This file is part of ECSpooler.
+import os, thread
+import logging
 
+try:
+    from pysqlite2 import dbapi2 as sqlite
+except ImportError, ierr:
+    # do nothing
+    sqlite = None
+    logging.error('pysqlite2 module not found!')
 
 class AbstractCheck(object):
     
@@ -24,7 +36,9 @@ class AbstractCheck(object):
         
         self.lock.acquire()
         try:
-            connection = sqlite.connect("cape")
+            dbFile = os.path.join(os.path.dirname(__file__), '..', '..', 
+                                  'var', 'data.fs')
+            connection = sqlite.connect(dbFile)
             connection.row_factory = dictFactory
             try:
                 return fun(connection)
