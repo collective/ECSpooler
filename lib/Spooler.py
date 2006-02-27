@@ -62,16 +62,23 @@ class Spooler(XMLRPCServer):
         self._checkers = {}
         self._queue    = checkjobQueue.CheckJobQueue()
         self._results  = checkresultCache.CheckResultCache()
-        self._auth     = auth.initAuthBackend({'filename':self._opt["pwd_file"]})
+
+        try:
+            self._auth     = auth.initAuthBackend({'filename':self._opt["pwd_file"]})
+        except Exception, e:
+            self._auth = auth.UserAuth(self._opt["pwd_file"])
 
         # doqueue thread (we will use only one thread)
         self._doqueue_thread = None
         self._doqueue_thread_stop = False
         
         # signal handler
-        signal.signal(signal.SIGHUP, self.reconfig)
-        signal.signal(signal.SIGTERM, self.stop)
-        #signal.signal(signal.SIGINT,  self.stop)
+        try:
+            signal.signal(signal.SIGHUP, self.reconfig)
+            signal.signal(signal.SIGTERM, self.stop)
+            #signal.signal(signal.SIGINT,  self.stop)
+        except AttributeError, aerr:
+            logging.warn("signal.SIGHUP or signal.SIGTERM not defined - skipping.")
         
 
     def reconfig(self, signal, stack):
@@ -194,7 +201,7 @@ class Spooler(XMLRPCServer):
                 return (1, "no such backend: %s" % job["checker"])
 
             # enqueue the job
-            log.info("Enqueueing job %s" % job["id"])
+            logging.info("Enqueueing job %s" % job["id"])
             self._queue.enqueue(job)
 
             return (0, job["id"])
