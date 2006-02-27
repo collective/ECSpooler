@@ -13,7 +13,7 @@ from AbstractHaskellBackend import REGEX_RUNHUGS_SPECIALS
 
 from data import checkjob, checkresult
 from util.utils import *
-from util.BackendSchema import Field, Schema
+from util.BackendSchema import TestEnv, InputField, Schema
 
 
 REGEX_FAILED = '(?m)Falsifiable, after \d+ tests?:'
@@ -25,7 +25,7 @@ DEFAULT_STUDENT_MODULE_NAME =  '#Student#'
 
 
 localSchema = Schema((
-        Field(
+        InputField(
             'modelSolution', 
             required = False, 
             label = 'Model solution',
@@ -33,7 +33,7 @@ localSchema = Schema((
             i18n_domain = 'EC',
         ),
         
-        Field(
+        InputField(
             'properties', 
             required = True, 
             label = 'QuickCheck properties',

@@ -11,7 +11,7 @@ import logging
 
 from data import *
 from util.utils import *
-from util.BackendSchema import TestEnv, Field, Schema
+from util.BackendSchema import TestEnv, InputField, Schema
 from AbstractFPBackend import AbstractFPBackend
 
 
@@ -30,12 +30,11 @@ print >> sys.stdout, \"isEqual=\" + str(test(%s, %s)) + \";;expected=\" + str(%s
 localSchema = Schema((
 
         TestEnv(
-            'default',
             simple = 'def test(a, b): return (a == b)',
             semantic = TEMPLATE_SEMANTIC,
         ),
 
-        Field(
+        InputField(
             'modelSolution', 
             required = True, 
             label = 'Model solution',
@@ -43,7 +42,7 @@ localSchema = Schema((
             i18n_domain = 'EC',
         ),
         
-        Field(
+        InputField(
             'testData', 
             required = True, 
             label = 'Test data',
@@ -55,7 +54,7 @@ localSchema = Schema((
             i18n_domain = 'EC',
         ),
 
-        Field(
+        InputField(
             'comparator', 
             required = False, 
             label = 'Comparator',

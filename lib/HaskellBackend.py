@@ -7,11 +7,41 @@
 
 import os, re, popen2, tempfile
 import threading
+import logging
 
-from data import *
+from data import checkjob, checkresult
 from util.utils import *
+from util.BackendSchema import TestEnv, InputField, Schema
 
 from AbstractHaskellBackend import AbstractHaskellBackend
+from AbstractHaskellBackend import REGEX_RUNHUGS_SPECIALS
+
+TEST_SIMPLE = \
+"""
+test a b = a == b
+"""
+
+TEST_PERM = \
+"""
+test a b = test_ispermutation a b
+
+remove item [] = []
+remove item (head:tail)
+    | head == item = tail
+    | otherwise = (head:(remove item tail) )
+
+member item [] = False
+member item (head:tail)
+    | head == item = True
+    | otherwise = (member item tail)
+
+test_ispermutation [] [] = True
+test_ispermutation x  [] = False
+test_ispermutation [] x  = False
+test_ispermutation (head:tail) list2
+    | (member head) list2 == True = test_ispermutation tail (remove head list2)
+    | otherwise = False
+"""
 
 TEMPLATE_SEMANTIC = \
 """module Main where
@@ -21,15 +51,50 @@ import %s
 main = putStr(\"isEqual=\" ++ show(test (%s) (%s)) ++ \";;expected=\" ++ show(%s) ++ \";;received=\" ++ show(%s))
 """
 
+localSchema = Schema((
+        InputField(
+            'modelSolution', 
+            required = True, 
+            label = 'Model solution',
+            description = 'Enter a model solution.',
+            i18n_domain = 'EC',
+        ),
+        
+        InputField(
+            'testData', 
+            required = True, 
+            label = 'Test data',
+            description = 'Enter one or more function calls. '+ 
+                        'A function call consists of the ' + 
+                        'function name (given in the exercise directives) ' + 
+                        'and test data as parameters of this funtion. '+
+                        'Each function call must be written in a single line.',
+            i18n_domain = 'EC',
+        ),
+
+        InputField(
+            'comparator', 
+            required = False, 
+            label = 'Comparator',
+            description = 'Enter your comparator function.' + 
+                        'The comparator function expects two parameters ' +
+                        'and returns a value like True or False. It must ' +
+                        'be named "test" and.',
+            i18n_domain = 'EC',
+        ),
+    ))
+
 class HaskellBackend(AbstractHaskellBackend):
     """
-    Simple checker class for checking Haskell programs using QuickCheck.
-    This class is inherited from Checker (see checker.py):
+    A simple checker class for checking Haskell programs by comparing
+    student and model solution on given test data.
     """
-    backendId = 'haskell'
-    backendName = 'Haskell'
+    
+    id = 'haskell'
+    name = 'Haskell'
+    schema = localSchema
 
-    # checkSemantics is defined in AbstractHaskellBackend
+    # checkSyntax is defined in AbstractHaskellBackend
 
     def checkSemantics(self):
         """
@@ -96,8 +161,7 @@ class HaskellBackend(AbstractHaskellBackend):
                     
             # hase the students' solution passed this tests?
             else:
-                # FIXME: use _log
-                print result
+                logging.debug(result)
                 
                 msgItems = result.split(';;')
                 
