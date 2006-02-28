@@ -6,63 +6,16 @@ from types import ListType, TupleType, StringType
 _field_count = 0
 _test_count = 0
 
-class TestEnv:
-    """
-    Testing environment
-    """
-    _properties = {
-        'simple' : None,
-        'permutation' : None,
-        'syntax': None,
-        'semantic': None,
-        'schemata' : 'default',
-        'type' : None,
-        }
-
-    def __init__(self, name=None, **kwargs):
-        """
-        Assign name to __name__. Add properties and passed-in
-        keyword args to __dict__.
-        """
-        if name is None:
-            global _test_count
-            _test_count += 1
-            name = 'test.%s' % _test_count
-
-        self.__name__ = name
-
-        self.__dict__.update(self._properties)
-        self.__dict__.update(kwargs)
-
-    def getName(self):
-        """Return the name of this field as a string"""
-        return self.__name__
-
-    def getPropertyNames(self):
-        return dict(vars(self)).keys()
-
-    def getProperty(self, name):
-        return dict(vars(self))[name]
-
-    def __repr__(self):
-        """
-        Return a string representation.
-        """
-        return "<TestEnv>"
-
-
-class InputField:
+class Field:
     """
     Class attribute _properties is a dictionary containing all of a
     field's property values.
     """
 
     _properties = {
-        'required' : False,
-        'mode' : 'rw',
         'type' : None,
+        'required' : False,
         'languageIndependent' : False,
-        'schemata' : 'default',
         }
 
     def __init__(self, name=None, **kwargs):
@@ -125,9 +78,34 @@ class InputField:
         """
         Return a string representation consisting of name, type and permissions.
         """
-        return "<InputField %s(%s:%s)>" % (self.getName(), self.type, self.mode)
+        return "<Field %s (%s)>" % (self.getName(), self.type)
 
 
+class TestEnv(Field):
+    """
+    Testing environment
+    """
+    
+    _properties = Field._properties.copy()
+    _properties.update({
+        'type' : 'TestEnvironment',
+        'simple' : None,
+        'permutation' : None,
+        'syntax': None,
+        'semantic': None,
+        })
+
+
+class InputField(Field):
+    """
+    Class attribute _properties is a dictionary containing all of a
+    field's property values.
+    """
+
+    _properties = Field._properties.copy()
+    _properties.update({
+        'type' : 'InputField',
+        })
 
 
 class Schemata:
@@ -146,6 +124,8 @@ class Schemata:
         self.__name__ = name
         self._names = []
         self._fields = {}
+        
+
 
         if fields is not None:
             if type(fields) not in [ListType, TupleType]:
@@ -218,7 +198,7 @@ class Schemata:
 
             # attribute missing:
             missing_attrs = [attr for attr in values.keys() \
-                             if not shasattr(field, attr)]
+                             if not hasattr(field, attr)]
             if missing_attrs: continue
 
             # attribute value unequal:
@@ -239,13 +219,13 @@ class Schemata:
     def addField(self, field):
         """Adds a given field to my dictionary of fields."""
         
-        print "in Schemata.addField"
-        
         #field = aq_base(field)
         self._validateOnAdd(field)
         name = field.getName()
+        
         if name not in self._names:
             self._names.append(name)
+        
         self._fields[name] = field
 
 
@@ -334,8 +314,6 @@ class BasicSchema(Schemata):
         Keyword arguments are added to my properties.
         """
         
-        print "in BasicSchema.__init__"
-        
         Schemata.__init__(self)
 
         self._props = self._properties.copy()
@@ -363,8 +341,6 @@ class BasicSchema(Schemata):
 
 
     def __add__(self, other):
-        
-        print "in BasicSchema.__add__"
         
         c = BasicSchema()
         # We can't use update and keep the order so we do it manually
@@ -511,13 +487,10 @@ class Schema(BasicSchema):
     #__implements__ = ILayerRuntime, ILayerContainer, ISchema
 
     def __init__(self, *args, **kwargs):
-        print "in Schema.__init__"
         BasicSchema.__init__(self, *args, **kwargs)
 
 
     def __add__(self, other):
-        
-        print "in Schema.__add__"
         
         c = Schema()
         # We can't use update and keep the order so we do it manually
@@ -560,7 +533,6 @@ class Schema(BasicSchema):
         return schema.__of__(parent)
         
 
-
 # -- Test section -------------------------------------------------------------
 if __name__ == "__main__":
 
@@ -596,9 +568,11 @@ if __name__ == "__main__":
     #print simpleField.toString()
     
     for field in simpleSchema.fields():
-        #print field.getName
-        if isinstance(field, TestEnv):
-            print 'TestEnv ->', field.getName()
-        elif isinstance(field, InputField):
-            print 'InputField ->', field.getName()
+        print field
+        #if isinstance(field, TestEnv):
+        #    print 'TestEnv ->', field.getName()
+        #elif isinstance(field, InputField):
+        #    print 'InputField ->', field.getName()
+            
+    print simpleSchema.filterFields(type='TestEnvironment')
             
