@@ -46,6 +46,15 @@ class UserAuth(AuthorizationBackend):
             self.crypt = lambda x,y: x
             logging.warn('crypt module not found - using cleartext passwords!')
 
+    def test(self, args, level):
+        """
+        """
+        username = args.get("username")
+        password = args.get("password")
+        
+        return self.authorize(username, password)
+
+
     def authorize(self, username, password):
         ans = self.db.has_key(username) and \
                self.db[username] == self.crypt(password, password[:2])
@@ -53,11 +62,14 @@ class UserAuth(AuthorizationBackend):
             time.sleep(userAuthFailSleep)
         return ans
 
+
     def addUser(self, username, password):
         self.db[username] = self.crypt(password, password[:2])
+
     
     def delUser(self, username):
         del self.db[username]
+
 
     def users(self):
         return self.db.keys()
