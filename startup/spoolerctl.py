@@ -116,7 +116,7 @@ def main():
         if not host: host = socket.getfqdn()
         if not port: port = 5050
         
-        pwdFile = os.path.join(os.path.dirname(__file__), '..', 'etc', '.passwd')
+        pwdFile = os.path.join(os.path.dirname(__file__), '..', 'etc', 'passwd')
         
         
         try:
@@ -158,7 +158,7 @@ def main():
             #print e.args      # arguments stored in .args
             #print e           # __str__ allows args to printed directly
             #print sys.exc_info()[0]
-            print "Unexpected error: %s: %s" % (sys.exc_info()[0], e)
+            print "Error (%s): %s" % (sys.exc_info()[0], e)
 
 
 # -- Main ----------------------------------------------------------------------

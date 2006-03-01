@@ -234,7 +234,7 @@ def main():
                 #print e.args      # arguments stored in .args
                 #print e           # __str__ allows args to printed directly
                 #print sys.exc_info()[0]
-                print "Unexpected error: %s: %s" % (sys.exc_info()[0], e)
+                print "Error (%s): %s" % (sys.exc_info()[0], e)
 
 # -- Main ----------------------------------------------------------------------
 if __name__ == "__main__":
