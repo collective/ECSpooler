@@ -30,7 +30,9 @@ print >> sys.stdout, \"isEqual=\" + str(test(%s, %s)) + \";;expected=\" + str(%s
 localSchema = Schema((
 
         TestEnv(
-            simple = 'def test(a, b): return (a == b)',
+            'simpleTestEnvironment',
+            label = 'Simple',
+            test = 'def test(a, b): return (a == b)',
             semantic = TEMPLATE_SEMANTIC,
         ),
 
@@ -158,7 +160,7 @@ class PythonBackend(AbstractFPBackend):
                     assert type(result) == type('')
         
                 except Exception, e:
-                    loggin.error('Internal Error during semantic check: %s' % str(e))
+                    logging.error('Internal Error during semantic check: %s' % str(e))
 
                     # delete temp files because we leave this method right now
                     os.remove(model['file'])
