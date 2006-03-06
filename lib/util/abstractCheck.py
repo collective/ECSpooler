@@ -10,13 +10,18 @@ import logging
 try:
     from pysqlite2 import dbapi2 as sqlite
 except ImportError, ierr:
-    # do nothing
-    sqlite = None
-    logging.error('pysqlite2 module not found!')
+    logging.error('Module pysqlite2 not found!')
+    raise ierr
 
 class AbstractCheck(object):
     
     def __init__(self):        
+        dbDir = os.path.join(os.path.dirname(__file__), '..', '..', 'var')
+        if not os.path.exists(dbDir): 
+            os.makedirs(dbDir)
+        
+        self.dbFile = os.path.join(dbDir, 'data.fs')
+
         self.lock = thread.allocate_lock()
         self.possiblyCreateTable()
         self.initFromDatabase()
@@ -36,9 +41,7 @@ class AbstractCheck(object):
         
         self.lock.acquire()
         try:
-            dbFile = os.path.join(os.path.dirname(__file__), '..', '..', 
-                                  'var', 'data.fs')
-            connection = sqlite.connect(dbFile)
+            connection = sqlite.connect(self.dbFile)
             connection.row_factory = dictFactory
             try:
                 return fun(connection)
