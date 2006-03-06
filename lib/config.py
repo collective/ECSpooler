@@ -4,48 +4,48 @@
 # Copyright (c) 2005 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
-import os, logging, logging.handlers
+import sys, os, logging, logging.handlers
 
-# set up project
+# -- project properties -------------------------------------------------------
 PROJECTNAME = 'ECSpooler'
 PRODUCT_NAME = 'ECSpooler'
 
-# set up i18n
+
+# -- i18n properties ----------------------------------------------------------
 I18N_DOMAIN = 'eduComponents'
 
-# set up logging
+
+# -- log properties -----------------------------------------------------------
 LOGLEVEL = logging.DEBUG
 
-logger = logging.getLogger("")  #root logger
+logger = logging.getLogger('')  #root logger
 logger.setLevel(LOGLEVEL)
-
 
 # set directory for log file and create it if necessary
 logDir = os.path.join(os.path.dirname(__file__), '..', 'log')
 
-#if not os.path.exists(logDir):
-#    try:
-#        os.makedirs(logDir)
-#    except OSError, ose:
-#        pass
+if not os.path.exists(logDir):
+    os.makedirs(logDir)
 
-# create log handlers for file and syslog
-fH = logging.FileHandler(os.path.join(logDir, 'status.log'))
-
-#sLH = logging.handlers.SysLogHandler(('localhost', handlers.SYSLOG_UDP_PORT), handlers.SysLogHandler.LOG_USER)
+# create log handlers for console, file, and syslog
+cH  = logging.StreamHandler(sys.stdout)
+fH  = logging.FileHandler(os.path.join(logDir, 'messages'))
 sLH = logging.handlers.SysLogHandler()
 
-fHFmt = logging.Formatter('%(asctime)s %(levelname)s: %(message)s ' \
-                           '(%(filename)s:%(lineno)d)')
+longFmt  = logging.Formatter('%(asctime)s %(levelname)s: %(message)s ' \
+                             '(%(filename)s:%(lineno)d)')
 
-sLHFmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+shortFmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
-fH.setFormatter(fHFmt)
-sLH.setFormatter(sLHFmt)
+cH.setFormatter(longFmt)
+fH.setFormatter(longFmt)
+sLH.setFormatter(shortFmt)
 
+#logger.addHandler(cH)
 logger.addHandler(fH)
 logger.addHandler(sLH)
 
+# defining log settings for (later) usage in a config file
 #[handler_hand02]
 #class=FileHandler
 #level=DEBUG
@@ -72,4 +72,5 @@ logger.addHandler(sLH)
 #format=F5 %(asctime)s %(levelname)s %(message)s
 #datefmt=
 
+# -- additional properties ----------------------------------------------------
 
