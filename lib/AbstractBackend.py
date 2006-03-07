@@ -5,18 +5,19 @@
 #
 # This file is part of ECSpooler.
 
-import os, re, popen2, tempfile, threading
+import os, sys, re, popen2, tempfile, threading, signal
 import socket, xmlrpclib
 import logging
 
 from types import StringType, IntType, DictionaryType
 
-from XMLRPCServer import XMLRPCServer
+# local imports
+from AbstractServer import AbstractServer
 from data import checkjob, checkresult
 from data.exceptions import AuthorizationFailedException
 from util.BackendSchema import TestEnv, InputField, Schema
 
-class AbstractBackend(XMLRPCServer):
+class AbstractBackend(AbstractServer):
     """
     AbstractBackend is the basic class of all backends. It
     implements an XMLRPC server, which is waiting for check
@@ -38,24 +39,17 @@ class AbstractBackend(XMLRPCServer):
     def __init__(self, options):
         """
         """
+        AbstractServer.__init__(self, options['host'], options['port'])
 
-        self.host = options.get('host')
-        self.port = options.get('port')
         # FIXME:
         #self.spooler = options.get('spooler')
-        self.spooler = options.get('capeserver')
-        self.auth = options.get("srv_auth")
+        self.spooler = options['capeserver']
+        self.auth = options['srv_auth']
         
         assert self.id != '', 'A Id is required for this backend.'
         assert self.name != '', 'A name is required for this backend.'
         assert self.schema != None, 'A schema is required for this backend'
         
-        assert self.host and type(self.host) == StringType, \
-            "Backend requires a correct 'host' option."
-
-        assert self.port and type(self.port) == IntType, \
-            "Backend requires a correct 'port' option."
-
         assert self.spooler and type(self.spooler) == StringType, \
             "Backend requires a correct 'spooler' option."
 
@@ -63,106 +57,100 @@ class AbstractBackend(XMLRPCServer):
         assert self.auth and type(self.auth) == DictionaryType, \
             "Backend requires a correct 'srv_auth' option."
 
-        # set srv_id to None because it will be set in __init__ of XMLRPCServer
-        self._srv_id = None
-
-        XMLRPCServer.__init__(self, (self.host, self.port), logRequests=0)
-
-        self.register_function(self.getId)
-        self.register_function(self.getName)
-        self.register_function(self.getSchema)
-        self.register_function(self.getStatus)
-
-        self.register_function(self.stop)
-        self.register_function(self.execute)
-
-        self.register_introspection_functions()
+        # set spoolerID to None; it will be set if backend was successfully
+        # registered to a spooler
+        self._spoolerID = None
 
 
-    def _authenticate(self, data):
-        """Checks the authorization information. 
-        @return True if given authorization data are valid, otherwise False.
+    def _registerFunctions(self):
         """
-        # FIXME: 
-        return 1
-
-        if self._srv_id == None: 
-            s = "Authorization failed: Invalid spooler connection settings."
-            logging.error(msg)
-            raise AuthorizationFailedException(s)
-
-        if not data or type(data) != dict or data.get("srv_id") != self._srv_id:
-            s = "Authorization failed: Invalid data."
-            logging.error(s)
-            raise AuthorizationFailedException(s)
-
-        return True
-
-
-    def run(self):
-        """Registers the backend using the given spooler data and 
-        runs it 'forever'.
-        @return False in case of an error, True instead.
         """
+        self._server.register_function(self.execute)
 
-        # 1. register this backend at ecspooler
+        self._server.register_function(self.getId)
+        self._server.register_function(self.getName)
+        self._server.register_function(self.getSchema)
+        self._server.register_function(self.getStatus)
+        
+        self._server.register_function(self.shutdown)
+
+
+    def _manageBeforeStart(self):
+        """Registers the backend using the given spooler data.
+        """
+        
+        registered = False
+
         try:
             spooler = xmlrpclib.Server(self.spooler)
 
-            (code, msg) = spooler.addChecker(self.auth, self.id, self.name,
+            (code, msg) = spooler.addBackend(self.auth, self.id, self.name,
                             'http://%s:%i' % (self.host, self.port))
 
             if code != 0:
-                logging.error("Can't add backend to spooler: %s (%i)" % (msg, code))
-                return 0
+                logging.error("Can't add backend to spooler: %s (%i)" % 
+                              (msg, code))
             elif not msg:
-                logging.error("Internal Error: Spooler returned an invalid id.")
-                return 0
+                logging.error("Internal error: Spooler returned an "
+                              "invalid id.")
             else:
-                self._srv_id = msg
+                self._spoolerID = msg
+                registered = True
 
-        except socket.error, e:
-            logging.error("Socket Error: %s (%s)" % (e, self.spooler))
-            return 0
+        except socket.error, serr:
+            logging.error("Socket error: %s (%s)" % (serr, self.spooler))
 
-        except xmlrpclib.Fault, e:
-            logging.error("XMLRPC Error: %s (%s)" % (e, self.spooler,))
-            return 0
-
-        # 2. run this backend
-        self.serve_forever()
-        return 1
-
-
-    def stop(self, authdata):
-        """Stops the backend. In case the authentication fails, a 
-        AuthorizationFailedException will be raised.
+        except xmlrpclib.Fault, err:
+            logging.error("XMLRPC error: %s (%s)" % (err, self.spooler,))
         
-        @param authdata The authorization information
+        
+        if not registered:
+            sys.exit(1)
+            
+    
+    def _manageBeforeStop(self):
+        """
+        Do nothing here right now.
+        """
+        try:
+            spooler = xmlrpclib.Server(self.spooler)
+            spooler.removeBackend(self.auth, self.id)
+
+        except socket.error, serr:
+            logging.error("Socket error: %s (%s)" % (serr, self.spooler))
+
+        except xmlrpclib.Fault, err:
+            logging.error("XMLRPC error: %s (%s)" % (err, self.spooler,))
+
+
+    def shutdown(self, authdata):
+        """
+        Shutting down backend; called from spooler or other client
         """
         self._authenticate(authdata)
+        self._stop(signal.SIGTERM, None)
 
-        self.server_close()
-        return 1
 
-    
     def getId(self):
         """Returns the id of this backend.
         @return The backend's id
         """
-        return self.id + self.get
+        return self.id
+
 
     def getName(self):
         """Returns the name of this backend.
         @return The backend's name
         """
-        return self.name + self.get
+        return self.name
+
 
     def getSchema(self):
         """Returns the schema defined for this backend.
         @return A Schema object
         """
         return self.schema
+
 
     def getStatus(self, authdata):
         """Returns a dictionary with some status information about 
@@ -176,7 +164,8 @@ class AbstractBackend(XMLRPCServer):
         self._authenticate(authdata)
 
         return {
-            'id': self.id,
+            'pid':  os.getpid(),
+            'id':   self.id,
             'name': self.name,
             'host': self.host,
             'port': self.port,
@@ -193,3 +182,23 @@ class AbstractBackend(XMLRPCServer):
 
         raise NotImplementedError("Method execute must be "
                                   "implemented by subclass.")
+
+
+    def _authenticate(self, data):
+        """Checks the authorization information. 
+        @return True if given authorization data are valid, otherwise False.
+        """
+        # FIXME: 
+        #return 1
+
+        if self._spoolerID == None: 
+            s = "Authorization failed: Invalid spooler connection settings."
+            logging.error(msg)
+            raise AuthorizationFailedException(s)
+
+        if not data or type(data) != dict or data['srv_id'] != self._spoolerID:
+            s = "Authorization failed: Invalid data."
+            logging.error(s)
+            raise AuthorizationFailedException(s)
+
+        return 1
