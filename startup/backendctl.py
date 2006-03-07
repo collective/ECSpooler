@@ -12,18 +12,17 @@ processes them. A configuration file must be avaiable for each backend
 with entries about spooler server's host and port as well as base port 
 for the backend. If a port is already in use, we will try another one.
 """
-import os, sys, time
-import socket
-import xmlrpclib
+import os, sys, time, socket, xmlrpclib
+import logging
 import getopt
-import ConfigParser
 
 # set path for backend classes
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..',  'lib'))
+import config
 
 MAX_TRIALS = 5
 
-def startBackend(backendId, backendPort, spoolerHost, spoolerPort, 
+def _startBackend(backendId, backendPort, spoolerHost, spoolerPort, 
                    spoolerAuth):
     """
     Starts a backend with the given parameters.
@@ -38,7 +37,7 @@ def startBackend(backendId, backendPort, spoolerHost, spoolerPort,
         else:
             cpid = os.fork()
     except AttributeError, aerr:
-        print "WARNING: os.fork not defined - skipping."
+        logging.warn('os.fork not defined - skipping.')
         cpid = 0
 
     if cpid == 0:
@@ -47,11 +46,7 @@ def startBackend(backendId, backendPort, spoolerHost, spoolerPort,
                                      spoolerHost, spoolerPort, spoolerAuth)
         
         if backend: 
-            started = backend.run()
-            
-            if not started:
-                print 'Failed. See log for more information.'
-                
+            backend.start()
         else:
             print 'Finally failed. See log for more information.'
 
@@ -61,7 +56,7 @@ def startBackend(backendId, backendPort, spoolerHost, spoolerPort,
         print 'pid=%d' % cpid
 
 
-def getBackendInstance(backendId, backendHost, backendPort, spoolerHost, 
+def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost, 
                         spoolerPort, spoolerAuth):
     """
     Returns an instance of the backend class if one could be created.
@@ -92,7 +87,7 @@ def getBackendInstance(backendId, backendHost, backendPort, spoolerHost,
     return None
     
 
-def tryGetBackendInstance(moduleName, instanceCreateStmt):
+def _tryGetBackendInstance(moduleName, instanceCreateStmt):
     """
     Executes the import statement for the backend class, creates an instance 
     and returns this instance.
@@ -118,7 +113,7 @@ def tryGetBackendInstance(moduleName, instanceCreateStmt):
         return None
         
 
-def stopBackend(backendId, spoolerHost, spoolerPort, spoolerAuth):
+def _stopBackend(backendId, spoolerHost, spoolerPort, spoolerAuth):
     """
     Stops the backend.
     """
@@ -135,8 +130,10 @@ def usage():
           "[-P SPOOLER_PORT] -u USERNAME -p PASSWORD " \
           "[-B BACKEND_PORT] BACKEND start|stop|restart|status"
 
+
 def authError(cmd):
     print "%s requires username and password" % cmd
+
 
 def main():
     """
@@ -228,12 +225,14 @@ def main():
                     usage()
     
             except Exception, e:
-                import traceback
-                traceback.print_exc()
-                #print type(e)     # the exception instance
-                #print e.args      # arguments stored in .args
-                #print e           # __str__ allows args to printed directly
-                #print sys.exc_info()[0]
+                if config.LOGLEVEL == logging.DEBUG:
+                    import traceback
+                    traceback.print_exc()
+                    #print type(e)     # the exception instance
+                    #print e.args      # arguments stored in .args
+                    #print e           # __str__ allows args to printed directly
+                    #print sys.exc_info()[0]
+
                 print "Error (%s): %s" % (sys.exc_info()[0], e)
 
 # -- Main ----------------------------------------------------------------------

@@ -6,11 +6,11 @@
 #
 # This file is part of ECSpooler.
 
-import os, sys, time, signal, socket, xmlrpclib
-import ConfigParser
-import getopt
+import os, sys, time, signal, socket, xmlrpclib, getopt
+import logging
 
-#from test.test_support import verify, TestSkipped
+sys.path.insert(0, os.path.join(os.path.dirname(__file__),  '..', 'lib'))
+import config
 
 def _startSpooler(host, port, pwdFile):
     """
@@ -23,33 +23,36 @@ def _startSpooler(host, port, pwdFile):
         else:
             cpid = os.fork()
     except AttributeError, aerr:
-        print "WARNING: os.fork not defined - skipping."
+        logging.warn('os.fork not defined - skipping.')
         cpid = 0
 
     if cpid == 0:
         # child process
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__),  '..', 'lib'))
         import Spooler
 
-        spooler = Spooler.Spooler({'host':host,
-                                   'port':int(port), 
-                                   'pwd_file':pwdFile})
-        spooler.run()
+        spooler = Spooler.Spooler(host, int(port), pwdFile)
+        spooler.start()
     else:
         # parent process
         time.sleep(1)
         print 'pid=%d' % cpid
 
 
-def _stopSpooler(host, port, AUTH):
+def _stopSpooler(host, port, auth):
     """
     """
     print "Stopping ECSpooler on %s port %d ........." % (host, port)
     spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
-    pid = spooler.getStatus(AUTH)['pid']
+    pid = spooler.getStatus(auth)['pid']
     
-    #spooler.stop()
-    os.kill(pid, signal.SIGTERM)         
+    try:
+        # stops the spooler sending kill -15 process-id
+        os.kill(pid, signal.SIGTERM)         
+    except AttributeError, aerr:
+        logging.warn('os.kill and/or signal.SIGTERM not defined. '
+                      'Trying to stop spooler elsewhere .')
+        # FIXME:
+        #spooler.shutdown(auth)
 
 
 def _getSpoolerStatus(host, port, auth):
@@ -147,17 +150,20 @@ def main():
                         usage()
 
         except (socket.error, xmlrpclib.Fault), exc:
-            import traceback
-            traceback.print_exc()
+            if config.LOGLEVEL == logging.DEBUG:
+                import traceback
+                traceback.print_exc()
+
             print "Server error: %s: %s" % (sys.exc_info()[0], exc)
 
         except Exception, e:
-            import traceback
-            traceback.print_exc()
-            #print type(e)     # the exception instance
-            #print e.args      # arguments stored in .args
-            #print e           # __str__ allows args to printed directly
-            #print sys.exc_info()[0]
+            if config.LOGLEVEL == logging.DEBUG:
+                import traceback
+                traceback.print_exc()
+                #print type(e)     # the exception instance
+                #print e.args      # arguments stored in .args
+                #print e           # __str__ allows args to printed directly
+                #print sys.exc_info()[0]
             print "Error (%s): %s" % (sys.exc_info()[0], e)
 
 
