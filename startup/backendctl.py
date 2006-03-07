@@ -43,7 +43,7 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
 
     if cpid == 0:
         # child process
-        backend = getBackendInstance(backendId, backendHost, backendPort, 
+        backend = _getBackendInstance(backendId, backendHost, backendPort, 
                                      spoolerHost, spoolerPort, spoolerAuth)
         
         if backend: 
@@ -81,7 +81,7 @@ def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost,
                 % (moduleName, moduleName, backendHost, i, \
                    spoolerHost, spoolerPort, repr(spoolerAuth),)
                    
-        retval = tryGetBackendInstance(moduleName, instanceCreateStmt)
+        retval = _tryGetBackendInstance(moduleName, instanceCreateStmt)
         
         if retval: return retval
     
