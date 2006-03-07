@@ -210,7 +210,7 @@ def main():
             try:
                 # check cmd option and do the indicated action
                 if cmd == 'start':
-                    startBackend(backendId, backendPort, spoolerHost, 
+                    _startBackend(backendId, backendPort, spoolerHost, 
                                  spoolerPort, auth)
     
                 elif cmd == 'stop':
