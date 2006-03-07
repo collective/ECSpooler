@@ -21,13 +21,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..',  'lib'))
 import config
 
 MAX_TRIALS = 5
+BACKEND_HOST = socket.getfqdn()
 
 def _startBackend(backendId, backendPort, spoolerHost, spoolerPort, 
                    spoolerAuth):
     """
     Starts a backend with the given parameters.
     """
-    backendHost = socket.getfqdn()
+    backendHost = BACKEND_HOST
     
     print 'Starting backend %s on %s.........' % (backendId, backendHost)
 
@@ -117,12 +118,18 @@ def _stopBackend(backendId, spoolerHost, spoolerPort, spoolerAuth):
     """
     Stops the backend.
     """
-    backendHost = socket.getfqdn()
+    backendHost = BACKEND_HOST
     
     print 'Stopping backend %s on %s.........' % (backendId, backendHost)
 
-    handle = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost, spoolerPort))
-    handle.removeBackend(spoolerAuth, backendId)
+    spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost, spoolerPort))
+    retval = spooler.removeBackend(spoolerAuth, backendId)
+    
+    if retval:
+        if retval[0] == 0:
+            print 'Done.'
+        else:
+            print retval[1]
 
 
 def usage():
@@ -207,13 +214,13 @@ def main():
                                  spoolerPort, auth)
     
                 elif cmd == 'stop':
-                    stopBackend(backendId, spoolerHost, spoolerPort, auth)
+                    _stopBackend(backendId, spoolerHost, spoolerPort, auth)
                 
                 elif cmd == 'restart':
-                    stopBackend(backendId, spoolerHost, spoolerPort, auth)
+                    _stopBackend(backendId, spoolerHost, spoolerPort, auth)
                     time.sleep(2)
         
-                    startBackend(backendId, backendPort, spoolerHost, 
+                    _startBackend(backendId, backendPort, spoolerHost, 
                                  spoolerPort, auth)
 
                 elif cmd == 'status':
