@@ -57,9 +57,9 @@ class AbstractFPBackend(AbstractBackend):
             return result.getData()
 
         except InvalidDataException, exc:
-            return checkresult.CheckResult(-1, "invalid job data").getData()
+            return checkresult.CheckResult(-1, "Invalid job data").getData()
 
-        return checkresult.CheckResult(-10, "implementation error").getData()
+        return checkresult.CheckResult(-10, "Implementation error").getData()
 
 
     def checkSyntax(self):

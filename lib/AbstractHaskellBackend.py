@@ -57,7 +57,7 @@ class AbstractHaskellBackend(AbstractFPBackend):
             import traceback
             traceback.print_exc()
 
-            print "Internal Error during syntax check: %s" % repr(e)
+            print "Internal error during syntax check: %s" % repr(e)
             return checkresult.CheckResult(20, repr(e))
 
         # consider exit code

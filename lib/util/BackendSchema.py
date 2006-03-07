@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 # $Id$
+#
+# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+#
+# This file is part of ECSpooler.
 
 from types import ListType, TupleType, StringType
 
@@ -89,8 +93,7 @@ class TestEnv(Field):
     _properties = Field._properties.copy()
     _properties.update({
         'type' : 'TestEnvironment',
-        'simple' : None,
-        'permutation' : None,
+        'test' : None,
         'syntax': None,
         'semantic': None,
         })
@@ -538,7 +541,10 @@ if __name__ == "__main__":
 
     simpleSchema = Schema((
         TestEnv(
-            simple = 'def test(a, b): return (a == b)',
+            'simpleTestEnvironment',
+            label = 'Simple',
+            description = 'Simple test; no permutations.',
+            test = 'def test(a, b): return (a == b)',
             semantic = 'import sys\n\n',
         ),
 
