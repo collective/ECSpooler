@@ -101,7 +101,7 @@ class PythonBackend(AbstractFPBackend):
             import traceback
             traceback.print_exc()
             
-            print "Internal Error during syntax check: %s" % repr(e)
+            print "Internal error during syntax check: %s" % repr(e)
             return checkresult.CheckResult(20, repr(e))
 
         # consider exit code
@@ -160,7 +160,7 @@ class PythonBackend(AbstractFPBackend):
                     assert type(result) == type('')
         
                 except Exception, e:
-                    logging.error('Internal Error during semantic check: %s' % str(e))
+                    logging.error('Internal error during semantic check: %s' % str(e))
 
                     # delete temp files because we leave this method right now
                     os.remove(model['file'])
@@ -225,3 +225,29 @@ class PythonBackend(AbstractFPBackend):
         """
         """
         return self._runInterpreter(INTERPRETER, source, '.py')
+
+# -- some testing -------------------------------------------------------------
+import socket
+
+if __name__ == "__main__":
+    """
+    """
+    try:
+        cpid = os.fork()
+    except AttributeError, aerr:
+        print('os.fork not defined - skipping.')
+        cpid = 0
+
+    if cpid == 0:
+        tB = PythonBackend({
+                    'host': socket.getfqdn(), 
+                    'port': 5060, 
+                    'capeserver': 'http://%s:5050' % socket.getfqdn(), 
+                    'srv_auth': {'username':'demo', 'password':'foobar'}
+                })
+
+        tB.start()
+
+    else:
+        time.sleep(1)
+        print 'pid=', cpid
