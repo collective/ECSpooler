@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 # $Id$
-import shelve, time, logging
-from types import StringType
+#
+# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+#
+# This file is part of ECSpooler.
+
+from types import StringType, DictionaryType
+import logging, md5, shelve, time
 
 try:
     import crypt
@@ -10,134 +15,193 @@ except ImportError, ierr:
     
 userAuthFailSleep = 3.0 # prevent dictionary attacks 
 
-def initAuthBackend(opts):
-    # return your custom auth backend implementation
-    return SimpleAuthorizationBackend(opts)
-
-
 class AuthorizationBackend:
+    """
+    """
 
     # authorization levels
     ENQUEUE = POLL_RESULTS = 1
     GET_STATUS  = 2
     ADD_CHECKER = 3
-
+    SHUTDOWN = 4
     
-    def __init__(self, opts):
+    def __init__(self):
         pass
-    
 
     def test(self, args, level):
-        raise "This method is abstract"
+        raise NotImplementedError("Method test must be "
+                                  "implemented by subclass.")
 
 
 class UserAuth(AuthorizationBackend):
     """User/password authentification with database containing
     (encrypted) passwords (UNIX-like)
-    
-    @see http://www.python-forum.de/viewtopic.php?t=231&sid=514dfaa0a9a6b78b64c49403204d5af9
     """
     
-    def __init__(self, userFile='.passwd'):
+    def __init__(self, userFile='passwd'):
+        """
+        """
         self.db = shelve.open(userFile)
+
         if crypt:
             self.crypt = crypt.crypt
         else:
-            self.crypt = lambda x,y: x
-            logging.warn('crypt module not found - using cleartext passwords!')
+            self.crypt = lambda x, y: x
+            logging.warn('Module crypt not found - using cleartext passwords!')
 
     def test(self, args, level):
         """
+        @param level unused/ignored
+        @return True if username and password are correct, otherwise False
         """
-        username = args.get("username")
-        password = args.get("password")
-        
-        return self.authorize(username, password)
+        try:
+            assert type(args) == DictionaryType, \
+                "Invalid data structure (%s)" % str(type(args))
 
+            username = args.get("username")
+            password = args.get("password")
+        
+            # do some parameter testing
+            assert username and type(username) == StringType, \
+                "Missing or invalid 'username'"
+            assert password and type(password) == StringType, \
+                "Missing or invalid 'password'"
+
+            return self.authorize(username, password)
+
+        except AssertionError, err:
+            logging.info("Authorization failed: %s" % err)
+            return False
 
     def authorize(self, username, password):
+        """
+        @return True if username and password are correct, otherwise False
+        """
         ans = self.db.has_key(username) and \
                self.db[username] == self.crypt(password, password[:2])
+
         if not ans:
             time.sleep(userAuthFailSleep)
+
         return ans
 
-
     def addUser(self, username, password):
+        """
+        """
         self.db[username] = self.crypt(password, password[:2])
 
-    
     def delUser(self, username):
+        """
+        @param username
+        """
         del self.db[username]
 
-
     def users(self):
+        """
+        @return A list of all users
+        """
         return self.db.keys()
 
 
-class SimpleAuthorizationBackend(AuthorizationBackend):
+class UserAuthMD5(AuthorizationBackend):
+    """User/password authentification with a file containing
+    md5 encrypted passwords (UNIX-like)
     """
-    The SimpleAuthorizationBackend is a lightweight implementation
-    for user authorization. It stores all users in a htpasswd-style
-    file, with standard crypt ciphers. It does not take different
-    levels of authorization into account.
-    """
-
-    def __init__(self, opts):
-        AuthorizationBackend.__init__(self,opts)
-        #self._fname = opts and opts.get("filename") or "../etc/passwd"
-        self._fname = opts.get("filename")
-        self._users = {}
-        self._load()
+    
+    def __init__(self, userFile='passwd'):
+        """
+        @param userFile Absolute path to a file containing usernames and
+                        md5 encrypted passwords
+        """
+        self.db = self._load(userFile)
 
     def test(self, args, level):
-
+        """
+        @param args A dictionary witj keys and values for username and password
+        @param level unused/ignored
+        @return True if username and password are correct, otherwise False
+        """
         try:
-            assert type(args) == type({}), "Invalid data structure"
-            assert args.get("username") and type(args["username"]) == type(""), \
-                "Missing or invalid 'username' attribute"
-            assert args.get("password") and type(args["password"]) == type(""), \
-                "Missing or invalid 'passwd' attribute"
+            assert type(args) == DictionaryType, \
+                "Invalid data structure (%s)" % str(type(args))
 
-            assert self._users.get(args["username"]), "No such user: %s"%args["username"]
+            username = args.get("username")
+            password = args.get("password")
+        
+            # do some parameter testing
+            assert username and type(username) == StringType, \
+                "Missing or invalid 'username'"
+            assert password and type(password) == StringType, \
+                "Missing or invalid 'password'"
 
-            cipher = self._users[args["username"]]
-
-            assert crypt.crypt(args["password"], cipher[0:2]) == cipher, \
-                "Crypt mismatch for user '%s'"%d["username"]
-
-            return 1
+            return self.authorize(username, password)
 
         except AssertionError, err:
-            logging.info("[SimpleAuthorizationBackend] test failed: %s" % err)
-            return 0
+            logging.info("Authorization failed: %s" % err)
+            return False
 
 
-    def _load(self):
+    def authorize(self, username, password):
+        """
+        @return True if username and password are correct, otherwise False
+        """
+        ans = self.db.has_key(username) and \
+               self.db[username] == md5.md5(password).hexdigest()
+
+        if not ans:
+            logging.warn('Wrong password. Waiting %d seconds to prevent ' 
+                         'dictionary attacks' % userAuthFailSleep)
+            time.sleep(userAuthFailSleep)
+
+        return ans
+
+    def users(self):
+        """
+        @return A list with all usernames
+        """
+        return self.db.keys()
+
+    def _load(self, userFile):
+        """
+        @return A dictionary containing username-password pairs
+        """
+        lines = []
+        usrdb = {}
+        
         try:
-            fd = open(self._fname, "r")
-            lines = fd.readlines()
-            fd.close()
-            for line in lines:
-                if line.startswith("#"): continue
-                if not line.strip(): continue
+            pwdFile = open(userFile, "r")
+            lines = pwdFile.readlines()
+            pwdFile.close()
+        except IOError, ioe:
+            logging.error(ioe)
+            logging.warn('No user accounts available.')
 
-                assert line.find(":") > 0, \
-                    "invalid passwd entry '%s'"%(line.strip())
+        for line in lines:
+            
+            if line.startswith("#"): continue
+            if not line.strip(): continue
 
-                uid = line[0:line.find(":")].strip()
-                self._users[uid] = line[line.find(":")+1:].strip()
-                #logging.debug("Added User '%s'" % uid)
+            if line.find(":") > 0:
+                username = line[0:line.find(":")].strip()
+                usrdb[username] = line[line.find(":")+1:].strip()
+                #logging.debug("Added user '%s'" % username)
 
-            assert len(self._users) > 0, "at least one account is required"
-
-        except Exception, exc:
-            raise "Unable to load passwd database (%s: %s)"%(exc.__class__.__name__,exc)
-
+        
+        return usrdb
 
 
+# -- --------------------------------------------------------------------------
 if __name__ == '__main__': 
 
-    ua = UserAuth()
+    # testing UserAuth
+
+    #ua = UserAuth('passwd_db')
     #ua.addUser('demo', 'foobar')
-    print ua.authorize('test', 'SuPPe')
+    #print ua.authorize('test', 'SuPPe')
+    #print ua.authorize('demo', 'foobar')
+
+
+    # testing UserAuthMD5
+    uamd5 = UserAuthMD5('passwd_md5')
+    print uamd5.authorize('test', 'SuPPe')
+    print uamd5.authorize('demo', 'foobar')
