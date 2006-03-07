@@ -148,7 +148,7 @@ class HaskellBackend(AbstractHaskellBackend):
                 import traceback
                 traceback.print_exc()
 
-                print "Internal Error during semantic check: %s" % repr(e)
+                print "Internal error during semantic check: %s" % repr(e)
                 return checkresult.CheckResult(-1, repr(e))
     
             # an error occured

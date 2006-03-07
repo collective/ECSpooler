@@ -127,9 +127,9 @@ class HaskellqcBackend(AbstractHaskellBackend):
                 #print "RESULT TEXT:\n%s" % output
 
             except:
-                print "Internal Error during Haskell execution: %s" % repr(data)
+                print "Internal error during Haskell execution: %s" % repr(data)
                 return checkresult.CheckResult(
-                    -1, "Haskell execution failed - internal error.")
+                    -1, "Internal error: Haskell execution failed.")
 
             # an error occured
             if exitcode != os.EX_OK:
@@ -200,6 +200,6 @@ class HaskellqcBackend(AbstractHaskellBackend):
             assert type(result) == type('')
 
         except:
-            return 'Internal Error: %s' % result
+            return 'Internal error: %s' % result
 
         return result
