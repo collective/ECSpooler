@@ -11,11 +11,14 @@ try:
     from pysqlite2 import dbapi2 as sqlite
 except ImportError, ierr:
     logging.error('Module pysqlite2 not found!')
-    raise ierr
+    #raise ierr
+    sqlite = None
 
 class AbstractCheck(object):
     
-    def __init__(self):        
+    def __init__(self):
+        """
+        """
         dbDir = os.path.join(os.path.dirname(__file__), '..', '..', 'var')
         if not os.path.exists(dbDir): 
             os.makedirs(dbDir)
