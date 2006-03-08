@@ -83,7 +83,10 @@ def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost,
                    
         retval = _tryGetBackendInstance(moduleName, instanceCreateStmt)
         
-        if retval: return retval
+        if retval: 
+            return retval
+        else:
+            time.sleep(0.1)
     
     return None
     
@@ -102,6 +105,8 @@ def _tryGetBackendInstance(moduleName, instanceCreateStmt):
     @return The backend instance or None if the instance couldn't be created.
     """
     try:
+        logging.debug('Trying to create instance of %s' % moduleName)
+        #logging.debug(instanceCreateStmt)
         # e.g. import PythonBackend.PythonBackend
         exec('import %s' % (moduleName,))
         exec(instanceCreateStmt)
@@ -123,7 +128,7 @@ def _stopBackend(backendId, spoolerHost, spoolerPort, spoolerAuth):
     print 'Stopping backend %s on %s.........' % (backendId, backendHost)
 
     spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost, spoolerPort))
-    retval = spooler.removeBackend(spoolerAuth, backendId)
+    retval = spooler.stopBackend(spoolerAuth, backendId)
     
     if retval:
         if retval[0] == 0:

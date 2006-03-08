@@ -44,7 +44,7 @@ class AbstractServer:
         # create a server instance, but do not run it
         self._server = SimpleXMLRPCServer((self.host, self.port), 
                                            SimpleXMLRPCRequestHandler, False)
-        
+                                           
         # register functions (must be implemented in subclasses)
         self._registerFunctions()
 

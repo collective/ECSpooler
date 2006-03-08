@@ -355,9 +355,12 @@ class Spooler(AbstractServer):
             retval = getattr(s, method)({"srv_id": self._srvID}, *kw, **args)
             return checkresult.CheckResult(retval[0], retval[1])
         
-        except (socket.error, xmlrpclib.Fault, xmlrpclib.ProtocolError), err:
-            msg = 'Server error: %s' % str(err)
-            logging.warn(msg)
+        #except (socket.error, xmlrpclib.Fault, xmlrpclib.ProtocolError), err:
+        except Exception, err:
+            if method != 'shutdown':
+                msg = "Server error: %s. Method was '%s'" % (str(err), method)
+                logging.error(msg)
+
             return checkresult.CheckResult(-5, msg)
 
 
