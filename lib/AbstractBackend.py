@@ -5,7 +5,7 @@
 #
 # This file is part of ECSpooler.
 
-import os, sys, re, popen2, tempfile, threading, signal
+import os, sys, re, popen2, tempfile, thread, threading, signal
 import socket, xmlrpclib
 import logging
 
@@ -15,7 +15,7 @@ from types import StringType, IntType, DictionaryType
 from AbstractServer import AbstractServer
 from data import checkjob, checkresult
 from data.exceptions import AuthorizationFailedException
-from util.BackendSchema import TestEnv, InputField, Schema
+from util.BackendSchema import TestEnvironment, InputField, Schema
 
 class AbstractBackend(AbstractServer):
     """
@@ -84,6 +84,9 @@ class AbstractBackend(AbstractServer):
         try:
             spooler = xmlrpclib.Server(self.spooler)
 
+            logging.debug("Registering backend '%s' at spooler (%s)" % 
+                          (self.id, self.spooler))
+
             (code, msg) = spooler.addBackend(self.auth, self.id, self.name,
                             'http://%s:%i' % (self.host, self.port))
 
@@ -105,7 +108,8 @@ class AbstractBackend(AbstractServer):
         
         
         if not registered:
-            sys.exit(1)
+            logging.error("Can't add backend to spooler")
+            os._exit(1)
             
     
     def _manageBeforeStop(self):
@@ -113,6 +117,9 @@ class AbstractBackend(AbstractServer):
         Do nothing here right now.
         """
         try:
+            logging.debug("Removing backend '%s' from spooler (%s)" % 
+                          (self.id, self.spooler))
+
             spooler = xmlrpclib.Server(self.spooler)
             spooler.removeBackend(self.auth, self.id)
 
@@ -128,7 +135,8 @@ class AbstractBackend(AbstractServer):
         Shutting down backend; called from spooler or other client
         """
         self._authenticate(authdata)
-        self._stop(signal.SIGTERM, None)
+        
+        thread.start_new_thread(self._stop, (signal.SIGTERM, None))
 
 
     def getId(self):
@@ -189,7 +197,7 @@ class AbstractBackend(AbstractServer):
         @return True if given authorization data are valid, otherwise False.
         """
         # FIXME: 
-        #return 1
+        return 1
 
         if self._spoolerID == None: 
             s = "Authorization failed: Invalid spooler connection settings."
