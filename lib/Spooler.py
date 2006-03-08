@@ -357,8 +357,9 @@ class Spooler(AbstractServer):
         
         #except (socket.error, xmlrpclib.Fault, xmlrpclib.ProtocolError), err:
         except Exception, err:
+            msg = "Server error: %s. Method was '%s'" % (str(err), method)
+
             if method != 'shutdown':
-                msg = "Server error: %s. Method was '%s'" % (str(err), method)
                 logging.error(msg)
 
             return checkresult.CheckResult(-5, msg)
