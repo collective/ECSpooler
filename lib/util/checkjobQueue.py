@@ -13,8 +13,8 @@ class CheckJobQueue(AbstractCheck):
     tableName   = "queue"
     tableSchema = "id               text primary key, " \
                   "checker          text, " \
-                  "student_solution text, " \
-                  "sample_solution  text, " \
+                  "studentSolution text, " \
+                  "modelSolution  text, " \
                   "comparator       text"
     _queue = []
     _objs = {}
@@ -51,14 +51,14 @@ class CheckJobQueue(AbstractCheck):
                 key = repr(time.time())
 
             cursor.execute("INSERT INTO %s "
-                           "(id,checker,student_solution,sample_solution,"
+                           "(id,checker,studentSolution,modelSolution,"
                            "comparator) "
                            "VALUES (?,?,?,?,?)" % self.tableName,
                            (key,
-                            data.get("checker"),
-                            data.get("student_solution"),
-                            data.get("sample_solution"),
-                            data.get("comparator")))
+                            data.get('backend'),
+                            data.get('studentSolution'),
+                            data.get('backendSolution'),
+                            data.get('testFunction')))
             cursor.close()
             connection.commit() # wfenske 2006-01-21
         
@@ -74,8 +74,8 @@ class CheckJobQueue(AbstractCheck):
         """
         def fun(connection):
             cursor = connection.cursor()
-            cursor.execute("SELECT id, checker, student_solution, "
-                           "sample_solution, comparator "
+            cursor.execute("SELECT id, checker, studentSolution, "
+                           "modelSolution, comparator "
                            "FROM %s" % self.tableName)
             rows = cursor.fetchall()
             cursor.close()
@@ -85,10 +85,10 @@ class CheckJobQueue(AbstractCheck):
                 jobDict = {}
                 # fix of bug xy (2005-09-28, ma)
                 jobDict["id"] = str(id)
-                jobDict["checker"] = row["checker"]
-                jobDict["student_solution"] = row["student_solution"]
-                jobDict["sample_solution"] = row["sample_solution"]
-                jobDict["comparator"] = row["comparator"]
+                jobDict['backend'] = row['backend']
+                jobDict['studentSolution'] = row['studentSolution']
+                jobDict['modelSolution'] = row["modelSolution"]
+                jobDict['testFunction'] = row["testFunction"]
                 j = CheckJob(jobDict)
                 self._objs[id] = j
                 self._queue.append(id)
@@ -123,9 +123,9 @@ class CheckJobQueue(AbstractCheck):
 
 if __name__ == "__main__":
     jobDict = {}
-    jobDict["checker"] = "checker_val"
-    jobDict["student_solution"] = "student_val"
-    jobDict["sample_solution"] = "sample_val"
+    jobDict['backend'] = "checker_val"
+    jobDict["studentSolution"] = "student_val"
+    jobDict["modelSolution"] = "sample_val"
     jobDict["comparator"] = "comp_val"
     j = CheckJob(jobDict)
     q = CheckJobQueue()

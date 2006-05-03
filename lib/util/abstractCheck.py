@@ -10,7 +10,7 @@ import logging
 try:
     from pysqlite2 import dbapi2 as sqlite
 except ImportError, ierr:
-    logging.error('Module pysqlite2 not found!')
+    logging.warn('Module pysqlite2 not found!')
     #raise ierr
     sqlite = None
 

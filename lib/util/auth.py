@@ -24,11 +24,12 @@ class AuthorizationBackend:
     GET_STATUS  = 2
     ADD_CHECKER = 3
     SHUTDOWN = 4
+    UNDEFINED = 5
     
     def __init__(self):
         pass
 
-    def test(self, args, level):
+    def test(self, args, level=5):
         raise NotImplementedError("Method test must be "
                                   "implemented by subclass.")
 
@@ -49,7 +50,7 @@ class UserAuth(AuthorizationBackend):
             self.crypt = lambda x, y: x
             logging.warn('Module crypt not found - using cleartext passwords!')
 
-    def test(self, args, level):
+    def test(self, args, level=5):
         """
         @param level unused/ignored
         @return True if username and password are correct, otherwise False
@@ -115,7 +116,7 @@ class UserAuthMD5(AuthorizationBackend):
         """
         self.db = self._load(userFile)
 
-    def test(self, args, level):
+    def test(self, args, level=5):
         """
         @param args A dictionary witj keys and values for username and password
         @param level unused/ignored
@@ -181,7 +182,7 @@ class UserAuthMD5(AuthorizationBackend):
             if line.startswith("#"): continue
             if not line.strip(): continue
 
-            if line.find(":") > 0:
+            if line.find(":") != -1:
                 username = line[0:line.find(":")].strip()
                 usrdb[username] = line[line.find(":")+1:].strip()
                 #logging.debug("Added user '%s'" % username)
