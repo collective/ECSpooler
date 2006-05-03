@@ -5,35 +5,54 @@
 #
 # This file is part of ECSpooler.
 
-import os, re, popen2, tempfile
-import threading
+import sys, os, re, popen2, tempfile, threading
 import logging
 
+from types import StringType
+
+# local imports
 from data import *
 from util.utils import *
-from util.BackendSchema import TestEnv, InputField, Schema
-from AbstractFPBackend import AbstractFPBackend
+from util.BackendSchema import TestEnvironment, RepeatField, InputField, Schema
+
+from AbstractSimpleBackend import AbstractSimpleBackend
 
 
 #INTERPRETER = '-a -f ../.systrace/opt_python_bin_python /opt/python/bin/python'
-INTERPRETER = '/usr/local/bin/python'
-
+#INTERPRETER = '/usr/local/bin/python'
+INTERPRETER = '/opt/python/bin/python'
 
 TEMPLATE_SEMANTIC = \
 """import sys
-import %s
-import %s
-%s
-print >> sys.stdout, \"isEqual=\" + str(test(%s, %s)) + \";;expected=\" + str(%s) + \";;received=\" + str(%s)
+import Model
+import Student
+
+${helpFunctions}
+
+# must be named 'test'
+${testFunction}
+
+o1 = Model.${testData}
+o2 = Student.${testData}
+
+print >> sys.stdout, \"isEqual=\" + str(test(o1, o2)) + \";;expected=\" + str(o1) + \";;received=\" + str(o2)
 """
 
-localSchema = Schema((
 
-        TestEnv(
-            'simpleTestEnvironment',
-            label = 'Simple',
-            test = 'def test(a, b): return (a == b)',
-            semantic = TEMPLATE_SEMANTIC,
+inputSchema = Schema((
+
+        RepeatField(
+            'testData', 
+            #accessor = # must return a list; default is one element per line
+            required = True, 
+            label = 'Test data',
+            
+            description = 'Enter one or more function calls. '+ 
+                        'A function call consists of the ' + 
+                        'function name (given in the exercise directives) ' + 
+                        'and test data as parameters of this funtion. '+
+                        'Each function call must be written in a single line.',
+            i18n_domain = 'EC',
         ),
 
         InputField(
@@ -45,30 +64,46 @@ localSchema = Schema((
         ),
         
         InputField(
-            'testData', 
-            required = True, 
-            label = 'Test data',
-            description = 'Enter one or more function calls. '+ 
-                        'A function call consists of the ' + 
-                        'function name (given in the exercise directives) ' + 
-                        'and test data as parameters of this funtion. '+
-                        'Each function call must be written in a single line.',
+            'helpFunctions', 
+            label = 'Help functions',
+            description = 'Enter help functions if needed.',
             i18n_domain = 'EC',
         ),
 
-        InputField(
-            'comparator', 
-            required = False, 
-            label = 'Comparator',
-            description = 'Enter your comparator function.' + 
-                        'The comparator function expects two parameters ' +
-                        'and returns a value like True or False. It must ' +
-                        'be named "test" and.',
-            i18n_domain = 'EC',
+#        InputField(
+#            'testFunction', 
+#            required = False, 
+#            label = 'Test function',
+#            description = "Enter your test function with name 'tets'." + 
+#                        'The test function expects two parameters ' +
+#                        'and must return True or False.',
+#            i18n_domain = 'EC',
+#        ),
+    ))
+
+# testSchema
+tests = Schema((
+
+        TestEnvironment(
+            'simple',
+            label = 'Simple',
+            description = 'Simple test; only exact result are allowed.',
+            test = 'def test(a, b): return (a == b)',
+            semantic = TEMPLATE_SEMANTIC,
+            interpreter = INTERPRETER,
+        ),
+
+        TestEnvironment(
+            'permutation',
+            label = 'Permutation',
+            description = 'Permutations are allowed.',
+            test = 'def test(a, b): return (b == a)',
+            semantic = TEMPLATE_SEMANTIC,
+            interpreter = INTERPRETER,
         ),
     ))
 
-class PythonBackend(AbstractFPBackend):
+class PythonBackend(AbstractSimpleBackend):
     """
     Backend for checking Python programs. This class is inherited 
     from AbstractFPBackend.
@@ -76,105 +111,123 @@ class PythonBackend(AbstractFPBackend):
     
     id = 'python'
     name = 'Python'
-    schema = localSchema
-    
+    version = '1.0'
 
-    def checkSyntax(self):
+    srcFileSuffix = '.py'
+
+    schema = inputSchema
+    testSchema = tests
+
+
+    def _postProcess(self, test, message):
         """
-        Checks syntax of a Python program.
-        @return A CheckResult object with error code and message text
+        @see AbtractSimpleBackend._postProcess
         """
-        assert self._job, "Job data is required."
 
-        source = self._job["student_solution"]
-
-        try:
-            (exitcode, response) = self._runPython(source)
-
-            assert type(response) == list
-
-            result = ''.join(response)
-            assert type(result) == type('')
-
-        except Exception, e:
-            # FIXME: use log instead print
-            import traceback
-            traceback.print_exc()
-            
-            print "Internal error during syntax check: %s" % repr(e)
-            return checkresult.CheckResult(20, repr(e))
-
-        # consider exit code
-        if exitcode != os.EX_OK:
-            return checkresult.CheckResult(exitcode, result)
-        else:
-            return checkresult.CheckResult(0, 'Syntax check succeeded.')
+        # replace path and filename
+        return re.sub('File ".*%s", ' % self.srcFileSuffix, '', message)
 
 
-    def checkSemantics(self):
+    def checkSemantics(self, job):
         """
-        Checks syntax and semantic of Python programs.
-        @return A CheckResult object with error code and message text
+        Checks semantic of a Python programs.
+        @return a BackendResult object with result code and value
         """
-        assert self._job, "Job data is required."
         
-        model = self._job["sample_solution"]
-        answer = self._job["student_solution"]
-        comparator = self._job["comparator"]
-        testdata = self._job["testdata"]
+        # 1. get model solution and student's submission
+        modelSolution = job['modelSolution']
+        studentSolution = job['studentSolution']
+
+        assert modelSolution and type(modelSolution) == StringType, \
+            "Semantic check requires valid 'model solution' (%s)" % \
+            modelSolution
+
+        assert studentSolution and type(studentSolution) == StringType, \
+            "Semantic check requires valid 'student solution' (%s)" % \
+            studentSolution
 
         # write model solution and answer files
-        model = self._createModule(prefix='Model', source=model)
-        answer = self._createModule(prefix='Student', source=answer)
+        model = self._writeModule('Model', modelSolution, '.py', job['id'])
+        student = self._writeModule('Student', studentSolution, '.py', job['id'])
 
-        # write wrapper code and execute it for all test data
+        # 2. get all test data to iterate through them
+        repeatFields = self.schema.filterFields(__name__='testData')
+        
+        assert repeatFields and len(repeatFields) == 1, \
+            'None or more than one RepeatField found.'
+        
+        repeatField = repeatFields[0]
+        testdata = repeatField.getAccessor()(job[repeatField.getName()])
+
+        # 3. define return values
         feedback = ''
-        # solved == 0 means the check was successful
-        solved = 0
-        
-        tests = testdata.split('\n')
-        
-        for test in tests:
-            if not comparator:
-                comparator = TEST_SIMPLE
+        solved = 1 # 1 means testing was successful
 
-            if test.strip():    
-                # complete the wrapper code
-                wrapper = TEMPLATE_SEMANTIC % (
-                            model['module'], 
-                            answer['module'],
-                            comparator,
-                            model['module'] + '.' + test,
-                            answer['module'] + '.' + test,
-                            model['module'] + '.' + test,
-                            answer['module'] + '.' + test,
-                        )
+        if len(self._getTests(job)) == 0:
+            msg = 'No test specification found.'
+            logging.warn(msg)
+            return(0, msg)
+
+        # 4. run selected test specifications
+        for test in self._getTests(job):
+
+            if solved == 0: break
+
+            logging.debug('Running semantic check with test: %s' % 
+                          test.getName())
+
+            # get the interpreter
+            interpreter = test.interpreter
            
-                # execute wrapper code in haskell interpreter
+            # 4.1. get wrapper code
+            src = test.semantic
+            
+            # 4.2. get values for all other input fields from schema which are 
+            # available in the job data
+            for field in self.schema.filterFields(type='InputField'):
+                if job.has_key(field.getName()):
+                    repl = job[field.getName()]
+                    src = re.sub('\$\{%s\}' % field.getName(), repl, src)
+
+            # 4.3 set test function
+            src = re.sub('\$\{testFunction\}', test.test, src)
+
+            # 4.4. run with all test data
+            for t in testdata:
+                # and now add repeatable data values
+                wrapper = re.sub('\$\{%s\}' % repeatField.getName(), t, src)
+        
+                # remove all remaining placeholders
+                wrapper = re.sub('\$\{.*\}', '', wrapper)
+                                 
+                # execute wrapper code in interpreter
                 try:
-                    (exitcode, response) = self._runPython(source)
+#                    (exitcode, response) = \
+#                        self._runPython(interpreter, wrapper, job['id'])
+#
+#                    assert type(response) == list, '%s (%s)' % (response, type(response))
+#    
+#                    result = ''.join(response)
+#                    assert type(result) == StringType, '%s (%s)' % (result, type(result))
+                    exitcode, result = \
+                        self._runPython(interpreter, wrapper, job['id'])
 
-                    assert type(response) == list
-    
-                    result = ''.join(response)
-                    assert type(result) == type('')
-        
                 except Exception, e:
-                    logging.error('Internal error during semantic check: %s' % str(e))
+                    msg = 'Internal error during semantic check: %s: %s' % \
+                          (sys.exc_info()[0], e)
+                                  
+                    logging.error(msg)
+                    return (0, msg)
 
-                    # delete temp files because we leave this method right now
-                    os.remove(model['file'])
-                    os.remove(answer['file'])
-                    return checkresult.CheckResult(-1, repr(e))
-        
                 # an error occured
                 if exitcode != os.EX_OK:
-                    # delete temp files because we leave this method right now
-                    os.remove(model['file'])
-                    os.remove(answer['file'])
-        
-                    return checkresult.CheckResult(exitcode, result)
-                        
+                    result = "\nYour submission failed. Test " \
+                             "case was: '%s' (%s)" \
+                             "\n\n Received result: %s"\
+                             % (t, test.getName(), result)
+
+                    return (0, result)
+                
                 # has the students' solution passed this tests?
                 else:
                     msgItems = result.split(';;')
@@ -183,48 +236,40 @@ class PythonBackend(AbstractFPBackend):
                     expected = msgItems[1].split('=')[1]
                     received = msgItems[2].split('=')[1]
                     
-                    if isEqual == 'False':
-                        # FIXME: i18n
-                        feedback += '\nYour submission failed. Test case was: "%s"' \
-                                    % (test,)
-                        feedback += '\n\n  Expected result: %s\n  Received result: %s' \
+                    if isEqual.upper() != 'TRUE':
+                        # TODO: i18n
+                        feedback += "\nYour submission failed. Test " \
+                                    "case was: '%s' (%s)" \
+                                    % (t, test.getName())
+                        feedback += '\n\n  Expected result: %s\n  ' \
+                                    'Received result: %s' \
                                     % (expected, received,)
                         
-                        solved = 1;
+                        solved = 0;
                         
-                        break # means end testing right now
-        # end for
+                        break # means: end testing right now
+            # end inner for loop
+        #end out for loop 
 
-        if solved == 0:
-            # FIXME: i18n
+        if solved == 1:
+            # TODO: i18n
             feedback = '\nYour submission passed all tests.'
 
-        # delete temp files
-        os.remove(model['file'])
-        os.remove(answer['file'])
+        return (solved, feedback)
 
 
-        return checkresult.CheckResult(solved, feedback)
-
-
-    def _createModule(self, prefix='', source=''):
+    def _runPython(self, intepreter, source, jobID):
         """
-        Creates a new python module. Returns the module's name and
-        absolute path on disk.
-        
-        @return a dictonary with keys module and file
+        @see _runInterpreter in class AbstractSimpleBackend
         """
-        moduleName = getUniqueModuleName(prefix)
-        fileName = getTempFileName(moduleName, '.py')
-        writeFile(source, fileName)
-        
-        return {'module':moduleName, 'file':fileName}
+        # write module for wrapper
+        wrapperModule = self._writeModule('wrapper', source, 
+                                     self.srcFileSuffix, jobID)
 
+        return self._runInterpreter(intepreter,
+                                    os.path.dirname(wrapperModule['file']),
+                                    os.path.basename(wrapperModule['file']))
 
-    def _runPython(self, source):
-        """
-        """
-        return self._runInterpreter(INTERPRETER, source, '.py')
 
 # -- some testing -------------------------------------------------------------
 import socket

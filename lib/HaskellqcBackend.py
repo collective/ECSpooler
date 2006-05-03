@@ -13,7 +13,7 @@ from AbstractHaskellBackend import REGEX_RUNHUGS_SPECIALS
 
 from data import checkjob, checkresult
 from util.utils import *
-from util.BackendSchema import TestEnv, InputField, Schema
+from util.BackendSchema import TestEnvironment, InputField, Schema
 
 
 REGEX_FAILED = '(?m)Falsifiable, after \d+ tests?:'
@@ -64,8 +64,8 @@ class HaskellqcBackend(AbstractHaskellBackend):
         
         resultStr = ''
         
-        modelSource = self._job["sample_solution"]
-        studentSource = self._job["student_solution"]
+        modelSource = self._job["modelSolution"]
+        studentSource = self._job["studentSolution"]
         propertySource = self._job["testdata"]
 
         # write model solution, students' solution and wrapper files

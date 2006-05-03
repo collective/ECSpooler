@@ -13,7 +13,9 @@ from types import StringType, IntType, DictionaryType
 
 # local imports
 from AbstractServer import AbstractServer
-from data import checkjob, checkresult
+from data import checkjob
+from data.checkresult import CheckResult
+from data.BackendResult import BackendResult
 from data.exceptions import AuthorizationFailedException
 from util.BackendSchema import TestEnvironment, InputField, Schema
 
@@ -21,20 +23,20 @@ class AbstractBackend(AbstractServer):
     """
     AbstractBackend is the basic class of all backends. It
     implements an XMLRPC server, which is waiting for check
-    jobs requested using the execute method.
+    jobs.
 
-    Backend implementations *should* be derived from this class and
-    implement the following method:
+    Backend implementations should be derived from this class and *must*
+    implement the following method(s):
 
       execute(self, authdata, jobdata):) -> CheckResult
-
-    This method can access the CheckJob data instance via self._job
     """
     
     # must be set in subclasses !!
     id = ''
     name =  ''
     schema = None
+    testSchema = None
+    version = None
     
     def __init__(self, options):
         """
@@ -46,9 +48,14 @@ class AbstractBackend(AbstractServer):
         self.spooler = options['capeserver']
         self.auth = options['srv_auth']
         
-        assert self.id != '', 'A Id is required for this backend.'
+        assert self.id != '', 'A id is required for this backend.'
         assert self.name != '', 'A name is required for this backend.'
-        assert self.schema != None, 'A schema is required for this backend'
+        assert self.version != '', 'A version is required for this backend.'
+
+        assert self.schema != None, \
+            'A input schema is required for this backend'
+        assert self.testSchema != None, \
+            'A test schema is required for this backend'
         
         assert self.spooler and type(self.spooler) == StringType, \
             "Backend requires a correct 'spooler' option."
@@ -67,17 +74,22 @@ class AbstractBackend(AbstractServer):
         """
         self._server.register_function(self.execute)
 
-        self._server.register_function(self.getId)
-        self._server.register_function(self.getName)
-        self._server.register_function(self.getSchema)
+        #self._server.register_function(self.getId)
+        #self._server.register_function(self.getName)
         self._server.register_function(self.getStatus)
-        
+        self._server.register_function(self.getInputSchema)
+        self._server.register_function(self.getTestSchema)
+        self._server.register_function(self.getInputFields)
+        self._server.register_function(self.getTestFields)
+
         self._server.register_function(self.shutdown)
 
 
     def _manageBeforeStart(self):
         """Registers the backend using the given spooler data.
         """
+        # FIXME:
+        #return 1
         
         registered = False
 
@@ -87,8 +99,12 @@ class AbstractBackend(AbstractServer):
             logging.debug("Registering backend '%s' at spooler (%s)" % 
                           (self.id, self.spooler))
 
-            (code, msg) = spooler.addBackend(self.auth, self.id, self.name,
-                            'http://%s:%i' % (self.host, self.port))
+            (code, msg) = spooler.addBackend(self.auth, 
+                                             self.id, 
+                                             self.name,
+                                             self.version, 
+                                             'http://%s:%i' % 
+                                             (self.host, self.port))
 
             if code != 0:
                 logging.error("Can't add backend to spooler: %s (%i)" % 
@@ -118,10 +134,10 @@ class AbstractBackend(AbstractServer):
         """
         try:
             logging.debug("Removing backend '%s' from spooler (%s)" % 
-                          (self.id, self.spooler))
+                          ('%s-%s' % (self.id, self.version), self.spooler))
 
             spooler = xmlrpclib.Server(self.spooler)
-            spooler.removeBackend(self.auth, self.id)
+            spooler.removeBackend(self.auth, self.id, self.version)
 
         except socket.error, serr:
             logging.error("Socket error: %s (%s)" % (serr, self.spooler))
@@ -130,66 +146,121 @@ class AbstractBackend(AbstractServer):
             logging.error("XMLRPC error: %s (%s)" % (err, self.spooler,))
 
 
-    def shutdown(self, authdata):
+    def shutdown(self, auth):
         """
         Shutting down backend; called from spooler or other client
         """
-        self._authenticate(authdata)
-        
-        thread.start_new_thread(self._stop, (signal.SIGTERM, None))
+        self._authenticate(auth)
+        # start a new thread to stop the backend but let this method some time
+        # to return a value to the spooler or other calling client
+        #logging.debug('Waiting 0.5s before stopping backend.')
+        sT = threading.Timer(0.5, self._stop, (signal.SIGTERM, None))
+        sT.start()
+
+        return (1, '')
 
 
-    def getId(self):
-        """Returns the id of this backend.
-        @return The backend's id
-        """
-        return self.id
+    # -- methods used by the frontends ----------------------------------------
 
-
-    def getName(self):
-        """Returns the name of this backend.
-        @return The backend's name
-        """
-        return self.name
-
-
-    def getSchema(self):
-        """Returns the schema defined for this backend.
-        @return A Schema object
-        """
-        return self.schema
-
-
-    def getStatus(self, authdata):
+    def getStatus(self, auth):
         """Returns a dictionary with some status information about 
         this backend. In case the authentication fails, a 
         AuthorizationFailedException will be raised.
         
-        @param authdata The authorization information
-        @return A dictionary with id, name, host, and port settings
+        @param auth authorization information
+        @return a dictionary with id, name, version, host, and port infos
         """
         
-        self._authenticate(authdata)
+        self._authenticate(auth)
 
-        return {
-            'pid':  os.getpid(),
-            'id':   self.id,
-            'name': self.name,
-            'host': self.host,
-            'port': self.port,
-        }
+        return (1, {
+            'pid':     os.getpid(),
+            'id':      self.id,
+            'name':    self.name,
+            'version': self.version,
+            'host':    self.host,
+            'port':    self.port,
+        })
 
 
+    def getInputSchema(self, auth):
+        """Return the input schema defined for this backend.
+        @return the input schema as string
+        """
+        return (1, str(self.schema))
+    
+    
+    def getTestSchema(self, auth):
+        """Return the test schema defined for this backend.
+        @return the test schema as string
+        """
+        return (1, str(self.testSchema))
+
+        
+    def getInputFields(self, auth):
+        """
+        Returns a dictionary where keys are the field names and the values
+        are all the properties defined by the input schema.
+        """
+        
+        result = {}
+        
+        for field in self.schema.fields():
+            #logging.debug('Processing field: %s' % field)
+            result[field.getName()] = field.getAllProperties()
+
+        #logging.debug('Return: %s' % retval)
+        return  (1, result)
+
+
+    def getTestFields(self, auth):
+        """
+        Returns a dictionary where keys are the ids and the values are the 
+        label of all definied tests in testSchema.
+        
+        """
+        result = {}
+
+        for test in self.testSchema.fields():
+            result[test.getName()] = test.label
+
+        return (1, result)
+
+
+    # -- internal methods used by subclasses ----------------------------------
     def execute(self, authdata, jobdata):
-        """Executes a check job using the fiven job data.
+        """Executes a check job using the given job data.
 
-        @param authdata The authorization information.
-        @param jobdata All relevant job data, see class CheckJob for details
-        @return A CheckResult object
+        @param authdata authorization information.
+        @param jobdata all relevant job data
+        @return in most cases a CheckResult object
         """
 
         raise NotImplementedError("Method execute must be "
                                   "implemented by subclass.")
+
+
+    def _getTests(self, job):
+        """
+        @return a list of test specifications depending on the ids given
+                in the job data
+        """
+        result = []
+        
+        #logging.debug('job: %s' % job.getData())
+
+        if job.has_key('tests'):
+            # user has selected one or more tests
+            testIDs = job['tests']
+
+            for id in testIDs:
+                result.extend(self.testSchema.filterFields(__name__=id))
+        else:
+            # not tests selected by the user, taking all available
+            result = self.testSchema.fields()
+            
+        logging.debug('Following tests will be used %s: ' % result)
+        return result
 
 
     def _authenticate(self, data):

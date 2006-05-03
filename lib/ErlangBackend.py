@@ -16,67 +16,38 @@ from data import *
 from util.utils import *
 
 from util.BackendSchema import TestEnvironment, RepeatField, InputField, Schema
-from AbstractSimpleBackend import AbstractSimpleBackend
-
-INTERPRETER = '/opt/hugs/bin/runhugs'
+from AbstractSimpleBackend import AbstractSimpleBackend, EX_OK
 
 TEST_SIMPLE = \
 """
-test a b = a == b
+test(A, A) -> true;
+test(_, _) -> false.
 """
 
+# test for equality of lists modulo permutation
+# multiple occurrences of elements allowed
 TEST_PERM = \
 """
-test a b = test_ispermutation a b
-
-remove item [] = []
-remove item (head:tail)
-    | head == item = tail
-    | otherwise = (head:(remove item tail) )
-
-member item [] = False
-member item (head:tail)
-    | head == item = True
-    | otherwise = (member item tail)
-
-test_ispermutation [] [] = True
-test_ispermutation x  [] = False
-test_ispermutation [] x  = False
-test_ispermutation (head:tail) list2
-    | (member head) list2 == True = test_ispermutation tail (remove head list2)
-    | otherwise = False
+test([],[])  -> true;
+test(L1, L2) -> if length(L1) /= length(L2) -> false;
+    true -> lists:member(hd(L1), L2) andalso test(tl(L1), lists:delete(hd(L1),L2))
+    end.
 """
 
+# wrapper code
 TEMPLATE_SEMANTIC = \
-"""module Main where
-import Model
-import Student
+"""-module(wrapper).
+-export([start/0]).
 
 ${helpFunctions}
 
--- must be named 'test'
 ${testFunction}
 
-o1 = Model.${testData}
-o2 = Student.${testData}
+o1() -> model:${testData}.
+o2() -> student:${testData}.
 
-main = putStr(\"isEqual=\" ++ show(test (o1) (o2)) ++ \";;expected=\" ++ show(o1) ++ \";;received=\" ++ show(o2))
+start() -> io:fwrite("isEqual=~w;;expected=~w;;received=~w", [test(o1(), o2()), o1(), o2()]).
 """
-
-TEMPLATE_SYNTAX = \
-"""module Main where
-
-${studentSolution}
-   
-main = putStr(\"\")
-"""
-
-TEMPLATE_MODULE= \
-"""module %s where
-%s
-"""
-
-REGEX_RUNHUGS_SPECIALS = 'Type checking\n?|Parsing\n?|[Parsing]*[Dependency analysis]*[Type checking]*[Compiling]*\x08 *'
 
 # input schema
 inputSchema = Schema((
@@ -115,61 +86,71 @@ tests = Schema((
         TestEnvironment(
             'simple',
             label = 'Simple',
-            description = 'Exact matching results are allowed.',
+            description = 'Test without permutations',
             test = TEST_SIMPLE,
-            syntax = TEMPLATE_SYNTAX,
             semantic = TEMPLATE_SEMANTIC,
-            lineNumberOffset = 2,
-            compiler = INTERPRETER,
-            interpreter = INTERPRETER,
+            #lineNumberOffset = 2,
+            compiler = '/opt/erlang/bin/erlc %s',
+            interpreter = '/opt/erlang/bin/erl -noshell -s %s -s init stop',
         ),
 
         TestEnvironment(
             'permutation',
             label = 'Permutation',
-            description = 'Permutations are allowed.',
+            description = 'Test with permutations',
             test = TEST_PERM,
-            syntax = TEMPLATE_SYNTAX,
             semantic = TEMPLATE_SEMANTIC,
-            lineNumberOffset = 2,
-            compiler = INTERPRETER,
-            interpreter = INTERPRETER,
+            #lineNumberOffset = 2,
+            compiler = '/opt/erlang/bin/erlc %s',
+            interpreter = '/opt/erlang/bin/erl -noshell -s %s -s init stop',
         ),
     ))
 
-class HaskellBackend(AbstractSimpleBackend):
+class ErlangBackend(AbstractSimpleBackend):
     """
     A simple checker class for checking Haskell programs by comparing
     student and model solution on given test data.
     """
     
-    id = 'haskell'
-    name = 'Haskell'
-    version = '1.0'
+    id = 'erlang'
+    name = 'Erlang'
 
-    srcFileSuffix = '.hs'
+    srcFileSuffix = '.erl'
 
     schema = inputSchema
     testSchema = tests
+    version = '1.0'
+
+
+    def _preProcessCheckSyntax(self, test, studentSolution):
+        """
+        Replace module name in student's solution with 'student'
+        
+        @see AbstractSimpleBackend._preProcessCheckSyntax
+        @return modified source code and new module name
+        """
+
+        source = re.sub('-module\((.*)\)\.', '-module(student).', 
+                        studentSolution)
+
+        return source, 'student'
+
 
     def _postProcess(self, test, message):
         """
+        @see AbtractSimpleBackend._postProcess
         """
-        # find line number in result
-        matches = re.findall('%s":(\d+)' % self.srcFileSuffix, message)
-        
-        if len(matches):
-            # set line number minus x lines and return
-            return re.sub('".*%s":(\d+)'  % self.srcFileSuffix, 
-                          'line: %d' % (int(matches[0])-test.lineNumberOffset), 
-                          message)
-        else:
-            return message
-        
+        # replace path and filename
+        return re.sub('.*%s:(\d+)' % self.srcFileSuffix, 
+                      'line: \g<1>', 
+                      message)
+                      
 
     def checkSemantics(self, job):
         """
-        Checks semantic of a Haskell programs.
+        Runs sematic test on a Erlang program.
+        Remenber: Before we can run the wrapper code we have to compile it!!
+        
         @return a BackendResult object with result code and value
         """
         # 1. get model solution and student's submission
@@ -184,17 +165,27 @@ class HaskellBackend(AbstractSimpleBackend):
             "Semantic check requires valid 'student solution' (%s)" % \
             studentSolution
 
-        modelSolution = TEMPLATE_MODULE % ('Model', modelSolution)
-        studentSolution = TEMPLATE_MODULE % ('Student', studentSolution)
+        # replace module name in model and student solution
+        modelSolution = re.sub('-module\((.*)\)\.', 
+                               '-module(model).', 
+                               modelSolution)
 
-        # write model solution and answer files
-        model = self._writeModule('Model', modelSolution, '.hs', job['id'])
-        student = self._writeModule('Student', studentSolution, '.hs', job['id'])
+        #studentSolution = re.sub('-module\((.*)\)\.', 
+        #                         '-module(student).', 
+        #                         studentSolution)
+
+        # write model solution in a file
+        model = self._writeModule('model', modelSolution, 
+                                  self.srcFileSuffix, job['id'])
+
+        #student = self._writeModule('student', studentSolution, 
+        #                            self.srcFileSuffix, job['id'])
+
 
         # 2. get all test data to iterate through them
         repeatFields = self.schema.filterFields(__name__='testData')
         
-        repeatFields and len(repeatFields) == 1, \
+        assert repeatFields and len(repeatFields) == 1, \
             'None or more than one RepeatField found.'
         
         repeatField = repeatFields[0]
@@ -202,7 +193,7 @@ class HaskellBackend(AbstractSimpleBackend):
 
         # 3. define return values
         feedback = ''
-        solved = 1 # 1 means testing was successful
+        solved = 1
 
         if len(self._getTests(job)) == 0:
             msg = 'No test specification found.'
@@ -217,10 +208,27 @@ class HaskellBackend(AbstractSimpleBackend):
             logging.debug('Running semantic check with test: %s' % 
                           test.getName())
 
+            # get the compiler
+            compiler = test.compiler
+
+            # compile model solution
+            exitcode, result = self._runInterpreter(compiler, 
+                                             os.path.dirname(model['file']),
+                                             os.path.basename(model['file']))
+            assert exitcode == EX_OK, 'Errors in model solution: %s' % result
+             
+            # we have already written and compiled the student solution 
+            # in checkSynatx method
+
+            #exitcode, result = self._runInterpreter(compiler,
+            #                                 os.path.dirname(student['file']),
+            #                                 os.path.basename(student['file']))
+            #assert exitcode == EX_OK, 'Errors in student solution: %s' % result
+            
             # get the interpreter
             interpreter = test.interpreter
            
-            # 4.1. get wrapper code
+            # 4.1. set wrapper source
             src = test.semantic
             
             # 4.2. get values for all other input fields from schema which are 
@@ -240,15 +248,29 @@ class HaskellBackend(AbstractSimpleBackend):
         
                 # remove all remaining placeholders
                 wrapper = re.sub('\$\{.*\}', '', wrapper)
-                                 
-                # execute wrapper code in haskell interpreter
-                try:
-                    exitcode, result = \
-                        self._runHaskell(interpreter, wrapper, job['id'])
 
-                    # remove all special characters written by runhugs/haskell 
-                    result = re.sub(REGEX_RUNHUGS_SPECIALS, '', result)
-        
+
+                # compile and execute wrapper
+                try:
+                    # write module for wrapper
+                    wrapperModule = self._writeModule('wrapper', wrapper, 
+                                                 self.srcFileSuffix, job['id'])
+
+                    # compile the wrapper
+                    exitcode, result = \
+                        self._runInterpreter(compiler,
+                                       os.path.dirname(wrapperModule['file']),
+                                       os.path.basename(wrapperModule['file']))
+                    
+                    assert exitcode == EX_OK, \
+                        'Error in wrapper code for semantic check: %s' % result
+
+                    # run the wrapper
+                    exitcode, result = \
+                        self._runInterpreter(interpreter, 
+                                       os.path.dirname(wrapperModule['file']),
+                                       'wrapper')
+
                 except Exception, e:
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
@@ -257,16 +279,17 @@ class HaskellBackend(AbstractSimpleBackend):
                     return (0, msg)
 
                 # an error occured
-                if exitcode != os.EX_OK:
+                if exitcode != EX_OK:
                     result = "\nYour submission failed. Test " \
                              "case was: '%s' (%s)" \
                              "\n\n Received result: %s"\
                              % (t, test.getName(), result)
+
                     return (0, result)
                         
                 # has the students' solution passed this tests?
                 else:
-                    #logging.debug(result)
+                    logging.debug(result)
                     
                     msgItems = result.split(';;')
                     
@@ -295,15 +318,28 @@ class HaskellBackend(AbstractSimpleBackend):
 
         return (solved, feedback)
 
+# -- some testing -------------------------------------------------------------
+import socket
 
-    def _runHaskell(self, intepreter, source, jobID):
-        """
-        @see _runInterpreter in class AbstractSimpleBackend
-        """
-        # write module for wrapper
-        wrapperModule = self._writeModule('wrapper', source, 
-                                     self.srcFileSuffix, jobID)
+if __name__ == "__main__":
+    """
+    """
+    try:
+        cpid = os.fork()
+    except AttributeError, aerr:
+        print('os.fork not defined - skipping.')
+        cpid = 0
 
-        return self._runInterpreter(intepreter, 
-                                    os.path.dirname(wrapperModule['file']),
-                                    os.path.basename(wrapperModule['file']))
+    if cpid == 0:
+        tB = ErlangBackend({
+                    'host': socket.getfqdn(), 
+                    'port': 5060, 
+                    'capeserver': 'http://%s:5050' % socket.getfqdn(), 
+                    'srv_auth': {'username':'demo', 'password':'foobar'}
+                })
+
+        tB.start()
+
+    else:
+        time.sleep(1)
+        print 'pid=', cpid

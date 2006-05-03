@@ -6,6 +6,8 @@
 # This file is part of ECSpooler.
 
 from types import ListType, TupleType, StringType
+from copy import copy, deepcopy
+from md5 import md5
 
 _field_count = 0
 _test_count = 0
@@ -19,6 +21,8 @@ class Field:
     _properties = {
         'type' : None,
         'required' : False,
+        'label' : '',
+        'description': '',
         'languageIndependent' : False,
         }
 
@@ -33,7 +37,7 @@ class Field:
             name = 'field.%s' % _field_count
 
         self.__name__ = name
-
+        
         self.__dict__.update(self._properties)
         self.__dict__.update(kwargs)
 
@@ -47,6 +51,15 @@ class Field:
 
     def getProperty(self, name):
         return dict(vars(self))[name]
+
+    def getAllProperties(self):
+        """
+        Return a dict with all properties and values stored for this Field.
+        """
+        cdict = dict(vars(self))
+        cdict.pop('__name__')
+        properties = copy(cdict)
+        return properties
 
     def copy(self, name=None):
         """
@@ -85,19 +98,54 @@ class Field:
         return "<Field %s (%s)>" % (self.getName(), self.type)
 
 
-class TestEnv(Field):
+class TestEnvironment(Field):
+#class TestSpec(Field):
     """
     Testing environment
     """
     
     _properties = Field._properties.copy()
     _properties.update({
-        'type' : 'TestEnvironment',
-        'test' : None,
+        'test': None,
         'syntax': None,
         'semantic': None,
+        'compiler': None,
+        'interpreter': None,
         })
 
+
+class RepeatField(Field):
+    """
+    """
+
+    _properties = Field._properties.copy()
+    _properties.update({
+        'type' : 'text',
+        'accessor': '_getLines',
+        })
+
+        
+    def getAccessor(self):
+        """Return the accessor method for getting data out of this
+        field"""
+        if self.accessor:
+            return getattr(self, self.accessor, None)
+
+        return None
+
+    
+    def _getLines(self, value):
+        """
+        """
+        result = []
+        
+        for line in value.split('\n'):
+            # we don't want empty lines
+            if line.strip():
+                result.append(line)
+
+        return result
+        
 
 class InputField(Field):
     """
@@ -107,7 +155,7 @@ class InputField(Field):
 
     _properties = Field._properties.copy()
     _properties.update({
-        'type' : 'InputField',
+        'type' : 'text',
         })
 
 
@@ -122,13 +170,9 @@ class Schemata:
     def __init__(self, name='default', fields=None):
         """Initialize Schemata and add optional fields."""
 
-        print "in Schemata.__init__"
-
         self.__name__ = name
         self._names = []
         self._fields = {}
-        
-
 
         if fields is not None:
             if type(fields) not in [ListType, TupleType]:
@@ -442,32 +486,9 @@ class BasicSchema(Schemata):
 
 
     def signature(self):
-        from md5 import md5
-        return md5(self.toString()).digest()
-
-
-    def changeSchemataForField(self, fieldname, schemataname):
-        """ change the schemata for a field """
-        field = self[fieldname]
-        self.delField(fieldname)
-        field.schemata = schemataname
-        self.addField(field)
-
-
-    def getSchemataNames(self):
-        """Return list of schemata names in order of appearing"""
-        lst = []
-        for f in self.fields():
-            if not f.schemata in lst:
-                lst.append(f.schemata)
-        return lst
-
-
-    def getSchemataFields(self, name):
-        """Return list of fields belong to schema 'name'
-        in order of appearing
         """
-        return [f for f in self.fields() if f.schemata == name]
+        """
+        return md5(self.toString()).digest()
 
 
     def replaceField(self, name, field):
@@ -487,14 +508,15 @@ class Schema(BasicSchema):
     Schema
     """
 
-    #__implements__ = ILayerRuntime, ILayerContainer, ISchema
-
     def __init__(self, *args, **kwargs):
+        """
+        """
         BasicSchema.__init__(self, *args, **kwargs)
 
 
     def __add__(self, other):
-        
+        """
+        """
         c = Schema()
         # We can't use update and keep the order so we do it manually
         for field in self.fields():
@@ -529,19 +551,14 @@ class Schema(BasicSchema):
         for k, v in self.registeredLayers():
             c.registerLayer(k, v)
         return c
-
-
-    def wrapped(self, parent):
-        schema = self.copy(factory=WrappedSchema)
-        return schema.__of__(parent)
         
 
 # -- Test section -------------------------------------------------------------
 if __name__ == "__main__":
 
     simpleSchema = Schema((
-        TestEnv(
-            'simpleTestEnvironment',
+        TestEnvironment(
+            'simpleTest',
             label = 'Simple',
             description = 'Simple test; no permutations.',
             test = 'def test(a, b): return (a == b)',
@@ -556,29 +573,34 @@ if __name__ == "__main__":
             i18n_domain = 'EC',
         ),
         
-        InputField(
-            'properties', 
+        RepeatField(
+            'testData', 
             required = True, 
-            label = 'QuickCheck properties',
-            description = 'Enter one or more QuickCheck properties. '+ 
-                        'Use #model# as place marker for the module in which '+ 
-                        'the model solution will be defined and #student# as '+
-                        'place marker for the students\' solution module.',
+            label = 'Tests',
+            description = 'Enter one or more test calls',
             i18n_domain = 'EC',
         ),
     ))
     
-    #print simpleField.getName()
-    #print simpleField.label
-    #print simpleField
-    #print simpleField.toString()
+        
+    #for field in simpleSchema.filterFields(type='TestEnvironment'):
+    #    print field
+
+    #for field in simpleSchema.filterFields(type='InputField'):
+    #    print field.getName()
+    #    print field.required
+    #    
+    #    print field.getAllProperties()
+
+    #repeatFields = simpleSchema.filterFields(type='RepeatField')
+    #repeatField = repeatFields[0]
+
+    #print repeatField.getAccessor()('1')
     
-    for field in simpleSchema.fields():
-        print field
-        #if isinstance(field, TestEnv):
-        #    print 'TestEnv ->', field.getName()
-        #elif isinstance(field, InputField):
-        #    print 'InputField ->', field.getName()
-            
-    print simpleSchema.filterFields(type='TestEnvironment')
-            
+    field = simpleSchema.get('testData')
+    
+    print field.getAllProperties()
+    
+    
+    
+    
