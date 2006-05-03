@@ -63,7 +63,7 @@ class AbstractSimpleBackend(AbstractBackend):
             try:
                 # invoke syntax check
                 logging.debug('Invoking syntax check (%s).' % job.getId())
-                result = self.checkSyntax(job)
+                result = self.manage_checkSyntax(job)  #self.checkSyntax(job)
             
                 # FIXME: Maybe the rturned value should be of typ
                 #        CheckResult so we can use method isFailure
@@ -109,7 +109,7 @@ class AbstractSimpleBackend(AbstractBackend):
             
         # using test specifications
         for test in self._getTests(job):
-            process_checkSyntax(test, studentSolution)
+            self.process_checkSyntax(test, studentSolution)
         # end for
 
         return (1, 'Syntax check succeeded.')
