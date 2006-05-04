@@ -21,6 +21,7 @@ class Field:
     _properties = {
         'type' : None,
         'required' : False,
+        'format' : None,
         'label' : '',
         'description': '',
         'languageIndependent' : False,
@@ -120,7 +121,8 @@ class RepeatField(Field):
 
     _properties = Field._properties.copy()
     _properties.update({
-        'type' : 'text',
+        'type' : 'RepeatField',
+        'format' : 'text',
         'accessor': '_getLines',
         })
 
@@ -155,7 +157,8 @@ class InputField(Field):
 
     _properties = Field._properties.copy()
     _properties.update({
-        'type' : 'text',
+        'type' : 'InputField',
+        'format' : 'text',
         })
 
 
