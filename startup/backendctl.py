@@ -20,7 +20,7 @@ import getopt
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..',  'lib'))
 import config
 
-MAX_TRIALS = 5
+MAX_TRIALS = 15
 BACKEND_HOST = socket.getfqdn()
 
 def _startBackend(backendId, backendPort, spoolerHost, spoolerPort, 
@@ -43,10 +43,11 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
 
     if cpid == 0:
         # child process
-        backend = _getBackendInstance(backendId, backendHost, backendPort, 
+        (backend, p)= _getBackendInstance(backendId, backendHost, backendPort, 
                                      spoolerHost, spoolerPort, spoolerAuth)
         
-        if backend: 
+        if backend:
+            print 'port=%d' % p
             backend.start()
         else:
             print 'Finally failed. See log for more information.'
@@ -84,7 +85,7 @@ def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost,
         retval = _tryGetBackendInstance(moduleName, instanceCreateStmt)
         
         if retval: 
-            return retval
+            return (retval, i)
         else:
             time.sleep(0.1)
     
@@ -135,6 +136,14 @@ def _stopBackend(backendId, spoolerHost, spoolerPort, spoolerAuth):
             print 'Done.'
         else:
             print retval[1]
+
+
+def _getStatus(backendId, spoolerHost, spoolerPort, spoolerAuth):
+    """
+    Returns some status information of the backend.
+    """
+    spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost, spoolerPort))
+    return spooler.getBackendStatus(spoolerAuth, backendId)
 
 
 def usage():
@@ -229,8 +238,9 @@ def main():
                                  spoolerPort, auth)
 
                 elif cmd == 'status':
-                    raise NotImplementedError('Getting status information is ' +
-                                              'not implemented yet.')
+                    #raise NotImplementedError('Getting status information is ' +
+                    #                          'not implemented yet.')
+                    print _getStatus(backendId, spoolerHost, spoolerPort, auth)
     
                 else:
                     print 'Unknown command %s' % cmd
