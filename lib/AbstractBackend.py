@@ -161,7 +161,6 @@ class AbstractBackend(AbstractServer):
 
 
     # -- methods used by the frontends ----------------------------------------
-
     def getStatus(self, auth):
         """Returns a dictionary with some status information about 
         this backend. In case the authentication fails, a 
@@ -170,7 +169,6 @@ class AbstractBackend(AbstractServer):
         @param auth authorization information
         @return a dictionary with id, name, version, host, and port infos
         """
-        
         self._authenticate(auth)
 
         return (1, {
@@ -229,11 +227,26 @@ class AbstractBackend(AbstractServer):
 
     # -- internal methods used by subclasses ----------------------------------
     def execute(self, authdata, jobdata):
-        """Executes a check job using the given job data.
+        """This method first checks the authentication and then 
+        calls _process_execute which executes the job.
 
         @param authdata authorization information.
         @param jobdata all relevant job data
-        @return in most cases a CheckResult object
+        @return CheckResult object or tupel consisting of result code and message
+        """
+        # check authentication
+        self._authenticate(authdata)
+        
+        # check the job
+        return self._process_execute(jobdata)
+
+
+    def process_execute(self, jobdata):
+        """Executes a check job using the given job data. This method 
+        must be overridden in subclasses.
+
+        @param jobdata all relevant job data
+        @return CheckResult object or tupel consisting of result code and message
         """
 
         raise NotImplementedError("Method execute must be "
@@ -268,7 +281,7 @@ class AbstractBackend(AbstractServer):
         @return True if given authorization data are valid, otherwise False.
         """
         # FIXME: 
-        return 1
+        #return 1
 
         if self._spoolerID == None: 
             s = "Authorization failed: Invalid spooler connection settings."

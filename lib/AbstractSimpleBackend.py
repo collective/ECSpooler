@@ -24,19 +24,17 @@ except AttributeError:
 
 class AbstractSimpleBackend(AbstractBackend):
     """
-    AbstractFPBackend is the basic class of all backends testing
-    programming exercises for functional programming languages,
-    such as Haskell, Erlang or Scheme.
+    AbstractSimpleBackend is the basic class of all backends for
+    programming exercises.
     
-    Backend implementations *should* be derived from this class and
+    Backend implementations *should* be derived from this class and must
     implement the following methods:
 
-    checkSyntax(self) -> BackendResult
-    ... test the student solution for syntactical correctness
+    process_checkSyntax(self) -> (code, message)
+    ... test the student solution for syntactical correctness.
 
-    checkSemantics(self) -> BackendResult
-    ... compare the student solution with the sample solution
-    using the given comparator function.
+    process_checkSemantics(self) ->  (code, message)
+    ... test the student solution for semantical correctness using input data.
     """
     
     srcFileSuffix = ''
@@ -44,15 +42,13 @@ class AbstractSimpleBackend(AbstractBackend):
     # resourcestring
     PROCESS_WAIT_TIME = 10
    
-    def execute(self, authdata, jobdata):
+    def process_execute(self, jobdata):
         """
         Executes a check job.
 
-        @param authdata authorization information
         @param jobdata relevant job data, see CheckJob docu for details
-        @return CheckResult data (a tupel consisting of result code and message)
+        @return CheckResult object or tupel consisting of result code and message
         """
-        self._authenticate(authdata)
 
         try:
             job = checkjob.CheckJob(jobdata)
@@ -72,7 +68,7 @@ class AbstractSimpleBackend(AbstractBackend):
                 if result[0] > 0: 
                     # invoke semantic check
                     logging.debug('Invoking semantic check (%s).' % job.getId())
-                    result = self.checkSemantics(job)
+                    result = self.manage_checkSemantics(job)
                 
             except Exception, e:
                 msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
@@ -86,11 +82,6 @@ class AbstractSimpleBackend(AbstractBackend):
         except (InvalidDataException, AssertionError), exc:
             logging.warn('%s: %s' % (exc, job))
             return (-1, '%s: %s' % (exc, job))
-
-#    def checkSyntax(self):
-#        # overwrite this method
-#        raise NotImplementedError("Method checkSyntax must be "
-#                                  "implemented by subclass")
 
 
     def manage_checkSyntax(self, job):
@@ -114,7 +105,7 @@ class AbstractSimpleBackend(AbstractBackend):
 
         return (1, 'Syntax check succeeded.')
 
-    def process_checkSyntax(self, test, studentSolution):
+    def _process_checkSyntax(self, test, studentSolution):
         """
         Tests the syntax of a programm. Override this method if you 
         need to do some special things during syntax check. 
@@ -141,19 +132,15 @@ class AbstractSimpleBackend(AbstractBackend):
                                    os.path.basename(module['file']))
                 
             except Exception, e:
-                #import traceback
-                #traceback.print_exc()
-
                 msg = 'Internal error during syntax check: %s: %s' % \
                       (sys.exc_info()[0], e)
-                #msg = 'Internal error during syntax check:'
                               
                 logging.error(msg)
                 return (0, msg)
     
             # consider exit code
             if exitcode != EX_OK:
-                result = self._postProcess(test, result)
+                result = self._postProcessCheckSyntax(test, result)
                 return (-exitcode, result)
 
         else:
@@ -161,9 +148,21 @@ class AbstractSimpleBackend(AbstractBackend):
                          test.getName())
 
 
-    def checkSemantics(self):
+    def manage_checkSemantics(self, job):
+        """
+        """
+        studentSolution = job['studentSolution']
+        
+        assert studentSolution and type(studentSolution) == StringType, \
+            "Semantic check requires a valid 'student solution' (%s)" % \
+            studentSolution
+
+        return self._process_checkSemantics(job)
+
+
+    def _process_checkSemantics(self, job):
         # overwrite this method
-        raise NotImplementedError("Method checkSemantics must be "
+        raise NotImplementedError("Method _manage_checkSemantics must be "
                                   "implemented by subclass")
 
 
@@ -195,7 +194,7 @@ class AbstractSimpleBackend(AbstractBackend):
         return studentSolution
 
 
-    def _postProcess(self, test, message):
+    def _postProcessCheckSyntax(self, test, message):
         """
         Post process interpreter messages. Override this method if you need
         to remove or reformat messages.
@@ -205,6 +204,16 @@ class AbstractSimpleBackend(AbstractBackend):
         return message
 
 
+    def _postProcessCheckSemantic(self, test, message):
+        """
+        Post process interpreter messages. Override this method if you need
+        to remove or reformat messages.
+        
+        @param message
+        """
+        return message
+
+    
     def _writeModule(self, name, source, suffix='', dir=''):
         """
         Creates a new python module. Returns the module's name and

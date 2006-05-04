@@ -136,9 +136,9 @@ class ErlangBackend(AbstractSimpleBackend):
         return source, 'student'
 
 
-    def _postProcess(self, test, message):
+    def _postProcessCheckSyntax(self, test, message):
         """
-        @see AbtractSimpleBackend._postProcess
+        @see AbtractSimpleBackend._postProcessCheckSyntax
         """
         # replace path and filename
         return re.sub('.*%s:(\d+)' % self.srcFileSuffix, 
@@ -146,7 +146,7 @@ class ErlangBackend(AbstractSimpleBackend):
                       message)
                       
 
-    def checkSemantics(self, job):
+    def process_checkSemantics(self, job):
         """
         Runs sematic test on a Erlang program.
         Remenber: Before we can run the wrapper code we have to compile it!!

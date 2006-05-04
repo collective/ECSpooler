@@ -152,8 +152,9 @@ class HaskellBackend(AbstractSimpleBackend):
     schema = inputSchema
     testSchema = tests
 
-    def _postProcess(self, test, message):
+    def _postProcessCheckSyntax(self, test, message):
         """
+        @see AbtractSimpleBackend._postProcessCheckSyntax
         """
         # find line number in result
         matches = re.findall('%s":(\d+)' % self.srcFileSuffix, message)

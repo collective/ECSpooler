@@ -119,9 +119,9 @@ class PythonBackend(AbstractSimpleBackend):
     testSchema = tests
 
 
-    def _postProcess(self, test, message):
+    def _postProcessCheckSyntax(self, test, message):
         """
-        @see AbtractSimpleBackend._postProcess
+        @see AbtractSimpleBackend._postProcessCheckSyntax
         """
 
         # replace path and filename
