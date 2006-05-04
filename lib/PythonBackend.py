@@ -128,7 +128,7 @@ class PythonBackend(AbstractSimpleBackend):
         return re.sub('File ".*%s", ' % self.srcFileSuffix, '', message)
 
 
-    def checkSemantics(self, job):
+    def _process_checkSemantics(self, job):
         """
         Checks semantic of a Python programs.
         @return a BackendResult object with result code and value

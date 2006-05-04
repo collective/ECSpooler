@@ -238,7 +238,7 @@ class AbstractBackend(AbstractServer):
         self._authenticate(authdata)
         
         # check the job
-        return self._process_execute(jobdata)
+        return self.process_execute(jobdata)
 
 
     def process_execute(self, jobdata):

@@ -55,7 +55,7 @@ class HaskellqcBackend(AbstractHaskellBackend):
     name = 'Haskell QuickCheck'
     schema = localSchema
     
-    def checkSemantics(self):
+    def _process_checkSemantics(self):
         """
         Checks syntax and semantic of Haskell programs.
         @return A CheckResult object with error code and message text

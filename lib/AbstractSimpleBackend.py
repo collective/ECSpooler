@@ -100,12 +100,12 @@ class AbstractSimpleBackend(AbstractBackend):
             
         # using test specifications
         for test in self._getTests(job):
-            self.process_checkSyntax(test, studentSolution)
+            self._process_checkSyntax(job['id'], test, studentSolution)
         # end for
 
         return (1, 'Syntax check succeeded.')
 
-    def _process_checkSyntax(self, test, studentSolution):
+    def _process_checkSyntax(self, jobId, test, studentSolution):
         """
         Tests the syntax of a programm. Override this method if you 
         need to do some special things during syntax check. 
@@ -124,7 +124,7 @@ class AbstractSimpleBackend(AbstractBackend):
                               
                 module = self._writeModule(mName, src, 
                                            self.srcFileSuffix, 
-                                           job['id'])
+                                           jobId)
                 
                 exitcode, result = \
                     self._runInterpreter(compiler, 

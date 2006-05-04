@@ -146,7 +146,7 @@ class ErlangBackend(AbstractSimpleBackend):
                       message)
                       
 
-    def process_checkSemantics(self, job):
+    def _process_checkSemantics(self, job):
         """
         Runs sematic test on a Erlang program.
         Remenber: Before we can run the wrapper code we have to compile it!!

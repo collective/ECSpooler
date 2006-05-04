@@ -154,7 +154,7 @@ class SchemeBackend(AbstractSimpleBackend):
                       message)
         
 
-    def checkSemantics(self, job):
+    def _process_checkSemantics(self, job):
         """
         Checks semantic of a Haskell programs.
         @return a BackendResult object with result code and value
