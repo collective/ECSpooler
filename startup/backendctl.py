@@ -47,6 +47,7 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
                                      spoolerHost, spoolerPort, spoolerAuth)
         
         if backend:
+            print 'name=%s-%s' % (backend.id, backend.version)
             print 'port=%d' % p
             backend.start()
         else:
@@ -143,7 +144,12 @@ def _getStatus(backendId, spoolerHost, spoolerPort, spoolerAuth):
     Returns some status information of the backend.
     """
     spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost, spoolerPort))
-    return spooler.getBackendStatus(spoolerAuth, backendId)
+    result = spooler.getBackendStatus(spoolerAuth, backendId)
+    
+    if result and result[0]:
+        return result[1]
+    else:
+        return result
 
 
 def usage():

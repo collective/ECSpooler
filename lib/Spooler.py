@@ -281,12 +281,12 @@ class Spooler(AbstractServer):
         if not self._auth.test(authdata, self._auth.GET_STATUS):
             return (-2, self.ERROR_AUTH_FAILED)
 
-        return {
+        return (1, {
             "pid":      os.getpid(),
             "backends": self._backends.keys(),
             "queue":    self._queue.getSize(),
             "results":  self._results.getSize(),
-        }
+        })
 
 
     def getBackends(self, auth):

@@ -43,7 +43,7 @@ def _stopSpooler(host, port, auth):
     """
     print "Stopping ECSpooler on %s port %d ........." % (host, port)
     spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
-    pid = spooler.getStatus(auth)['pid']
+    pid = spooler.getStatus(auth)[1]['pid']
     
     try:
         # stops the spooler sending kill -15 process-id
@@ -59,7 +59,7 @@ def _getSpoolerStatus(host, port, auth):
     """
     """
     spooler = xmlrpclib.Server("http://%s:%s" % (host, port))
-    return spooler.getStatus(auth)
+    return spooler.getStatus(auth)[1]
 
 
 def usage():
