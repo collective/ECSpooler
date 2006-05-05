@@ -80,18 +80,6 @@ REGEX_RUNHUGS_SPECIALS = 'Type checking\n?|Parsing\n?|[Parsing]*[Dependency anal
 
 # input schema
 inputSchema = Schema((
-        RepeatField(
-            'testData', 
-            #accessor = # must return a list; default is one element per line
-            required = True, 
-            label = 'Test data',
-            description = 'Enter one or more function calls. '+ 
-                        'A function call consists of the ' + 
-                        'function name (given in the exercise directives) ' + 
-                        'and test data as parameters of this funtion. '+
-                        'Each function call must be written in a single line.',
-            i18n_domain = 'EC',
-        ),
 
         InputField(
             'modelSolution', 
@@ -105,6 +93,19 @@ inputSchema = Schema((
             'helpFunctions', 
             label = 'Help functions',
             description = 'Enter help functions if needed.',
+            i18n_domain = 'EC',
+        ),
+
+        RepeatField(
+            'testData', 
+            #accessor = # must return a list; default is one element per line
+            required = True, 
+            label = 'Test data',
+            description = 'Enter one or more function calls. '+ 
+                        'A function call consists of the ' + 
+                        'function name (given in the exercise directives) ' + 
+                        'and test data as parameters of this funtion. '+
+                        'Each function call must be written in a single line.',
             i18n_domain = 'EC',
         ),
     ))

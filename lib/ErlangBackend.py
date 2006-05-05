@@ -51,18 +51,6 @@ start() -> io:fwrite("isEqual=~w;;expected=~w;;received=~w", [test(o1(), o2()), 
 
 # input schema
 inputSchema = Schema((
-        RepeatField(
-            'testData', 
-            #accessor = # must return a list; default is one element per line
-            required = True, 
-            label = 'Test data',
-            description = 'Enter one or more function calls. '+ 
-                        'A function call consists of the ' + 
-                        'function name (given in the exercise directives) ' + 
-                        'and test data as parameters of this funtion. '+
-                        'Each function call must be written in a single line.',
-            i18n_domain = 'EC',
-        ),
 
         InputField(
             'modelSolution', 
@@ -78,7 +66,20 @@ inputSchema = Schema((
             description = 'Enter help functions if needed.',
             i18n_domain = 'EC',
         ),
-    ))
+
+        RepeatField(
+            'testData', 
+            #accessor = # must return a list; default is one element per line
+            required = True, 
+            label = 'Test data',
+            description = 'Enter one or more function calls. '+ 
+                        'A function call consists of the ' + 
+                        'function name (given in the exercise directives) ' + 
+                        'and test data as parameters of this funtion. '+
+                        'Each function call must be written in a single line.',
+            i18n_domain = 'EC',
+        ),
+))
 
 # testSchema
 tests = Schema((

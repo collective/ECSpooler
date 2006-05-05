@@ -41,20 +41,6 @@ print >> sys.stdout, \"isEqual=\" + str(test(o1, o2)) + \";;expected=\" + str(o1
 
 inputSchema = Schema((
 
-        RepeatField(
-            'testData', 
-            #accessor = # must return a list; default is one element per line
-            required = True, 
-            label = 'Test data',
-            
-            description = 'Enter one or more function calls. '+ 
-                        'A function call consists of the ' + 
-                        'function name (given in the exercise directives) ' + 
-                        'and test data as parameters of this funtion. '+
-                        'Each function call must be written in a single line.',
-            i18n_domain = 'EC',
-        ),
-
         InputField(
             'modelSolution', 
             required = True, 
@@ -70,15 +56,20 @@ inputSchema = Schema((
             i18n_domain = 'EC',
         ),
 
-#        InputField(
-#            'testFunction', 
-#            required = False, 
-#            label = 'Test function',
-#            description = "Enter your test function with name 'tets'." + 
-#                        'The test function expects two parameters ' +
-#                        'and must return True or False.',
-#            i18n_domain = 'EC',
-#        ),
+
+        RepeatField(
+            'testData', 
+            #accessor = # must return a list; default is one element per line
+            required = True, 
+            label = 'Test data',
+            
+            description = 'Enter one or more function calls. '+ 
+                        'A function call consists of the ' + 
+                        'function name (given in the exercise directives) ' + 
+                        'and test data as parameters of this funtion. '+
+                        'Each function call must be written in a single line.',
+            i18n_domain = 'EC',
+        ),
     ))
 
 # testSchema
