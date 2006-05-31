@@ -65,7 +65,7 @@ class AbstractSimpleBackend(AbstractBackend):
                 #        CheckResult so we can use method isFailure
                 #if not result.isFailure(): 
                 
-                if result[0] > 0: 
+                if result and result[0] > 0: 
                     # invoke semantic check
                     logging.debug('Invoking semantic check (%s).' % job.getId())
                     result = self.manage_checkSemantics(job)
@@ -84,6 +84,7 @@ class AbstractSimpleBackend(AbstractBackend):
             return (-1, '%s: %s' % (exc, job))
 
 
+    # -- check syntax ---------------------------------------------------------
     def manage_checkSyntax(self, job):
         """
         Manages the syntax check for a given job depending on the 
@@ -100,22 +101,27 @@ class AbstractSimpleBackend(AbstractBackend):
             
         # using test specifications
         for test in self._getTests(job):
-            self._process_checkSyntax(job['id'], test, studentSolution)
+            result = self._process_checkSyntax(job['id'], test, studentSolution)
+            
+            if result and result[0] <= 0:
+                return result
         # end for
 
         return (1, 'Syntax check succeeded.')
 
+
     def _process_checkSyntax(self, jobId, test, studentSolution):
         """
         Tests the syntax of a programm. Override this method if you 
-        need to do some special things during syntax check. 
+        need to do some special things during syntax check.
+        
         """
-        # get the compiler/interpreter
+        # get the compiler or if not available the interpreter
         compiler = test.compiler or test.interpreter
         
         if compiler:
             
-            # reformat wrapper or student's source code
+            # student's source code
             src, mName = self._preProcessCheckSyntax(test, studentSolution)
 
             try:
@@ -144,10 +150,47 @@ class AbstractSimpleBackend(AbstractBackend):
                 return (-exitcode, result)
 
         else:
-            logging.warn('No compiler/interpreter given for test: %s' % 
-                         test.getName())
+            msg = 'No compiler/interpreter given for test: %s' % test.getName()
+
+            logging.error(msg)
+            return (0, msg)
+
+        # everything seems to be ok
+        return (1, '')
+
+   
+    def _preProcessCheckSyntax(self, test, src, **kwargs):
+        """
+        Pre process student's submissions and syntax check wrapper code. 
+        Override this method if you need to reformat the wrapper code or 
+        the student's submission. 
+        
+        @param test
+        @param src
+        @return source and module name if needed
+        """
+        result = ''
+        
+        if test.syntax:
+            result = re.sub('\$\{studentSolution\}', src, 
+                            test.syntax)
+        else:
+            result = studentSolution
+
+        return result, None
 
 
+    def _postProcessCheckSyntax(self, test, message):
+        """
+        Post process interpreter messages. Override this method if you need
+        to remove or reformat messages.
+        
+        @param message
+        """
+        return message
+
+
+    # -- check semantics ------------------------------------------------------
     def manage_checkSemantics(self, job):
         """
         """
@@ -166,44 +209,15 @@ class AbstractSimpleBackend(AbstractBackend):
                                   "implemented by subclass")
 
 
-    def _preProcessCheckSyntax(self, test, studentSolution):
-        """
-        Pre process student's submissions and syntax check wrapper code. 
-        Override this method if you need to reformat the wrapper code or 
-        the student's submission. 
-        
-        @return source and module name if needed
-        """
-        source = ''
-        
-        if test.syntax:
-            source = re.sub('\$\{studentSolution\}', studentSolution, 
-                         test.syntax)
-        else:
-            source = studentSolution
-
-        return source, None
-    
-
-    def _preProcessCheckSemantic(self, test, studentSolution):
+    def _preProcessCheckSemantic(self, test, src, **kwargs):
         """
         Pre process student's submissions and semantic check wrapper code. 
         Override this method if you need to reformat the wrapper code or 
         the student's submission. 
         """                                  
-        return studentSolution
+        return src
 
-
-    def _postProcessCheckSyntax(self, test, message):
-        """
-        Post process interpreter messages. Override this method if you need
-        to remove or reformat messages.
-        
-        @param message
-        """
-        return message
-
-
+    
     def _postProcessCheckSemantic(self, test, message):
         """
         Post process interpreter messages. Override this method if you need
@@ -213,7 +227,8 @@ class AbstractSimpleBackend(AbstractBackend):
         """
         return message
 
-    
+
+    # -- helper methods -------------------------------------------------------
     def _writeModule(self, name, source, suffix='', dir=''):
         """
         Creates a new python module. Returns the module's name and
