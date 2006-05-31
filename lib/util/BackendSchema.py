@@ -529,13 +529,13 @@ class Schema(BasicSchema):
         # Need to be smarter when joining layers
         # and internal props
         c._props.update(self._props)
-        layers = {}
-        for k, v in self.registeredLayers():
-            layers[k] = v
-        for k, v in other.registeredLayers():
-            layers[k] = v
-        for k, v in layers.items():
-            c.registerLayer(k, v)
+        #layers = {}
+        #for k, v in self.registeredLayers():
+        #    layers[k] = v
+        #for k, v in other.registeredLayers():
+        #    layers[k] = v
+        #for k, v in layers.items():
+        #    c.registerLayer(k, v)
         return c
 
 
@@ -550,9 +550,9 @@ class Schema(BasicSchema):
         # Need to be smarter when joining layers
         # and internal props
         c._props.update(self._props)
-        layers = {}
-        for k, v in self.registeredLayers():
-            c.registerLayer(k, v)
+        #layers = {}
+        #for k, v in self.registeredLayers():
+        #    c.registerLayer(k, v)
         return c
         
 
