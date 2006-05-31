@@ -19,6 +19,7 @@ from util.BackendSchema import TestEnvironment, RepeatField, InputField, Schema
 from AbstractSimpleBackend import AbstractSimpleBackend
 
 INTERPRETER = '/opt/hugs/bin/runhugs'
+# INTERPRETER_WITH_LIB_PATH runhugs -P"$HOME/lib:" Echo.hs
 
 TEST_SIMPLE = \
 """
@@ -169,6 +170,16 @@ class HaskellBackend(AbstractSimpleBackend):
             return message
         
 
+    def _postProcessCheckSemantic(self, test, message):
+        """
+        Post process interpreter messages. Override this method if you need
+        to remove or reformat messages.
+        
+        @param message
+        """
+        return re.sub('isEqual=', '', message)
+
+    
     def _process_checkSemantics(self, job):
         """
         Checks semantic of a Haskell programs.
@@ -194,7 +205,8 @@ class HaskellBackend(AbstractSimpleBackend):
         student = self._writeModule('Student', studentSolution, '.hs', job['id'])
 
         # 2. get all test data to iterate through them
-        repeatFields = self.schema.filterFields(__name__='testData')
+        #repeatFields = self.schema.filterFields(__name__='testData')
+        repeatFields = self.schema.filterFields(type='RepeatField')
         
         repeatFields and len(repeatFields) == 1, \
             'None or more than one RepeatField found.'
@@ -263,7 +275,9 @@ class HaskellBackend(AbstractSimpleBackend):
                     result = "\nYour submission failed. Test " \
                              "case was: '%s' (%s)" \
                              "\n\n Received result: %s"\
-                             % (t, test.getName(), result)
+                             % (t, test.getName(), 
+                                self._postProcessCheckSemantic(test, result))
+
                     return (0, result)
                         
                 # has the students' solution passed this tests?

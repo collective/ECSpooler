@@ -122,19 +122,19 @@ class ErlangBackend(AbstractSimpleBackend):
     testSchema = tests
     version = '1.0'
 
-
-    def _preProcessCheckSyntax(self, test, studentSolution):
+    # -- check syntax ---------------------------------------------------------
+    def _preProcessCheckSyntax(self, test, src, **kwargs):
         """
-        Replace module name in student's solution with 'student'
+        Replace module name in students' submission.
         
         @see AbstractSimpleBackend._preProcessCheckSyntax
         @return modified source code and new module name
         """
 
-        source = re.sub('-module\((.*)\)\.', '-module(student).', 
-                        studentSolution)
+        result = re.sub('-module\((.*)\)\.', '-module(student).', 
+                        src)
 
-        return source, 'student'
+        return result, 'student'
 
 
     def _postProcessCheckSyntax(self, test, message):
@@ -147,6 +147,16 @@ class ErlangBackend(AbstractSimpleBackend):
                       message)
                       
 
+    # -- check semantics ------------------------------------------------------
+    def _preProcessCheckSemantic(self, test, src, **kwargs):
+        """
+        Pre process student's submissions and semantic check wrapper code. 
+        Override this method if you need to reformat the wrapper code or 
+        the student's submission. 
+        """                                  
+        return src
+
+    
     def _process_checkSemantics(self, job):
         """
         Runs sematic test on a Erlang program.
@@ -165,6 +175,8 @@ class ErlangBackend(AbstractSimpleBackend):
         assert studentSolution and type(studentSolution) == StringType, \
             "Semantic check requires valid 'student solution' (%s)" % \
             studentSolution
+            
+        self._preProcessCheckSemantic(test, src)
 
         # replace module name in model and student solution
         modelSolution = re.sub('-module\((.*)\)\.', 
@@ -183,8 +195,9 @@ class ErlangBackend(AbstractSimpleBackend):
         #                            self.srcFileSuffix, job['id'])
 
 
-        # 2. get all test data to iterate through them
-        repeatFields = self.schema.filterFields(__name__='testData')
+        # 2. get a repeat field and iterate through the corresponding data
+        #repeatFields = self.schema.filterFields(__name__='testData')
+        repeatFields = self.schema.filterFields(type='RepeatField')
         
         assert repeatFields and len(repeatFields) == 1, \
             'None or more than one RepeatField found.'
@@ -211,6 +224,13 @@ class ErlangBackend(AbstractSimpleBackend):
 
             # get the compiler
             compiler = test.compiler
+            
+            # FIXME: We expect that the student solution was already written 
+            #        and compiled in process_checkSyntax. That could cause some
+            #        problems. In case we have more than one test scenario
+            #        the written/compiled student solution corresponds to the 
+            #        last test scenario. Therefore we have to write and compile
+            #        it twice.
 
             # compile model solution
             exitcode, result = self._runInterpreter(compiler, 
