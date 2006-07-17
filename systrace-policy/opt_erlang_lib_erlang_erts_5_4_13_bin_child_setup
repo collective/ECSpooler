@@ -1,0 +1,10 @@
+Policy: /opt/erlang/lib/erlang/erts-5.4.13/bin/child_setup, Emulation: netbsd
+	netbsd-mmap: permit
+	netbsd-fsread: filename eq "/etc/ld.so.conf" then permit
+	netbsd-__fstat13: permit
+	netbsd-close: permit
+	netbsd-munmap: permit
+	netbsd-fsread: filename match "/<non-existent filename>: *" then permit
+	netbsd-fsread: filename match "/lib/libc.so.*" then permit
+	netbsd-dup2: deny[eperm]
+	netbsd-exit: permit

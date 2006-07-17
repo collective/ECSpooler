@@ -1,0 +1,140 @@
+Policy: /opt/erlang/lib/erlang/erts-5.4.13/bin/beam, Emulation: netbsd
+	netbsd-mmap: permit
+	netbsd-fsread: filename eq "/etc/ld.so.conf" then permit
+	netbsd-__fstat13: permit
+	netbsd-close: permit
+	netbsd-munmap: permit
+	netbsd-__sysctl: permit
+	netbsd-fsread: filename match "/<non-existent filename>: *" then permit
+	netbsd-fsread: filename match "/lib/libm387.so.*" then permit
+	netbsd-fsread: filename match "/lib/libm.so.*" then permit
+	netbsd-fsread: filename match "/usr/lib/libcurses.so.*" then permit
+	netbsd-fsread: filename match "/lib/libc.so.*" then permit
+	netbsd-fsread: filename eq "/etc/malloc.conf" then permit
+	netbsd-break: permit
+	netbsd-getrlimit: permit
+	netbsd-__sigaction_sigtramp: permit
+	netbsd-ioctl: permit
+	netbsd-fsread: filename match "/usr/share/zoneinfo/*/*" then permit
+	netbsd-read: permit
+	netbsd-gettimeofday: permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/bin/start.boot" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/error_handler.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/heart.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/error_logger.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/gen_event.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/gen.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/proc_lib.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/application_controller.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/lists.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/gen_server.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/application.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/sys.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/application_master.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/kernel.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/supervisor.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/rpc.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/gb_trees.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/global.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/inet_db.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/inet_config.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/os.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/inet_udp.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/inet.beam" then permit
+	netbsd-socket: sockdom eq "AF_INET" and socktype eq "SOCK_DGRAM" then permit
+	netbsd-fcntl: permit
+	netbsd-setsockopt: permit
+	netbsd-bind: sockaddr eq "inet-[0.0.0.0]:0" then permit
+	netbsd-getsockname: permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/inet_parse.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/inet_gethost_native.beam" then permit
+	netbsd-pipe: permit
+	netbsd-__sigprocmask14: permit
+	netbsd-__vfork14: permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/io_lib_pretty.beam" then permit
+	netbsd-execve: filename eq "/opt/erlang/lib/erlang/erts-5.4.13/bin/child_setup" and argv eq "/opt/erlang/lib/erlang/erts-5.4.13/bin/child_setup . exec inet_gethost 4  3:63 7:1 8:0 -" then permit
+	netbsd-writev: permit
+	netbsd-poll: permit
+	netbsd-compat_16___sigreturn14: permit
+	netbsd-wait4: permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/erl_distribution.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/global_group.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/net_kernel.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/file_server.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/old_file_server.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/code.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/code_server.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/code_aux.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/packages.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/gb_sets.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/ets.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/filename.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/lists_sort.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib" then permit
+	netbsd-fstatvfs1: permit
+	netbsd-lseek: permit
+	netbsd-getdents: permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/appmon-2.1.5/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/asn1-1.4.4.9/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/compiler-4.3.12/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/cosEvent-2.1/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/cosEventDomain-1.1/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/cosFileTransfer-1.1.2/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/cosNotification-1.1.2/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/cosProperty-1.1.1/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/cosTime-1.1/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/cosTransactions-1.2/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/crypto-1.4/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/debugger-3.0.1/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/edoc-0.6.8/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/erl_interface-3.5.5" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/et-1.0/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/gs-1.5.4/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/hipe-3.5.5/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/ic-4.2.9/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/inets-4.7.2/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/megaco-3.3/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/mnemosyne-1.2.5.1/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/mnesia-4.2.5/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/mnesia_session-1.1.5/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/observer-0.9.6.2/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/orber-3.6.2/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/os_mon-2.0/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/otp_mibs-1.0.4/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/parsetools-1.3.2/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/pman-2.5.2/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/runtime_tools-1.5.1.1/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/sasl-2.1.1/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/snmp-4.7.1/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/ssh-0.9.1/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/ssl-3.0.11/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/syntax_tools-1.4.3/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/toolbar-1.2.1/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/tools-2.4.7/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/tv-2.1.2/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/webtool-0.8.2/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/xmerl-1.0.3/ebin" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/user_sup.beam" then permit
+	netbsd-__getcwd: permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/supervisor_bridge.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/user.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/kernel_config.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/queue.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/error_logger_tty_h.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/c.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/file.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/erl_eval.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/orddict.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/kernel-2.10.13/ebin/file_io_server.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/io.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/io_lib.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/io_lib_format.beam" then permit
+	netbsd-fsread: filename eq "/opt/erlang/lib/erlang/lib/stdlib-1.13.12/ebin/erl_scan.beam" then permit
+	netbsd-fsread: filename match "/tmp/*/wrapper.beam" then permit
+	netbsd-fsread: filename match "/tmp/*/model.beam" then permit
+	netbsd-fsread: filename match "/tmp/*/student.beam" then permit
+	netbsd-write: permit
+	netbsd-exit: permit
+

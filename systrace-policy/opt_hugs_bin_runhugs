@@ -1,0 +1,70 @@
+Policy: /opt/hugs/bin/runhugs, Emulation: netbsd
+	netbsd-mmap: permit
+	netbsd-fsread: filename eq "/etc/ld.so.conf" then permit
+	netbsd-__fstat13: permit
+	netbsd-close: permit
+	netbsd-munmap: permit
+	netbsd-fsread: filename match "/<non-existent filename>: *" then permit
+ 	netbsd-fsread: filename match "/lib/libtermcap.so.*" then permit
+ 	netbsd-__sysctl: permit
+ 	netbsd-fsread: filename match "/lib/libm387.so.*" then permit
+ 	netbsd-fsread: filename match "/lib/libm.so.*" then permit
+ 	netbsd-fsread: filename match "/lib/libc.so.*" then permit
+ 	netbsd-issetugid: permit
+ 	netbsd-fsread: filename match "/usr/share/locale/*/LC_CTYPE" then permit
+	netbsd-fsread: filename eq "/etc/malloc.conf" then permit
+	netbsd-break: permit
+	netbsd-lseek: permit
+	netbsd-read: permit
+	netbsd-__sigprocmask14: permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/Prelude.hs" then permit
+	netbsd-fsread: filename eq "/opt" then permit
+	netbsd-fsread: filename eq "/opt/hugs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Prelude.hs" then permit
+	netbsd-__sigaction_sigtramp: permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/Dynamic.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Dynamic.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/IOExts.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/IORef.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/IO.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Maybe.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Typeable.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/ConcBase.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/Array.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/List.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Word.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Int.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Either.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/HashTable.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Control/Monad.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Control" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/IOArray.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/IORef.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Char.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Bits.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Tuple.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/Bits.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/Char.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/Int.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/Numeric.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Ratio.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Ix.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/Word.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/System/IO/Error.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/System" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/System/IO" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/Ptr.hs" then permit
+	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/System.hs" then permit
+	netbsd-fsread: filename match "/tmp/*/wrapper.hs" then permit
+	netbsd-__getcwd: permit
+	netbsd-fsread: filename match "/tmp/*/Student.hs" then permit
+	netbsd-fsread: filename match "/tmp/*/Model.hs" then permit
+	netbsd-ioctl: permit
+	netbsd-write: permit
+	netbsd-exit: permit
+
