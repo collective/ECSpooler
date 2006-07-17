@@ -9,8 +9,11 @@
 import os, sys, time, signal, socket, xmlrpclib, getopt
 import logging
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__),  '..', 'lib'))
-import config
+#sys.path.insert(0, os.path.join(os.path.dirname(__file__),  '..', 'lib'))
+#import config
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from lib import *
 
 def _startSpooler(host, port, pwdFile):
     """
@@ -28,7 +31,7 @@ def _startSpooler(host, port, pwdFile):
 
     if cpid == 0:
         # child process
-        import Spooler
+        #import Spooler
 
         spooler = Spooler.Spooler(host, int(port), pwdFile)
         spooler.start()

@@ -1,4 +1,4 @@
- #!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # $Id$
 #
@@ -16,9 +16,12 @@ import os, sys, time, socket, xmlrpclib
 import logging
 import getopt
 
+from types import IntType
+
 # set path for backend classes
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..',  'lib'))
-import config
+#sys.path.insert(0, os.path.join(os.path.dirname(__file__),  '..', 'lib'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from lib import *
 
 MAX_TRIALS = 15
 BACKEND_HOST = socket.getfqdn()
@@ -49,7 +52,7 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
         if backend:
             print 'name=%s-%s' % (backend.id, backend.version)
             print 'port=%d' % p
-            backend.start()
+            print backend.start()
         else:
             print 'Finally failed. See log for more information.'
 
@@ -66,8 +69,9 @@ def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost,
     """
     
     # put together the backend module and class name using backendId
-    moduleName = '%sBackend' % \
-        (backendId.lower()[0].upper() + backendId.lower()[1:])
+    moduleName = '%s' % \
+        backendId
+        #(backendId.lower()[0].upper() + backendId.lower()[1:])
     
 
     for i in range(backendPort, backendPort + MAX_TRIALS, 1):
@@ -75,13 +79,15 @@ def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost,
         # get a instance, e.g., PythonBackend
         # FIXME: use spooler instead of capeserver
         instanceCreateStmt = \
-        "backend = %s.%s({ \
+        "backend = %s({ \
                     'host': '%s', \
                     'port': %d, \
                     'capeserver': 'http://%s:%d', \
                     'srv_auth': %s})" \
-                % (moduleName, moduleName, backendHost, i, \
+                % (moduleName, backendHost, i, \
                    spoolerHost, spoolerPort, repr(spoolerAuth),)
+                
+        #print instanceCreateStmt
                    
         retval = _tryGetBackendInstance(moduleName, instanceCreateStmt)
         
@@ -110,7 +116,7 @@ def _tryGetBackendInstance(moduleName, instanceCreateStmt):
         logging.debug('Trying to create instance of %s' % moduleName)
         #logging.debug(instanceCreateStmt)
         # e.g. import PythonBackend.PythonBackend
-        exec('import %s' % (moduleName,))
+        #exec('import %s' % (moduleName,))
         exec(instanceCreateStmt)
 
         return backend
