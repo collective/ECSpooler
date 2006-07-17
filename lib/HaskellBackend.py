@@ -5,18 +5,17 @@
 #
 # This file is part of ECSpooler.
 
-import sys, os, re, popen2, tempfile
-import threading
+import sys, os, re
 import logging
 
-from types import StringType
+from types import StringType, UnicodeType
 
 # local imports
-from data import *
-from util.utils import *
+#from data import *
+#from util.utils import *
 
 from util.BackendSchema import TestEnvironment, RepeatField, InputField, Schema
-from AbstractSimpleBackend import AbstractSimpleBackend
+from AbstractProgrammingBackend import AbstractProgrammingBackend
 
 INTERPRETER = '/opt/hugs/bin/runhugs'
 # INTERPRETER_WITH_LIB_PATH runhugs -P"$HOME/lib:" Echo.hs
@@ -48,7 +47,7 @@ test_ispermutation (head:tail) list2
     | otherwise = False
 """
 
-TEMPLATE_SEMANTIC = \
+TEMPLATE_MODULE_MAIN_WRAPPER = \
 """module Main where
 import Model
 import Student
@@ -64,15 +63,15 @@ o2 = Student.${testData}
 main = putStr(\"isEqual=\" ++ show(test (o1) (o2)) ++ \";;expected=\" ++ show(o1) ++ \";;received=\" ++ show(o2))
 """
 
-TEMPLATE_SYNTAX = \
+TEMPLATE_MODULE_MAIN_SYNTAX = \
 """module Main where
 
-${studentSolution}
+${SOURCE}
    
 main = putStr(\"\")
 """
 
-TEMPLATE_MODULE= \
+TEMPLATE_DEFAULT_MODULE= \
 """module %s where
 %s
 """
@@ -119,8 +118,8 @@ tests = Schema((
             label = 'Simple',
             description = 'Exact matching results are allowed.',
             test = TEST_SIMPLE,
-            syntax = TEMPLATE_SYNTAX,
-            semantic = TEMPLATE_SEMANTIC,
+            syntax = TEMPLATE_MODULE_MAIN_SYNTAX,
+            semantic = TEMPLATE_MODULE_MAIN_WRAPPER,
             lineNumberOffset = 2,
             compiler = INTERPRETER,
             interpreter = INTERPRETER,
@@ -131,15 +130,15 @@ tests = Schema((
             label = 'Permutation',
             description = 'Permutations are allowed.',
             test = TEST_PERM,
-            syntax = TEMPLATE_SYNTAX,
-            semantic = TEMPLATE_SEMANTIC,
+            syntax = TEMPLATE_MODULE_MAIN_SYNTAX,
+            semantic = TEMPLATE_MODULE_MAIN_WRAPPER,
             lineNumberOffset = 2,
             compiler = INTERPRETER,
             interpreter = INTERPRETER,
         ),
     ))
 
-class HaskellBackend(AbstractSimpleBackend):
+class HaskellBackend(AbstractProgrammingBackend):
     """
     A simple checker class for checking Haskell programs by comparing
     student and model solution on given test data.
@@ -185,45 +184,45 @@ class HaskellBackend(AbstractSimpleBackend):
         Checks semantic of a Haskell programs.
         @return a BackendResult object with result code and value
         """
-        # 1. get model solution and student's submission
-        modelSolution = job['modelSolution']
-        studentSolution = job['studentSolution']
 
-        assert modelSolution and type(modelSolution) == StringType, \
-            "Semantic check requires valid 'model solution' (%s)" % \
-            modelSolution
-
-        assert studentSolution and type(studentSolution) == StringType, \
-            "Semantic check requires valid 'student solution' (%s)" % \
-            studentSolution
-
-        modelSolution = TEMPLATE_MODULE % ('Model', modelSolution)
-        studentSolution = TEMPLATE_MODULE % ('Student', studentSolution)
-
-        # write model solution and answer files
-        model = self._writeModule('Model', modelSolution, '.hs', job['id'])
-        student = self._writeModule('Student', studentSolution, '.hs', job['id'])
-
-        # 2. get all test data to iterate through them
-        #repeatFields = self.schema.filterFields(__name__='testData')
+        # get all test data and iterate through them
         repeatFields = self.schema.filterFields(type='RepeatField')
         
-        repeatFields and len(repeatFields) == 1, \
-            'None or more than one RepeatField found.'
+        assert repeatFields and len(repeatFields) == 1, \
+            "None or more than one field of type 'RepeatField' found."
         
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
 
-        # 3. define return values
-        feedback = ''
-        solved = 1 # 1 means testing was successful
-
         if len(self._getTests(job)) == 0:
             msg = 'No test specification found.'
             logging.warn(msg)
-            return(0, msg)
+            #return(0, msg)
+            return
 
-        # 4. run selected test specifications
+        # we have some test data -> lets start the evaluation
+        # get model solution and student's submission
+        modelSolution = job['modelSolution']
+        studentSolution = job['studentSolution']
+
+        assert modelSolution and type(modelSolution) in (StringType,
+                                                         UnicodeType), \
+            "Semantic check requires valid 'model solution' (%s)" % \
+            modelSolution
+
+        assert studentSolution and type(studentSolution) in (StringType,
+                                                             UnicodeType), \
+            "Semantic check requires valid 'student solution' (%s)" % \
+            studentSolution
+
+        modelSolution = TEMPLATE_DEFAULT_MODULE % ('Model', modelSolution)
+        studentSolution = TEMPLATE_DEFAULT_MODULE % ('Student', studentSolution)
+
+        # define return values
+        feedback = ''
+        solved = 1 # 1 means testing was successful
+
+        # run selected test specifications
         for test in self._getTests(job):
 
             if solved == 0: break
@@ -234,20 +233,24 @@ class HaskellBackend(AbstractSimpleBackend):
             # get the interpreter
             interpreter = test.interpreter
            
-            # 4.1. get wrapper code
+            # write model solution and student solutions to file
+            model = self._writeModule('Model', modelSolution, '.hs', job['id'], test.encoding)
+            student = self._writeModule('Student', studentSolution, '.hs', job['id'], test.encoding)
+
+            # get wrapper code
             src = test.semantic
             
-            # 4.2. get values for all other input fields from schema which are 
+            # get values for all other input fields from schema which are 
             # available in the job data
             for field in self.schema.filterFields(type='InputField'):
                 if job.has_key(field.getName()):
                     repl = job[field.getName()]
                     src = re.sub('\$\{%s\}' % field.getName(), repl, src)
 
-            # 4.3 set test function
+            # set test function
             src = re.sub('\$\{testFunction\}', test.test, src)
 
-            # 4.4. run with all test data
+            # run with all test data
             for t in testdata:
                 # and now add repeatable data values
                 wrapper = re.sub('\$\{%s\}' % repeatField.getName(), t, src)
@@ -257,8 +260,17 @@ class HaskellBackend(AbstractSimpleBackend):
                                  
                 # execute wrapper code in haskell interpreter
                 try:
+                    # write module for wrapper
+                    wrapperModule = self._writeModule('wrapper', wrapper, 
+                                                      self.srcFileSuffix, 
+                                                      job['id'],
+                                                      test.encoding)
+
+                    # execute
                     exitcode, result = \
-                        self._runHaskell(interpreter, wrapper, job['id'])
+                        self._runInterpreter(interpreter, 
+                                    os.path.dirname(wrapperModule['file']),
+                                    os.path.basename(wrapperModule['file']))
 
                     # remove all special characters written by runhugs/haskell 
                     result = re.sub(REGEX_RUNHUGS_SPECIALS, '', result)
@@ -310,16 +322,3 @@ class HaskellBackend(AbstractSimpleBackend):
             feedback = '\nYour submission passed all tests.'
 
         return (solved, feedback)
-
-
-    def _runHaskell(self, intepreter, source, jobID):
-        """
-        @see _runInterpreter in class AbstractSimpleBackend
-        """
-        # write module for wrapper
-        wrapperModule = self._writeModule('wrapper', source, 
-                                     self.srcFileSuffix, jobID)
-
-        return self._runInterpreter(intepreter, 
-                                    os.path.dirname(wrapperModule['file']),
-                                    os.path.basename(wrapperModule['file']))

@@ -9,7 +9,7 @@ import os, sys, re, popen2, tempfile, thread, threading, signal
 import socket, xmlrpclib
 import logging
 
-from types import StringType, IntType, DictionaryType
+from types import StringType, UnicodeType, IntType, DictionaryType
 
 # local imports
 from AbstractServer import AbstractServer
@@ -57,7 +57,7 @@ class AbstractBackend(AbstractServer):
         assert self.testSchema != None, \
             'A test schema is required for this backend'
         
-        assert self.spooler and type(self.spooler) == StringType, \
+        assert self.spooler and type(self.spooler) in (StringType, UnicodeType), \
             "Backend requires a correct 'spooler' option."
 
         #assert self.auth and type(self.auth) == type({}), \
@@ -125,8 +125,10 @@ class AbstractBackend(AbstractServer):
         
         if not registered:
             logging.error("Can't add backend to spooler")
-            os._exit(1)
+            #os._exit(1)
             
+        return registered
+
     
     def _manageBeforeStop(self):
         """
@@ -272,7 +274,7 @@ class AbstractBackend(AbstractServer):
             # not tests selected by the user, taking all available
             result = self.testSchema.fields()
             
-        logging.debug('Following tests will be used %s: ' % result)
+        #logging.debug('Following tests will be used %s: ' % result)
         return result
 
 

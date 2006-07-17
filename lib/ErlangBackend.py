@@ -9,14 +9,14 @@ import sys, os, re, popen2, tempfile
 import threading
 import logging
 
-from types import StringType
+from types import StringType, UnicodeType
 
 # local imports
 from data import *
 from util.utils import *
 
 from util.BackendSchema import TestEnvironment, RepeatField, InputField, Schema
-from AbstractSimpleBackend import AbstractSimpleBackend, EX_OK
+from AbstractProgrammingBackend import AbstractProgrammingBackend, EX_OK
 
 TEST_SIMPLE = \
 """
@@ -107,7 +107,7 @@ tests = Schema((
         ),
     ))
 
-class ErlangBackend(AbstractSimpleBackend):
+class ErlangBackend(AbstractProgrammingBackend):
     """
     A simple checker class for checking Haskell programs by comparing
     student and model solution on given test data.
@@ -127,7 +127,7 @@ class ErlangBackend(AbstractSimpleBackend):
         """
         Replace module name in students' submission.
         
-        @see AbstractSimpleBackend._preProcessCheckSyntax
+        @see AbstractProgrammingBackend._preProcessCheckSyntax
         @return modified source code and new module name
         """
 
@@ -164,38 +164,8 @@ class ErlangBackend(AbstractSimpleBackend):
         
         @return a BackendResult object with result code and value
         """
-        # 1. get model solution and student's submission
-        modelSolution = job['modelSolution']
-        studentSolution = job['studentSolution']
-
-        assert modelSolution and type(modelSolution) == StringType, \
-            "Semantic check requires valid 'model solution' (%s)" % \
-            modelSolution
-
-        assert studentSolution and type(studentSolution) == StringType, \
-            "Semantic check requires valid 'student solution' (%s)" % \
-            studentSolution
             
-        self._preProcessCheckSemantic(test, src)
-
-        # replace module name in model and student solution
-        modelSolution = re.sub('-module\((.*)\)\.', 
-                               '-module(model).', 
-                               modelSolution)
-
-        #studentSolution = re.sub('-module\((.*)\)\.', 
-        #                         '-module(student).', 
-        #                         studentSolution)
-
-        # write model solution in a file
-        model = self._writeModule('model', modelSolution, 
-                                  self.srcFileSuffix, job['id'])
-
-        #student = self._writeModule('student', studentSolution, 
-        #                            self.srcFileSuffix, job['id'])
-
-
-        # 2. get a repeat field and iterate through the corresponding data
+        # get the repeat field and iterate through the corresponding data
         #repeatFields = self.schema.filterFields(__name__='testData')
         repeatFields = self.schema.filterFields(type='RepeatField')
         
@@ -205,16 +175,30 @@ class ErlangBackend(AbstractSimpleBackend):
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
 
-        # 3. define return values
-        feedback = ''
-        solved = 1
-
         if len(self._getTests(job)) == 0:
             msg = 'No test specification found.'
             logging.warn(msg)
-            return(0, msg)
+            #return(0, msg)
+            # no test data found -> return None
+            return
 
-        # 4. run selected test specifications
+        # 1. get model solution and student's submission
+        modelSolution = job['modelSolution']
+        studentSolution = job['studentSolution']
+
+        assert modelSolution and type(modelSolution) in (StringType, UnicodeType), \
+            "Semantic check requires valid 'model solution' (%s)" % \
+            repr(modelSolution)
+
+        assert studentSolution and type(studentSolution) in (StringType, UnicodeType), \
+            "Semantic check requires valid 'student solution' (%s)" % \
+            repr(studentSolution)
+
+        # define return values
+        feedback = ''
+        solved = 1
+
+        # run selected test specifications
         for test in self._getTests(job):
 
             if solved == 0: break
@@ -225,12 +209,17 @@ class ErlangBackend(AbstractSimpleBackend):
             # get the compiler
             compiler = test.compiler
             
-            # FIXME: We expect that the student solution was already written 
-            #        and compiled in process_checkSyntax. That could cause some
-            #        problems. In case we have more than one test scenario
-            #        the written/compiled student solution corresponds to the 
-            #        last test scenario. Therefore we have to write and compile
-            #        it twice.
+            # FIXME: move the 're.sub' code to _preProcessCheckSyntax
+
+            # replace module name in model solution
+            modelSolution = re.sub('-module\((.*)\)\.', 
+                                   '-module(model).', 
+                                   modelSolution)
+
+            # write model solution to a file
+            model = self._writeModule('model', modelSolution, 
+                                  self.srcFileSuffix, job['id'],
+                                  test.encoding)
 
             # compile model solution
             exitcode, result = self._runInterpreter(compiler, 
@@ -238,13 +227,20 @@ class ErlangBackend(AbstractSimpleBackend):
                                              os.path.basename(model['file']))
             assert exitcode == EX_OK, 'Errors in model solution: %s' % result
              
-            # we have already written and compiled the student solution 
-            # in checkSynatx method
 
-            #exitcode, result = self._runInterpreter(compiler,
-            #                                 os.path.dirname(student['file']),
-            #                                 os.path.basename(student['file']))
-            #assert exitcode == EX_OK, 'Errors in student solution: %s' % result
+            # replace module name in student solution
+            studentSolution = re.sub('-module\((.*)\)\.', 
+                                     '-module(student).', 
+                                     studentSolution)
+            # write student's solution to a file
+            student = self._writeModule('student', studentSolution, 
+                                        self.srcFileSuffix, job['id'],
+                                        test.encoding)
+
+            exitcode, result = self._runInterpreter(compiler,
+                                             os.path.dirname(student['file']),
+                                             os.path.basename(student['file']))
+            assert exitcode == EX_OK, 'Errors in student solution: %s' % result
             
             # get the interpreter
             interpreter = test.interpreter
@@ -275,7 +271,8 @@ class ErlangBackend(AbstractSimpleBackend):
                 try:
                     # write module for wrapper
                     wrapperModule = self._writeModule('wrapper', wrapper, 
-                                                 self.srcFileSuffix, job['id'])
+                                                 self.srcFileSuffix, job['id'],
+                                                 test.encoding)
 
                     # compile the wrapper
                     exitcode, result = \

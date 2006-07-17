@@ -5,7 +5,7 @@
 #
 # This file is part of ECSpooler.
 
-from types import StringType, DictionaryType
+from types import StringType, UnicodeType, DictionaryType
 import logging, md5, shelve, time
 
 try:
@@ -63,9 +63,9 @@ class UserAuth(AuthorizationBackend):
             password = args.get("password")
         
             # do some parameter testing
-            assert username and type(username) == StringType, \
+            assert username and type(username) in (StringType, UnicodeType), \
                 "Missing or invalid 'username'"
-            assert password and type(password) == StringType, \
+            assert password and type(password) in (StringType, UnicodeType), \
                 "Missing or invalid 'password'"
 
             return self.authorize(username, password)
@@ -130,9 +130,9 @@ class UserAuthMD5(AuthorizationBackend):
             password = args.get("password")
         
             # do some parameter testing
-            assert username and type(username) == StringType, \
+            assert username and type(username) in (StringType, UnicodeType), \
                 "Missing or invalid 'username'"
-            assert password and type(password) == StringType, \
+            assert password and type(password) in (StringType, UnicodeType), \
                 "Missing or invalid 'password'"
 
             return self.authorize(username, password)

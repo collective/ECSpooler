@@ -8,14 +8,14 @@
 import sys, os, re, popen2, tempfile, threading
 import logging
 
-from types import StringType
+from types import StringType, UnicodeType
 
 # local imports
 from data import *
 from util.utils import *
 from util.BackendSchema import TestEnvironment, RepeatField, InputField, Schema
 
-from AbstractSimpleBackend import AbstractSimpleBackend
+from AbstractProgrammingBackend import AbstractProgrammingBackend
 
 
 #INTERPRETER = '-a -f ../.systrace/opt_python_bin_python /opt/python/bin/python'
@@ -94,7 +94,7 @@ tests = Schema((
         ),
     ))
 
-class PythonBackend(AbstractSimpleBackend):
+class PythonBackend(AbstractProgrammingBackend):
     """
     Backend for checking Python programs. This class is inherited 
     from AbstractFPBackend.
@@ -125,23 +125,7 @@ class PythonBackend(AbstractSimpleBackend):
         @return a BackendResult object with result code and value
         """
         
-        # 1. get model solution and student's submission
-        modelSolution = job['modelSolution']
-        studentSolution = job['studentSolution']
-
-        assert modelSolution and type(modelSolution) == StringType, \
-            "Semantic check requires valid 'model solution' (%s)" % \
-            modelSolution
-
-        assert studentSolution and type(studentSolution) == StringType, \
-            "Semantic check requires valid 'student solution' (%s)" % \
-            studentSolution
-
-        # write model solution and answer files
-        model = self._writeModule('Model', modelSolution, '.py', job['id'])
-        student = self._writeModule('Student', studentSolution, '.py', job['id'])
-
-        # 2. get all test data to iterate through them
+        # get all test data to iterate through them
         repeatFields = self.schema.filterFields(__name__='testData')
         
         assert repeatFields and len(repeatFields) == 1, \
@@ -150,16 +134,29 @@ class PythonBackend(AbstractSimpleBackend):
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
 
-        # 3. define return values
+        # define return values
         feedback = ''
         solved = 1 # 1 means testing was successful
 
         if len(self._getTests(job)) == 0:
             msg = 'No test specification found.'
             logging.warn(msg)
-            return(0, msg)
+            #return(0, msg)
+            return
 
-        # 4. run selected test specifications
+        # get model solution and student's submission
+        modelSolution = job['modelSolution']
+        studentSolution = job['studentSolution']
+
+        assert modelSolution and type(modelSolution) in (StringType, UnicodeType), \
+            "Semantic check requires valid 'model solution' (%s)" % \
+            repr(modelSolution)
+
+        assert studentSolution and type(studentSolution) in (StringType, UnicodeType), \
+            "Semantic check requires valid 'student solution' (%s)" % \
+            repr(studentSolution)
+
+        # run selected test specifications
         for test in self._getTests(job):
 
             if solved == 0: break
@@ -170,6 +167,10 @@ class PythonBackend(AbstractSimpleBackend):
             # get the interpreter
             interpreter = test.interpreter
            
+            # 4.0 write model solution and answer files
+            model = self._writeModule('Model', modelSolution, '.py', job['id'], test.encoding)
+            student = self._writeModule('Student', studentSolution, '.py', job['id'], test.encoding)
+
             # 4.1. get wrapper code
             src = test.semantic
             
@@ -193,16 +194,16 @@ class PythonBackend(AbstractSimpleBackend):
                                  
                 # execute wrapper code in interpreter
                 try:
-#                    (exitcode, response) = \
-#                        self._runPython(interpreter, wrapper, job['id'])
-#
-#                    assert type(response) == list, '%s (%s)' % (response, type(response))
-#    
-#                    result = ''.join(response)
-#                    assert type(result) == StringType, '%s (%s)' % (result, type(result))
-                    exitcode, result = \
-                        self._runPython(interpreter, wrapper, job['id'])
+                    wrapperModule = self._writeModule('wrapper', wrapper, 
+                                                      self.srcFileSuffix, 
+                                                      job['id'],
+                                                      test.encoding)
 
+                    exitcode, result = \
+                        self._runInterpreter(interpreter,
+                                    os.path.dirname(wrapperModule['file']),
+                                    os.path.basename(wrapperModule['file']))
+                    
                 except Exception, e:
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
@@ -247,19 +248,6 @@ class PythonBackend(AbstractSimpleBackend):
             feedback = '\nYour submission passed all tests.'
 
         return (solved, feedback)
-
-
-    def _runPython(self, intepreter, source, jobID):
-        """
-        @see _runInterpreter in class AbstractSimpleBackend
-        """
-        # write module for wrapper
-        wrapperModule = self._writeModule('wrapper', source, 
-                                     self.srcFileSuffix, jobID)
-
-        return self._runInterpreter(intepreter,
-                                    os.path.dirname(wrapperModule['file']),
-                                    os.path.basename(wrapperModule['file']))
 
 
 # -- some testing -------------------------------------------------------------

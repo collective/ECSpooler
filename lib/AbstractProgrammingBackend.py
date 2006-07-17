@@ -6,10 +6,10 @@
 # This file is part of ECSpooler.
 
 import sys, os, re, popen2, tempfile, threading, signal
-import socket, xmlrpclib, shutil
+import shutil
 import logging
 
-from types import StringType
+from types import StringType, UnicodeType
 
 from AbstractBackend import AbstractBackend
 from util import utils
@@ -21,10 +21,15 @@ try:
     EX_OK = os.EX_OK
 except AttributeError:
     EX_OK = 0
-
-class AbstractSimpleBackend(AbstractBackend):
+    
+try:
+    SIGKILL = signal.SIGKILL
+except AttributeError:
+    SIGKILL = 15
+    
+class AbstractProgrammingBackend(AbstractBackend):
     """
-    AbstractSimpleBackend is the basic class of all backends for
+    AbstractProgrammingBackend is the basic class of all backends for
     programming exercises.
     
     Backend implementations *should* be derived from this class and must
@@ -41,13 +46,14 @@ class AbstractSimpleBackend(AbstractBackend):
     
     # resourcestring
     PROCESS_WAIT_TIME = 10
+
    
     def process_execute(self, jobdata):
         """
         Executes a check job.
 
-        @param jobdata relevant job data, see CheckJob docu for details
-        @return CheckResult object or tupel consisting of result code and message
+        @param jobdata relevant job data, see class CheckJob for more details
+        @return CheckResult-object/tupel consisting of result code and message
         """
 
         try:
@@ -61,14 +67,18 @@ class AbstractSimpleBackend(AbstractBackend):
                 logging.debug('Invoking syntax check (%s).' % job.getId())
                 result = self.manage_checkSyntax(job)  #self.checkSyntax(job)
             
-                # FIXME: Maybe the rturned value should be of typ
-                #        CheckResult so we can use method isFailure
+                # FIXME: If the returned value is always of typ
+                #        CheckResult we could use isFailure!
                 #if not result.isFailure(): 
                 
                 if result and result[0] > 0: 
                     # invoke semantic check
                     logging.debug('Invoking semantic check (%s).' % job.getId())
-                    result = self.manage_checkSemantics(job)
+                    retval = self.manage_checkSemantics(job)
+                    
+                    # no return value == no test data and therefore no test resutls!
+                    if retval:
+                        result = retval
                 
             except Exception, e:
                 msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
@@ -91,11 +101,13 @@ class AbstractSimpleBackend(AbstractBackend):
         selected test scenarios.  The syntax check itself will be 
         done in process_checkSyntax.
         """
+        
         studentSolution = job['studentSolution']
         
-        assert studentSolution and type(studentSolution) == StringType, \
+        assert studentSolution and type(studentSolution) in (StringType, 
+                                                             UnicodeType), \
             "Syntax check requires a valid 'student solution' (%s)" % \
-            studentSolution
+            repr(studentSolution)
             
         # src = TEMPLATE_SYNTAX % (self._job["studentSolution"],)
             
@@ -130,7 +142,8 @@ class AbstractSimpleBackend(AbstractBackend):
                               
                 module = self._writeModule(mName, src, 
                                            self.srcFileSuffix, 
-                                           jobId)
+                                           jobId,
+                                           test.encoding)
                 
                 exitcode, result = \
                     self._runInterpreter(compiler, 
@@ -172,10 +185,10 @@ class AbstractSimpleBackend(AbstractBackend):
         result = ''
         
         if test.syntax:
-            result = re.sub('\$\{studentSolution\}', src, 
-                            test.syntax)
+            result = re.sub('\$\{SOURCE\}', src, test.syntax)
+            
         else:
-            result = studentSolution
+            result = src
 
         return result, None
 
@@ -196,17 +209,18 @@ class AbstractSimpleBackend(AbstractBackend):
         """
         studentSolution = job['studentSolution']
         
-        assert studentSolution and type(studentSolution) == StringType, \
+        assert studentSolution and type(studentSolution) in (StringType, 
+                                                             UnicodeType), \
             "Semantic check requires a valid 'student solution' (%s)" % \
-            studentSolution
+            repr(studentSolution)
 
         return self._process_checkSemantics(job)
 
 
     def _process_checkSemantics(self, job):
         # overwrite this method
-        raise NotImplementedError("Method _manage_checkSemantics must be "
-                                  "implemented by subclass")
+        raise NotImplementedError("Method _process_checkSemantics must be "
+                                  "implemented by a subclass")
 
 
     def _preProcessCheckSemantic(self, test, src, **kwargs):
@@ -214,8 +228,12 @@ class AbstractSimpleBackend(AbstractBackend):
         Pre process student's submissions and semantic check wrapper code. 
         Override this method if you need to reformat the wrapper code or 
         the student's submission. 
+
+        @param test
+        @param src
+        @return source and module name if needed
         """                                  
-        return src
+        return src, None
 
     
     def _postProcessCheckSemantic(self, test, message):
@@ -229,10 +247,10 @@ class AbstractSimpleBackend(AbstractBackend):
 
 
     # -- helper methods -------------------------------------------------------
-    def _writeModule(self, name, source, suffix='', dir=''):
+    def _writeModule(self, name, source, suffix='', dir='', encoding='utf-8'):
         """
-        Creates a new python module. Returns the module's name and
-        absolute path.
+        Creates a new module. Returns the module's name and
+        absolute path in a tuple object.
         
         @return a dictonary with keys module and file
         """
@@ -244,10 +262,11 @@ class AbstractSimpleBackend(AbstractBackend):
         fName = os.path.join(tempfile.gettempdir(), dir, name + suffix)
         
         # write file
-        utils.writeFile(source, fName)
+        utils.writeFile(source, fName, encoding)
+        
         # get modul name
-        #mName =  os.path.basename(fName).replace(suffix, '')
-        mName =  name
+        #mName = os.path.basename(fName).replace(suffix, '')
+        mName = name
         
         return {'module':mName, 'file':fName}
 
@@ -280,7 +299,9 @@ class AbstractSimpleBackend(AbstractBackend):
         
         # change dir to current job dir
         os.chdir(dir)
-            
+        
+        #logging.debug('xxx: %s' % (interpreter % fName))    
+        
         handle = popen2.Popen4(interpreter % fName)
         handle.tochild.close()
         # we don't expect to send on stdin; instead we just wait for the 
@@ -288,10 +309,10 @@ class AbstractSimpleBackend(AbstractBackend):
 
         def interruptProcess():
             logging.debug('Aborting %s: %d -> %i' %
-                          (interpreter % fName, signal.SIGKILL, handle.pid))
+                          (interpreter % fName, SIGKILL, handle.pid))
 
             #os.kill(handle.pid, 15)
-            os.kill(handle.pid, signal.SIGKILL)
+            os.kill(handle.pid, SIGKILL)
 
         # end interruptProcess
 
@@ -301,7 +322,7 @@ class AbstractSimpleBackend(AbstractBackend):
         timer.cancel()
 
 
-        if exitcode == signal.SIGKILL:
+        if exitcode == SIGKILL:
             # process has been interrupted by timer
             #os.remove(fName)
             return (exitcode, ['Function call cancelled after %i seconds.' % 
@@ -330,9 +351,8 @@ class AbstractSimpleBackend(AbstractBackend):
             os.chdir(tempfile.gettempdir())
 
             path = os.path.join(tempfile.gettempdir(), dir)
-            # delete an entire directory tree
-            # FIXME: 
-            #shutil.rmtree(path)
+            # delete the entire directory tree
+            shutil.rmtree(path)
 
         except Exception, e:
             logging.error('Internal error during _cleanup: %s: %s' % \

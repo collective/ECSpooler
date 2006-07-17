@@ -8,7 +8,7 @@ import os, time, random, md5, thread, threading, signal
 import socket, xmlrpclib
 import logging
 
-from types import IntType, StringType
+from types import IntType, StringType, UnicodeType
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 # local imports
@@ -27,13 +27,13 @@ class AbstractServer:
         self._srvID = \
             md5.md5(repr(random.Random().random())).hexdigest()
 
-        self._classNAME = self.__class__.__name__
+        self._className = self.__class__.__name__
 
-        assert host and type(host) == StringType, \
-            "%s requires a correct 'host' option." % self._classNAME
+        assert host and type(host) in (StringType, UnicodeType), \
+            "%s requires a correct 'host' option." % self._className
 
         assert port and type(port) == IntType, \
-            "%s requires a correct 'port' option." % self._classNAME
+            "%s requires a correct 'port' option." % self._className
 
         # set class varia
         self.host = host
@@ -62,45 +62,48 @@ class AbstractServer:
         The main thread simply sleeps so that it can respond to signals.
         """
         
-        self._manageBeforeStart()
+        if self._manageBeforeStart():
 
-        logging.info('Starting server thread (%s)...' % self._classNAME)
-        self._serverThread = threading.Thread(target=self._XMLRPCThread)
-        self._serverThread.setDaemon(1)
-        self._serverThread.start()
-
-        try:
-            signal.signal(signal.SIGTERM, self._stop)
-            #signal.signal(signal.SIGHUP, self._reconfig)
-        except AttributeError, aerr:
-            logging.warn('Maybe signal.SIGTERM is not defined - skipping.')
-
-        
-        if os.name == 'nt':
+            logging.info('Starting server thread (%s)...' % self._className)
+            self._serverThread = threading.Thread(target=self._XMLRPCThread)
+            self._serverThread.setDaemon(1)
+            self._serverThread.start()
+    
             try:
-                signal.signal(signal.SIGBREAK, signal.default_int_handler)
+                signal.signal(signal.SIGTERM, self._stop)
+                #signal.signal(signal.SIGHUP, self._reconfig)
             except AttributeError, aerr:
-                logging.warn('Maybe signal.SIGBREAK is not defined - skipping.')
+                logging.warn('Maybe signal.SIGTERM is not defined - skipping.')
+    
+            
+            if os.name == 'nt':
+                try:
+                    signal.signal(signal.SIGBREAK, signal.default_int_handler)
+                except AttributeError, aerr:
+                    logging.warn('Maybe signal.SIGBREAK is not defined - skipping.')
+    
+            try:
+                while 1:
+                    time.sleep(0.1)
+                #end while
+            except KeyboardInterrupt, ki:
+                logging.debug('Receiving keyboard interrupt.')
+                self._stop(signal.SIGTERM, None)
 
-        try:
-            while 1:
-                time.sleep(0.1)
-            #end while
-        except KeyboardInterrupt, ki:
-            logging.debug('Receiving keyboard interrupt.')
-            self._stop(signal.SIGTERM, None)
+        else:
+          return "Couldn't start server thread. See log for more details."
 
 
     def _stop(self, signal, stack):
         """
         """
         logging.debug('Receiving signal %s, shutting down (%s).' % 
-                       (signal, self._classNAME))
+                       (signal, self._className))
 
         self._manageBeforeStop()
 
         # stop server thread
-        logging.info('Stopping server thread (%s)...' % self._classNAME)
+        logging.info('Stopping server thread (%s)...' % self._className)
         self._server.server_close()
         
         os._exit(0)

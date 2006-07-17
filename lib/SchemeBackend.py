@@ -5,20 +5,19 @@
 #
 # This file is part of ECSpooler.
 
-import sys, os, re, popen2, tempfile
-import threading
+import sys, os, re
 import logging
 
-from types import StringType
+from types import StringType, UnicodeType
 
 # local imports
-from data import *
-from util.utils import *
+#from data import *
+#from util.utils import *
 
 from util.BackendSchema import TestEnvironment, RepeatField, InputField, Schema
-from AbstractSimpleBackend import AbstractSimpleBackend
+from AbstractProgrammingBackend import AbstractProgrammingBackend
 
-INTERPRETER = ''
+INTERPRETER = 'mzscheme -f %s -e -m -v "(main)"'
 
 TEST_SIMPLE = \
 """
@@ -62,8 +61,6 @@ TEMPLATE_MODULE= \
 (provide %s)
 %s)
 """
-
-REGEX_RUNHUGS_SPECIALS = 'Type checking\n?|Parsing\n?|[Parsing]*[Dependency analysis]*[Type checking]*[Compiling]*\x08 *'
 
 # input schema
 inputSchema = Schema((
@@ -124,9 +121,7 @@ tests = Schema((
         ),
     ))
 
-'mzscheme -f %s -e -m -v "(main)"'
-
-class SchemeBackend(AbstractSimpleBackend):
+class SchemeBackend(AbstractProgrammingBackend):
     """
     A simple checker class for checking Haskell programs by comparing
     student and model solution on given test data.
@@ -159,26 +154,8 @@ class SchemeBackend(AbstractSimpleBackend):
         Checks semantic of a Haskell programs.
         @return a BackendResult object with result code and value
         """
-        # 1. get model solution and student's submission
-        modelSolution = job['modelSolution']
-        studentSolution = job['studentSolution']
 
-        assert modelSolution and type(modelSolution) == StringType, \
-            "Semantic check requires valid 'model solution' (%s)" % \
-            modelSolution
-
-        assert studentSolution and type(studentSolution) == StringType, \
-            "Semantic check requires valid 'student solution' (%s)" % \
-            studentSolution
-
-        modelSolution = TEMPLATE_MODULE % ('Model', modelSolution)
-        studentSolution = TEMPLATE_MODULE % ('Student', studentSolution)
-
-        # write model solution and answer files
-        model = self._writeModule('Model', modelSolution, '.hs', job['id'])
-        student = self._writeModule('Student', studentSolution, '.hs', job['id'])
-
-        # 2. get all test data to iterate through them
+        # get all test data to iterate through them
         repeatFields = self.schema.filterFields(__name__='testData')
         
         assert repeatFields and len(repeatFields) == 1, \
@@ -187,11 +164,26 @@ class SchemeBackend(AbstractSimpleBackend):
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
 
-        # 3. define return values
+        # get model solution and student's submission
+        modelSolution = job['modelSolution']
+        studentSolution = job['studentSolution']
+
+        assert modelSolution and type(modelSolution) in (StringType, UnicodeType), \
+            "Semantic check requires valid 'model solution' (%s)" % \
+            repr(modelSolution)
+
+        assert studentSolution and type(studentSolution) in (StringType, UnicodeType), \
+            "Semantic check requires valid 'student solution' (%s)" % \
+            repr(studentSolution)
+
+        modelSolution = TEMPLATE_MODULE % ('Model', modelSolution)
+        studentSolution = TEMPLATE_MODULE % ('Student', studentSolution)
+
+        # define return values
         feedback = ''
         solved = 1 # 1 means testing was successful
 
-        # 4. run selected test specifications
+        # run selected test specifications
         for test in self._getTests(job):
 
             if solved == 0: break
@@ -202,6 +194,14 @@ class SchemeBackend(AbstractSimpleBackend):
             # get the interpreter
             interpreter = test.interpreter
            
+            # 4.0 write model solution and answer files
+            self._writeModule('Model', modelSolution, self.srcFileSuffix, 
+                              job['id'], test.encoding)
+
+            self._writeModule('Student', studentSolution, self.srcFileSuffix, 
+                              job['id'], test.encoding)
+    
+
             # 4.1. get wrapper code
             src = test.semantic
             
@@ -225,12 +225,16 @@ class SchemeBackend(AbstractSimpleBackend):
                                  
                 # execute wrapper code in haskell interpreter
                 try:
-                    exitcode, result = \
-                        self._runHaskell(interpreter, wrapper, job['id'])
+                    wrapperModule = self._writeModule('wrapper', wrapper, 
+                                                      self.srcFileSuffix, 
+                                                      job['id'],
+                                                      test.encoding)
 
-                    # remove all special characters written by runhugs/haskell 
-                    result = re.sub(REGEX_RUNHUGS_SPECIALS, '', result)
-        
+                    exitcode, result = \
+                        self._runInterpreter(interpreter, 
+                                    os.path.dirname(wrapperModule['file']),
+                                    os.path.basename(wrapperModule['file']))
+
                 except Exception, e:
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
@@ -277,15 +281,3 @@ class SchemeBackend(AbstractSimpleBackend):
 
         return (solved, feedback)
 
-
-    def _runHaskell(self, intepreter, source, jobID):
-        """
-        @see _runInterpreter in class AbstractSimpleBackend
-        """
-        # write module for wrapper
-        wrapperModule = self._writeModule('wrapper', source, 
-                                     self.srcFileSuffix, jobID)
-
-        return self._runInterpreter(intepreter, 
-                                    os.path.dirname(wrapperModule['file']),
-                                    os.path.basename(wrapperModule['file']))

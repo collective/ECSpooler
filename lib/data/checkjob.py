@@ -5,7 +5,8 @@
 #
 # This file is part of ECSpooler.
 import time
-from data import exceptions
+#from lib.data import exceptions
+import exceptions
 
 class CheckJob:
     """

@@ -112,6 +112,7 @@ class TestEnvironment(Field):
         'semantic': None,
         'compiler': None,
         'interpreter': None,
+        'encoding': 'utf-8'
         })
 
 
@@ -600,10 +601,12 @@ if __name__ == "__main__":
 
     #print repeatField.getAccessor()('1')
     
-    field = simpleSchema.get('testData')
+    #field = simpleSchema.get('testData')
     
-    print field.getAllProperties()
+    #print field.getAllProperties()
     
+    print simpleSchema.fields()
+
+    simpleSchema.delField('modelSolution')
     
-    
-    
+    print simpleSchema.fields()

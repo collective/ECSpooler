@@ -1,5 +1,6 @@
 # -- some hepler methods -------------------------------------------------------
-import os, time, random, md5, socket, tempfile
+import os, sys, time, random, md5, socket, tempfile
+import logging, traceback
 
 def getUniqueModuleName(prefix=''):
     """ 
@@ -21,7 +22,7 @@ def getTempFileName(moduleName, suffix=''):
     return os.path.join(tempfile.gettempdir(), moduleName + suffix)
 
 
-def writeFile(content, filename):
+def writeFile(content, filename, encoding='utf-8'):
     """ 
     Writes a file with the given *absolute* filepath and content.
     @param content The content of this file.
@@ -37,15 +38,16 @@ def writeFile(content, filename):
         
         #file = open(filename, 'w+')
         file = open(filename, 'w')
-        file.write(content)
+        file.write(content.encode(encoding, 'replace'))
         file.write('\n')
     
         file.flush()
         file.close()
         
         return 1
-    except Exception, e:
+    except Exception:
         # FIXME: return error message or through a special exception
+        logging.error(''.join(traceback.format_exception(*sys.exc_info())))
         return 0
 
 
@@ -78,7 +80,6 @@ def delDir(path):
         return 1
         
     except Exception, e:
-        import traceback
         traceback.print_exc()
         # FIXME: return error message
         return e

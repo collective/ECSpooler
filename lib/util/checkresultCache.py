@@ -1,4 +1,4 @@
-from data.checkresult import CheckResult
+from lib.data.checkresult import CheckResult
 import time
 import thread
 

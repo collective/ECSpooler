@@ -6,9 +6,9 @@
 # This file is part of ECSpooler.
 import os, time, random, md5, thread, threading, signal
 import socket, xmlrpclib
-import logging
+import traceback , logging
 
-from types import IntType, StringType, TupleType, ListType
+from types import IntType, StringType, UnicodeType, TupleType, ListType
 #from SocketServer import ThreadingMixIn
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
@@ -34,8 +34,8 @@ class Spooler(AbstractServer):
         """
         AbstractServer.__init__(self, host, port)
 
-        assert pwdFile and type(pwdFile) == StringType,\
-            "%s requires a correct 'pwd_file' option." % self._classNAME
+        assert pwdFile and type(pwdFile) in (StringType, UnicodeType),\
+            "%s requires a correct 'pwd_file' option." % self._className
 
         # define dictionary for backends and lists for jobs and results
         self._backends = {}
@@ -71,17 +71,19 @@ class Spooler(AbstractServer):
         """
         """
         # start a new thread which runs the doqueue-method
-        logging.info('Starting scheduler thread (%s)...' % self._classNAME)
+        logging.info('Starting scheduler thread (%s)...' % self._className)
         self._doqueueThread = threading.Thread(target=self._doqueue)
         #self._doqueueThread.setDaemon(True)
         self._doqueueThread.start()
+        
+        return True
 
 
     def _manageBeforeStop(self):
         """
         """
         # stop doqueue thread
-        logging.info('Stopping scheduler thread (%s)...' % self._classNAME)
+        logging.info('Stopping scheduler thread (%s)...' % self._className)
         self._doqueueThreadExit = True
 
         while self._doqueueThread and self._doqueueThread.isAlive():
@@ -202,7 +204,6 @@ class Spooler(AbstractServer):
 
         try:
             
-            #logging.debug('jobdata: %s' % jobdata)
             job = checkjob.CheckJob(jobdata, createID=1)
             
             uid = job['backend']
@@ -427,6 +428,9 @@ class Spooler(AbstractServer):
         @param method name of method that will be invoked
         @return An tupel with code and result or an error message
         """
+        #logging.debug('xxx: %s' % repr(kw))
+        #logging.debug('xxx: %s' % repr(args))
+        
         s = xmlrpclib.Server(url)
         try:
             return getattr(s, method)({"srv_id": self._srvID}, *kw, **args)
@@ -436,7 +440,8 @@ class Spooler(AbstractServer):
         except Exception, e:
             msg = 'Server error: %s: %s (%s).' % (sys.exc_info()[0], e, method)
 
-            logging.error(msg) 
+            #logging.error(msg)
+            logging.error(''.join(traceback.format_exception(*sys.exc_info())))
             return msg
 
 

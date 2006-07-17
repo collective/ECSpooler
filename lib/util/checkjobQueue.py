@@ -1,4 +1,4 @@
-from data.checkjob import CheckJob
+from lib.data.checkjob import CheckJob
 import time
 
 # wfenske 2006-01-21
@@ -50,17 +50,17 @@ class CheckJobQueue(AbstractCheck):
             else:
                 key = repr(time.time())
 
-            cursor.execute("INSERT INTO %s "
-                           "(id,checker,studentSolution,modelSolution,"
-                           "comparator) "
-                           "VALUES (?,?,?,?,?)" % self.tableName,
-                           (key,
-                            data.get('backend'),
-                            data.get('studentSolution'),
-                            data.get('backendSolution'),
-                            data.get('testFunction')))
-            cursor.close()
-            connection.commit() # wfenske 2006-01-21
+#            cursor.execute("INSERT INTO %s "
+#                           "(id,checker,studentSolution,modelSolution,"
+#                           "comparator) "
+#                           "VALUES (?,?,?,?,?)" % self.tableName,
+#                           (key,
+#                            data.get('backend'),
+#                            data.get('studentSolution'),
+#                            data.get('backendSolution'),
+#                            data.get('testFunction')))
+#            cursor.close()
+#            connection.commit() # wfenske 2006-01-21
         
             self._queue.append(key)
             self._objs[key] = checkJob
@@ -73,25 +73,26 @@ class CheckJobQueue(AbstractCheck):
         Reads all queue items from the database into our cache
         """
         def fun(connection):
-            cursor = connection.cursor()
-            cursor.execute("SELECT id, checker, studentSolution, "
-                           "modelSolution, comparator "
-                           "FROM %s" % self.tableName)
-            rows = cursor.fetchall()
-            cursor.close()
-
-            for row in rows:
-                id = row["id"]
-                jobDict = {}
-                # fix of bug xy (2005-09-28, ma)
-                jobDict["id"] = str(id)
-                jobDict['backend'] = row['backend']
-                jobDict['studentSolution'] = row['studentSolution']
-                jobDict['modelSolution'] = row["modelSolution"]
-                jobDict['testFunction'] = row["testFunction"]
-                j = CheckJob(jobDict)
-                self._objs[id] = j
-                self._queue.append(id)
+#            cursor = connection.cursor()
+#            cursor.execute("SELECT id, checker, studentSolution, "
+#                           "modelSolution, comparator "
+#                           "FROM %s" % self.tableName)
+#            rows = cursor.fetchall()
+#            cursor.close()
+#
+#            for row in rows:
+#                id = row["id"]
+#                jobDict = {}
+#                # fix of bug xy (2005-09-28, ma)
+#                jobDict["id"] = str(id)
+#                jobDict['backend'] = row['backend']
+#                jobDict['studentSolution'] = row['studentSolution']
+#                jobDict['modelSolution'] = row["modelSolution"]
+#                jobDict['testFunction'] = row["testFunction"]
+#                j = CheckJob(jobDict)
+#                self._objs[id] = j
+#                self._queue.append(id)
+            pass
                 
         return self.withConnection(fun)
 
@@ -110,11 +111,11 @@ class CheckJobQueue(AbstractCheck):
             del(self._objs[key])
             self._queue.remove(key)
 
-            cursor = connection.cursor()
-            cursor.execute("DELETE FROM %s WHERE id=?" % self.tableName,
-                           (key,))
-            cursor.close()
-            connection.commit() # wfenske 2006-01-21
+#            cursor = connection.cursor()
+#            cursor.execute("DELETE FROM %s WHERE id=?" % self.tableName,
+#                           (key,))
+#            cursor.close()
+#            connection.commit() # wfenske 2006-01-21
             
             return val
         

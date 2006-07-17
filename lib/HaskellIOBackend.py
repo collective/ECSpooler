@@ -9,7 +9,7 @@ import sys, os, re, popen2, tempfile
 import threading
 import logging
 
-from types import StringType
+from types import StringType, UnicodeType
 
 # local imports
 from data import *
