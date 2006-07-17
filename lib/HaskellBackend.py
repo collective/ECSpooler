@@ -193,12 +193,16 @@ class HaskellBackend(AbstractProgrammingBackend):
         
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
+        
+        if len(testdata) == 0:
+            #msg = 'No test data found.'
+            #logging.warn(msg)
+            return
 
         if len(self._getTests(job)) == 0:
             msg = 'No test specification found.'
             logging.warn(msg)
-            #return(0, msg)
-            return
+            return(0, msg)
 
         # we have some test data -> lets start the evaluation
         # get model solution and student's submission

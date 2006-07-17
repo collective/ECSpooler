@@ -175,12 +175,15 @@ class ErlangBackend(AbstractProgrammingBackend):
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
 
+        if len(testdata) == 0:
+            #msg = 'No test data found.'
+            #logging.warn(msg)
+            return
+
         if len(self._getTests(job)) == 0:
             msg = 'No test specification found.'
             logging.warn(msg)
-            #return(0, msg)
-            # no test data found -> return None
-            return
+            return(0, msg)
 
         # 1. get model solution and student's submission
         modelSolution = job['modelSolution']

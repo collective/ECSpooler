@@ -164,6 +164,10 @@ class SchemeBackend(AbstractProgrammingBackend):
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
 
+        # define return values
+        feedback = ''
+        solved = 1 # 1 means testing was successful
+
         # get model solution and student's submission
         modelSolution = job['modelSolution']
         studentSolution = job['studentSolution']

@@ -134,15 +134,15 @@ class PythonBackend(AbstractProgrammingBackend):
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
 
-        # define return values
-        feedback = ''
-        solved = 1 # 1 means testing was successful
+        if len(testdata) == 0:
+            #msg = 'No test data found.'
+            #logging.warn(msg)
+            return
 
         if len(self._getTests(job)) == 0:
             msg = 'No test specification found.'
             logging.warn(msg)
-            #return(0, msg)
-            return
+            return(0, msg)
 
         # get model solution and student's submission
         modelSolution = job['modelSolution']
@@ -155,6 +155,10 @@ class PythonBackend(AbstractProgrammingBackend):
         assert studentSolution and type(studentSolution) in (StringType, UnicodeType), \
             "Semantic check requires valid 'student solution' (%s)" % \
             repr(studentSolution)
+
+        # define return values
+        feedback = ''
+        solved = 1 # 1 means testing was successful
 
         # run selected test specifications
         for test in self._getTests(job):
