@@ -303,6 +303,7 @@ class JavaBackend(AbstractProgrammingBackend):
             # 4.4. run with all test data
             for t in testdata:
                 # and now add repeatable data values
+                tStudent = None
                 wrapper = src
                 rfn = repeatField.getName()
                 for (k, ns) in (('model',   NS_MODEL),
@@ -312,6 +313,8 @@ class JavaBackend(AbstractProgrammingBackend):
                     realClass = "%s.%s" % (ns, compiled['%sClass' % k])
                     v = re.sub(r"\b%s\b" % compiled['modelClass'], realClass,
                                t)
+                    if k=='student':
+                        tStudent = v
                     # substitute the respective test data placeholder
                     # with the test data we just fixed up
                     wrapper = re.sub(r'\$\{%s_%s\}' % (k, rfn), v, wrapper)
@@ -374,7 +377,7 @@ class JavaBackend(AbstractProgrammingBackend):
                         # TODO: i18n
                         feedback += "\nYour submission failed. Test " \
                                     "case was: '%s' (%s)" \
-                                    % (t, test.getName())
+                                    % (tStudent, test.getName())
                         feedback += '\n\n  Expected result: %s\n  ' \
                                     'Received result: %s' \
                                     % (expected, received,)
