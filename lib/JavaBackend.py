@@ -24,9 +24,11 @@ def non_null_str(s):
 JAVA_PATH='/opt/diablo-jdk1.5.0_07/bin'
 COMPILER=os.path.join(JAVA_PATH, 'javac')
 INTERPRETER=os.path.join(JAVA_PATH, 'java')
+
+# The packages that the model and student solution will be put in
 NS_MODEL='ModelPackage'
 NS_STUDENT='StudentPackage'
-
+# The name of the wrapper class that performs the semantic check
 CLASS_SEMANTIC_CHECK='SemanticCheck'
 
 # The regular expression to extract the name of the *public* class
@@ -67,16 +69,16 @@ public class %s {
     ${testFunction}
     
     public static void main(String[] argv) {
-        Object exp   = (new %s.${modelClass}()).${testData};
-        Object rec   = (new %s.${studentClass}()).${testData};
-        Boolean eql  = new Boolean(test(exp, rec));
+        Object exp  = ${model_testData};
+        Object rec  = ${student_testData};
+        Boolean eql = new Boolean(test(exp, rec));
         
         System.out.println("isEqual=" + eql.toString()
                            + ";;expected=" + exp.toString()
                            + ";;received=" + rec.toString());
     }
 }
-''' % (CLASS_SEMANTIC_CHECK, NS_MODEL, NS_STUDENT)
+''' % (CLASS_SEMANTIC_CHECK)
 
 # input schema
 inputSchema = Schema((
@@ -301,10 +303,21 @@ class JavaBackend(AbstractProgrammingBackend):
             # 4.4. run with all test data
             for t in testdata:
                 # and now add repeatable data values
-                wrapper = re.sub('\$\{%s\}' % repeatField.getName(), t, src)
+                wrapper = src
+                rfn = repeatField.getName()
+                for (k, ns) in (('model',   NS_MODEL),
+                                ('student', NS_STUDENT)):
+                    # substitute the class name in the test data with
+                    # the actual, package-qualified class name
+                    realClass = "%s.%s" % (ns, compiled['%sClass' % k])
+                    v = re.sub(r"\b%s\b" % compiled['modelClass'], realClass,
+                               t)
+                    # substitute the respective test data placeholder
+                    # with the test data we just fixed up
+                    wrapper = re.sub(r'\$\{%s_%s\}' % (k, rfn), v, wrapper)
         
                 # remove all remaining placeholders
-                wrapper = re.sub('\$\{.*\}', '', wrapper)
+                wrapper = re.sub('\$\{[^\}]*\}', '', wrapper)
 
                 # compile and execute wrapper
                 try:
