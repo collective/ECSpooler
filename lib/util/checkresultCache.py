@@ -1,10 +1,17 @@
 from lib.data.checkresult import CheckResult
 import time
 import thread
+import logging
 
 # wfenske 2006-01-21
 from abstractCheck import AbstractCheck
 
+try:
+    from pysqlite2 import dbapi2 as sqlite
+except ImportError, ierr:
+    logging.warn('Module pysqlite2 not found!')
+    #raise ierr
+    sqlite = None
 
 class CheckResultCache(AbstractCheck):
     """
@@ -43,9 +50,12 @@ class CheckResultCache(AbstractCheck):
 
             cursor = connection.cursor()
             data = checkResult.getData()
-            cursor.execute("INSERT INTO %s (id,result,message) "
-                           "VALUES (?,?,?)" % self.tableName,
-                           (jobid, data[0], data[1]))
+            try:
+                cursor.execute("INSERT INTO %s (id,result,message) "
+                               "VALUES (?,?,?)" % self.tableName,
+                               (jobid, data[0], data[1]))
+            except sqlite.Warning:
+                pass
             cursor.close()
             connection.commit() # wfenske 2006-01-21
 
@@ -60,8 +70,11 @@ class CheckResultCache(AbstractCheck):
         """
         def fun(connection):
             cursor = connection.cursor()
-            cursor.execute("SELECT id, result, message "
-                           "FROM %s" % self.tableName)
+            try:
+                cursor.execute("SELECT id, result, message "
+                               "FROM %s" % self.tableName)
+            except sqlite.Warning:
+                pass
             rows = cursor.fetchall()
             cursor.close()
             
@@ -85,7 +98,10 @@ class CheckResultCache(AbstractCheck):
             self._results.clear()
 
             cursor = connection.cursor()
-            cursor.execute("DELETE FROM %s" % self.tableName)
+            try:
+                cursor.execute("DELETE FROM %s" % self.tableName)
+            except sqlite.Warning:
+                pass
             cursor.close()
             connection.commit() # wfenske 2006-01-21
             return obj
@@ -106,8 +122,12 @@ class CheckResultCache(AbstractCheck):
 
                 # delete CheckResult from database
                 cursor = connection.cursor()
-                cursor.execute("DELETE FROM %s WHERE id=?" % self.tableName,
-                               (id,))
+                try:
+                    cursor.execute("DELETE FROM %s WHERE id=?"
+                                   % self.tableName,
+                                   (id,))
+                except sqlite.Warning:
+                    pass
                 cursor.close()
                 connection.commit() # wfenske 2006-01-21
                 
