@@ -36,23 +36,23 @@ class AbstractCheck(object):
         
 
     def withConnection(self, fun):
-        def dictFactory(cursor, row):
-            d = {}
-            for idx, col in enumerate(cursor.description):
-                d[col[0]] = row[idx]
-            return d
-        
-        self.lock.acquire()
-        try:
-            connection = sqlite.connect(self.dbFile)
-            connection.row_factory = dictFactory
+        if sqlite is not None:
+            def dictFactory(cursor, row):
+                d = {}
+                for idx, col in enumerate(cursor.description):
+                    d[col[0]] = row[idx]
+                return d
+
+            self.lock.acquire()
             try:
-                return fun(connection)
-            finally:
-                connection.close()
-        finally:            
-            self.lock.release()
-        
+                connection = sqlite.connect(self.dbFile)
+                connection.row_factory = dictFactory
+                try:
+                    return fun(connection)
+                finally:
+                    connection.close()
+            finally:            
+                self.lock.release()
         
     def possiblyCreateTable(self):
         """
@@ -61,13 +61,19 @@ class AbstractCheck(object):
         """
         def fun(connection):            
             cursor = connection.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE TYPE='table'")
+            try:
+                cursor.execute("SELECT name FROM sqlite_master WHERE TYPE='table'")
+            except sqlite.Warning:
+                pass
             rows = cursor.fetchall()
             tableExists = len([row for row in rows
                                if row["name"] == self.tableName]) > 0
             if not tableExists:
-                cursor.execute("CREATE TABLE %s (%s)" % (self.tableName,
-                                                    self.tableSchema))
+                try:
+                    cursor.execute("CREATE TABLE %s (%s)" % (self.tableName,
+                                                             self.tableSchema))
+                except sqlite.Warning:
+                    pass
                 connection.commit()
             cursor.close()
         
