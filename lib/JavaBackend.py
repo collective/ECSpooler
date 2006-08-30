@@ -55,7 +55,8 @@ CLASS_NAME_RE=re.compile(r'^\s*(?:public\s+(?:(?:abstract|final|public|strictfp)
 
 TEST_SIMPLE = \
 """
-    public static boolean test(Object a, Object b) {
+    static boolean test(Object a, Object b)
+    {
         return a.equals(b);
     }
 """
@@ -63,14 +64,16 @@ TEST_SIMPLE = \
 # wrapper code
 TEMPLATE_SEMANTIC = \
 '''
-public class %s {
+public class %s
+{
     ${helpFunctions}
 
     ${testFunction}
     
-    public static void main(String[] argv) {
-        Object exp  = ${model_testData};
-        Object rec  = ${student_testData};
+    public static void main(String[] argv)
+    {
+        Object  exp = ${model_testData};
+        Object  rec = ${student_testData};
         Boolean eql = new Boolean(test(exp, rec));
         
         System.out.println("isEqual=" + eql.toString()
@@ -314,7 +317,15 @@ class JavaBackend(AbstractProgrammingBackend):
                     v = re.sub(r"\b%s\b" % compiled['modelClass'], realClass,
                                t)
                     if k=='student':
-                        tStudent = v
+                        # We use this for error reports.  It is like
+                        # the test data that we actually use, but
+                        # without the package qualifier.  After all,
+                        # the package is something we add and seeing
+                        # that in the error report might confuse the
+                        # student.
+                        tStudent = re.sub(r"\b%s\b" % compiled['modelClass'],
+                                          compiled['studentClass'],
+                                          t)
                     # substitute the respective test data placeholder
                     # with the test data we just fixed up
                     wrapper = re.sub(r'\$\{%s_%s\}' % (k, rfn), v, wrapper)
