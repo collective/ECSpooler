@@ -2,9 +2,9 @@
 
 Overview
 
-  ECSpooler is a Web service which provides the automatic assessment 
-  of submissions for ECAutoAssessmentBox. It manages a submission 
-  queue and several backends.
+  ECSpooler is a Python XML-RPC service which provides the automatic 
+  assessment of submissions for ECAutoAssessmentBox. It manages a 
+  submission queue and several backends.
 
 Download
 
@@ -14,4 +14,4 @@ Prerequisites
 
   * "Python":http://python.org
   
-  * "pysqlite 2.x":http://initd.org/tracker/pysqlite
+  
