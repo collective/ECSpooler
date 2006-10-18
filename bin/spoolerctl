@@ -1,10 +1,10 @@
 #! /bin/sh
 
-HOME=$(dirname $_)
-HOME=${HOME%%/bin}
+WORK_DIR=`dirname $0`
+WORK_DIR=${WORK_DIR%%/bin}
 
 PYTHON="python"
 
-SDCTL="$HOME/startup/spoolerctl.py"
+SDCTL="$WORK_DIR/startup/spoolerctl.py"
 
 exec "$PYTHON" "$SDCTL" "$@"

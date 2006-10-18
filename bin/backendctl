@@ -1,9 +1,10 @@
 #! /bin/sh
 
-HOME=$(dirname $_)
-HOME=${HOME%%/bin}
+WORK_DIR=`dirname $0`
+WORK_DIR=${WORK_DIR%%/bin}
 
 PYTHON="python"
-BDCTL="$HOME/startup/backendctl.py"
+
+BDCTL="$WORK_DIR/startup/backendctl.py"
 
 exec "$PYTHON" "$BDCTL" "$@"
