@@ -13,15 +13,15 @@ with entries about spooler server's host and port as well as base port
 for the backend. If a port is already in use, we will try another one.
 """
 import os, sys, time, socket, xmlrpclib
-import logging
+import traceback
 import getopt
+import logging
 
-from types import IntType
+# add parent directory to the system path
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
-# set path for backend classes
-#sys.path.insert(0, os.path.join(os.path.dirname(__file__),  '..', 'lib'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from lib import *
+from config import LOGLEVEL
+from backends import *
 
 MAX_TRIALS = 15
 BACKEND_HOST = socket.getfqdn()
@@ -33,7 +33,10 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
     """
     backendHost = BACKEND_HOST
     
-    print 'Starting backend %s on %s.........' % (backendId, backendHost)
+    exec 'id = %s.id' % (backendId,)
+    exec 'version = %s.version' % (backendId,)
+
+    print "Starting backend '%s %s (%s)' on %s........." % (backendId, version, id, backendHost)
 
     try:
         if sys.platform in ['unixware7']:
@@ -50,7 +53,7 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
                                      spoolerHost, spoolerPort, spoolerAuth)
         
         if backend:
-            print 'name=%s-%s' % (backend.id, backend.version)
+            #print 'name=%s-%s' % (backend.id, backend.version)
             print 'port=%d' % p
             print backend.start()
         else:
@@ -113,7 +116,7 @@ def _tryGetBackendInstance(moduleName, instanceCreateStmt):
     @return The backend instance or None if the instance couldn't be created.
     """
     try:
-        logging.debug('Trying to create instance of %s' % moduleName)
+        logging.debug("Trying to create instance of backend '%s'" % moduleName)
         #logging.debug(instanceCreateStmt)
         # e.g. import PythonBackend.PythonBackend
         #exec('import %s' % (moduleName,))
@@ -133,10 +136,14 @@ def _stopBackend(backendId, spoolerHost, spoolerPort, spoolerAuth):
     """
     backendHost = BACKEND_HOST
     
-    print 'Stopping backend %s on %s.........' % (backendId, backendHost)
+    exec 'id = %s.id' % (backendId,)
+    exec 'version = %s.version' % (backendId,)
 
+    print "Stopping backend '%s %s (%s)' on %s........." % (backendId, version, id, backendHost)
+
+    
     spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost, spoolerPort))
-    retval = spooler.stopBackend(spoolerAuth, backendId)
+    retval = spooler.stopBackend(spoolerAuth, id)
     
     if retval:
         if retval[0] == 0:
@@ -171,6 +178,7 @@ def authError(cmd):
 def main():
     """
     """
+
     try:
         opts, args = getopt.getopt(sys.argv[1:], "H:P:u:p:B:h", 
                                ["spoolerhost=", "spoolerport=", 
@@ -257,10 +265,9 @@ def main():
                 else:
                     print 'Unknown command %s' % cmd
                     usage()
-    
+                    
             except Exception, e:
-                if config.LOGLEVEL == logging.DEBUG:
-                    import traceback
+                if LOGLEVEL == logging.DEBUG:
                     traceback.print_exc()
                     #print type(e)     # the exception instance
                     #print e.args      # arguments stored in .args

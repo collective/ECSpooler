@@ -7,13 +7,14 @@
 # This file is part of ECSpooler.
 
 import os, sys, time, signal, socket, xmlrpclib, getopt
+import traceback
 import logging
 
-#sys.path.insert(0, os.path.join(os.path.dirname(__file__),  '..', 'lib'))
-#import config
+# add parent directory to the system path
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from lib import *
+from config import LOGLEVEL
+from lib.Spooler import Spooler
 
 def _startSpooler(host, port, pwdFile):
     """
@@ -32,8 +33,8 @@ def _startSpooler(host, port, pwdFile):
     if cpid == 0:
         # child process
         #import Spooler
-
-        spooler = Spooler.Spooler(host, int(port), pwdFile)
+        
+        spooler = Spooler(host, int(port), pwdFile)
         spooler.start()
     else:
         # parent process
@@ -44,18 +45,22 @@ def _startSpooler(host, port, pwdFile):
 def _stopSpooler(host, port, auth):
     """
     """
-    print "Stopping ECSpooler on %s port %d ........." % (host, port)
-    spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
-    pid = spooler.getStatus(auth)[1]['pid']
-    
     try:
-        # stops the spooler sending kill -15 process-id
-        os.kill(pid, signal.SIGTERM)         
-    except AttributeError, aerr:
-        logging.warn('os.kill and/or signal.SIGTERM not defined. '
-                      'Trying to stop spooler elsewhere .')
-        # FIXME:
-        #spooler.shutdown(auth)
+        print "Stopping ECSpooler on %s port %d ........." % (host, port)
+        spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
+        pid = spooler.getStatus(auth)[1]['pid']
+        
+        try:
+            # stops the spooler sending kill -15 process-id
+            os.kill(pid, signal.SIGTERM)         
+        except AttributeError:
+            logging.warn('os.kill and/or signal.SIGTERM not defined. '
+                          'Trying to stop spooler elsewhere.')
+            # FIXME:
+            #spooler.shutdown(auth)
+    except Exception, e: 
+        #print "Unable to stop ECSpooler on %s port %d" % (host, port)
+        pass
 
 
 def _getSpoolerStatus(host, port, auth):
@@ -142,31 +147,33 @@ def main():
     
                     elif command == 'restart':
                         _stopSpooler(host, port, auth)
-                        time.sleep(2)
+                        time.sleep(3)
                         _startSpooler(host, port, pwdFile)
     
                     elif command == 'status':
                         print _getSpoolerStatus(host, port, auth)
     
                     else:
-                        print 'Unknown command %s' % cmd
+                        print 'Unknown command %s' % command
                         usage()
 
         except (socket.error, xmlrpclib.Fault), exc:
-            if config.LOGLEVEL == logging.DEBUG:
-                import traceback
+            if LOGLEVEL == logging.DEBUG:
                 traceback.print_exc()
+                print type(exc)     # the exception instance
+                print exc.args      # arguments stored in .args
+                print exc           # __str__ allows args to printed directly
+                print sys.exc_info()[0]
 
             print "Server error: %s: %s" % (sys.exc_info()[0], exc)
 
         except Exception, e:
-            if config.LOGLEVEL == logging.DEBUG:
-                import traceback
+            if LOGLEVEL == logging.DEBUG:
                 traceback.print_exc()
-                #print type(e)     # the exception instance
-                #print e.args      # arguments stored in .args
-                #print e           # __str__ allows args to printed directly
-                #print sys.exc_info()[0]
+                print type(e)     # the exception instance
+                print e.args      # arguments stored in .args
+                print e           # __str__ allows args to printed directly
+                print sys.exc_info()[0]
             print "Error (%s): %s" % (sys.exc_info()[0], e)
 
 
