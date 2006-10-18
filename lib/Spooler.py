@@ -4,30 +4,37 @@
 # Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
-import os, time, random, md5, thread, threading, signal
-import socket, xmlrpclib
-import traceback , logging
+import os, sys, time, thread, threading
+import xmlrpclib
+import traceback
+import logging
 
-from types import IntType, StringType, UnicodeType, TupleType, ListType
+from types import StringType, UnicodeType, TupleType, ListType
 #from SocketServer import ThreadingMixIn
-from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
+#from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 # local imports
-from data import *
-from util import *
-from config import *
+#from config import 
+from lib.AbstractServer import AbstractServer
+from lib.data.BackendJob import BackendJob
+from lib.data.BackendResult import BackendResult
 
-from AbstractServer import AbstractServer
+from lib.util.auth import *
+from lib.util.SpoolerQueue import SpoolerQueue
+
+from config import JOB_QUEUE_STORAGE
+from config import RESULT_QUEUE_STORAGE
 
 
 class Spooler(AbstractServer):
     """
-    Spooler is the central class in the whole setup.
+    The Spooler manages incomming jobs and backends. Each job will be turned 
+    over to a backend.
     """
 
     # resourcestring
     ERROR_AUTH_FAILED = "Authorization failed"
-    DEFAULT_DOQUEUE_WAKEUP = 1 # 1000 ms
+    DEFAULT_DOQUEUE_WAKEUP = 2 # 1 == 1000 ms
 
     def __init__(self, host, port, pwdFile):
         """
@@ -35,15 +42,18 @@ class Spooler(AbstractServer):
         AbstractServer.__init__(self, host, port)
 
         assert pwdFile and type(pwdFile) in (StringType, UnicodeType),\
-            "%s requires a correct 'pwd_file' option." % self._className
+            "%s requires a correct 'pwd_file' option" % self._className
 
-        # define dictionary for backends and lists for jobs and results
+        # a dictionary for backends
         self._backends = {}
-        self._queue = checkjobQueue.CheckJobQueue()
-        self._results = checkresultCache.CheckResultCache()
+        # q queue to managing incomming jobs
+        self._queue = SpoolerQueue(JOB_QUEUE_STORAGE)
 
+        # a queue for managing backend results
+        self._results = SpoolerQueue(RESULT_QUEUE_STORAGE)
+        
         # using md5 encrypted passwords in file etc/passwd for authentification
-        self._auth = auth.UserAuthMD5(pwdFile)
+        self._auth = UserAuthMD5(pwdFile)
 
         # doqueue thread (we will use only one thread)
         self._doqueueThread = None
@@ -53,13 +63,14 @@ class Spooler(AbstractServer):
 
     def _registerFunctions(self):
         """
+        Register all methods/function which can be accessed from a client.
         """
         self._server.register_function(self.addBackend)
         self._server.register_function(self.removeBackend)
         self._server.register_function(self.stopBackend)
-        self._server.register_function(self.enqueue)
-        self._server.register_function(self.pollResults)
-        self._server.register_function(self.pollResult)
+        self._server.register_function(self.appendJob)
+        self._server.register_function(self.popResults)
+        self._server.register_function(self.popResult)
         self._server.register_function(self.getStatus)
         self._server.register_function(self.getBackends)
         self._server.register_function(self.getBackendStatus)
@@ -69,11 +80,11 @@ class Spooler(AbstractServer):
 
     def _manageBeforeStart(self):
         """
+        Starts a thread which checks the queue for new jobs.
         """
         # start a new thread which runs the doqueue-method
         logging.info('Starting scheduler thread (%s)...' % self._className)
         self._doqueueThread = threading.Thread(target=self._doqueue)
-        #self._doqueueThread.setDaemon(True)
         self._doqueueThread.start()
         
         return True
@@ -93,19 +104,20 @@ class Spooler(AbstractServer):
         
         logging.info('Stopping backends...')
         
-        # Make a copy of _backends because it will change during 
+        # We make a copy of _backends because it will change during 
         # iteration: backends call removeBackend in their shutdown method,
         # which will change _backends.
         backends = self._backends.copy()
         
-        for chk in backends.itervalues():
-             self._callChecker(chk['url'], 'shutdown')
+        for backend in backends.itervalues():
+             self._callBackend(backend['url'], 'shutdown')
 
 
     def stopBackend(self, authdata, uid):
-        """Stopping the backend with the given name by invoking the
+        """
+        Stopps the backend with the given name by invoking the
         shutdown method for this backend. The backend itself then 
-        invokes the removeBackend method.
+        invokes the removeBackend method in the spooler.
         
         @param authdata username and password for authentication
         @param id a backend's unique ID consisting of id and version information
@@ -113,23 +125,23 @@ class Spooler(AbstractServer):
             code == 0, stopping backend succeeded
             code != 0, stopping backend failed; msg contains further information
         """
-        if not self._auth.test(authdata, self._auth.ADD_CHECKER):
+        if not self._auth.test(authdata, STOP_BACKEND):
             return (-2, self.ERROR_AUTH_FAILED)
 
         if uid in self._backends:
             chk = self._backends[uid]
 
             logging.info("Stopping backend '%s' at '%s'" % (uid, chk['url']))
-            self._callChecker(chk["url"], "shutdown")
+            self._callBackend(chk["url"], "shutdown")
 
             return (0, '')
         else:
-            return (-1, "Backend '%s' is not registered." % uid)
+            return (-1, "Backend '%s' is not registered" % uid)
 
 
     def addBackend(self, authdata, id, name, version, xmlrpc_url):
         """
-        Add a backend to the spooler's list of available backends.
+        Adds a backend to the spooler's list of available backends.
 
         Each backend calls the spooler on being started, and tells 
         the server its id, name and its xmlrpc url. The server returns
@@ -138,26 +150,26 @@ class Spooler(AbstractServer):
         thus authorizes the request. Only the server to which the
         checker is attached can perform requests to this checker.
 
-        @return (code, msg) with
-            code == 0, addBackend succeeded; msg is a dentifying server-id
-            code != 0, addBackend failed; msg contains further information
+        @return a tuple of (code, msg) with
+            code == 0, succeeded; msg is the server-id
+            code != 0, failed; msg contains further information
         """
-        if not self._auth.test(authdata, self._auth.ADD_CHECKER):
+        if not self._auth.test(authdata, ADD_BACKEND):
             return (-2, self.ERROR_AUTH_FAILED)
 
-        # construct a new unique id consisting of id and version
-        uid = self._getUniqueId(id, version)
+        # construct the ID for this backend ng of id and version
+        backendId = self._getBackendId(id, version)
         
-        if uid in self._backends:
-            return (-1, "Backend '%s (%s)' is already registered." % 
-                        (name, uid))
+        if backendId in self._backends:
+            return (-1, "Backend '%s (%s)' is already registered" % 
+                        (name, backendId))
 
-        self._backends[uid] = {'id': id, 'name': name, 'version': version,
-                               'url': xmlrpc_url, 'current_job': 0}
+        self._backends[backendId] = {'id': id, 'name': name, 'version': version,
+                               'url': xmlrpc_url, 'isBusy': False}
 
-        logging.info("Backend '%s (%s) (%s)' added." % (name, uid, xmlrpc_url))
+        logging.info("Backend '%s %s (%s) (%s)' added" % (name, version, id, xmlrpc_url))
 
-        return (0, self._srvID)
+        return (0, self._srvId)
 
 
     def removeBackend(self, authdata, id, version):
@@ -172,10 +184,10 @@ class Spooler(AbstractServer):
             code == 0, removing backend succeeded
             code != 0, removing backend failed; msg contains further information
         """
-        if not self._auth.test(authdata, self._auth.ADD_CHECKER):
+        if not self._auth.test(authdata, REMOVE_BACKEND):
             return (-2, self.ERROR_AUTH_FAILED)
 
-        uid = self._getUniqueId(id, version)
+        uid = self._getBackendId(id, version)
 
         if uid in self._backends:
             backend = self._backends[uid]
@@ -185,12 +197,12 @@ class Spooler(AbstractServer):
 
             return (0, '')
         else:
-            return (-1, "Backend '%s' not found." % uid)
+            return (-1, "Backend '%s' not found" % uid)
 
 
-    def enqueue(self, authdata, jobdata):
+    def appendJob(self, authdata, data):
         """
-        Adds a CheckJob to the queue
+        Adds a new CheckJob to the queue
 
         @param authdata username and password for authentication
         @param jobdata relevant job data (see also class CheckJob)
@@ -199,72 +211,83 @@ class Spooler(AbstractServer):
             code != 0, enqueue failed and msg contains further information
         """
 
-        if not self._auth.test(authdata, self._auth.ENQUEUE):
+        if not self._auth.test(authdata, APPEND_JOB):
             return (-2, self.ERROR_AUTH_FAILED)
 
         try:
+            # create a new BackenJob instance
+            job = BackendJob(data)
+            # get the backend from the job
+            backenId = job['backend']
             
-            job = checkjob.CheckJob(jobdata, createID=1)
-            
-            uid = job['backend']
+            # if no backend with the backendId is currently registered to the
+            # spooler an appropriate message will be returned
+            if not backenId in self._backends.keys():
+                return (1, "No such backend: %s" % backenId)
 
-            if not uid in self._backends.keys():
-                return (1, "No such backend: %s" % uid)
-
-            # enqueue the job
-            logging.info("Enqueueing job %s" % job['id'])
+            # append the job
+            logging.info("Enqueueing job '%s'" % job.getId())
             self._queue.enqueue(job)
 
-            return (0, job['id'])
+            return (0, job.getId())
 
-        except exceptions.InvalidDataException, exc:
-            return (-1, "Invalid job data: %s (%s)" % 
-                        (repr(exc), repr(jobdata)))
-
-        logging.error('Internal error.')
-        return (-10, 'Internal error.')
+        except Exception, e:
+            msg = 'Invalid or insufficient data: %s: %s' % (sys.exc_info()[0], e)
+            logging.error(msg)
+            return (-1, msg)
 
 
-    def pollResults(self, authdata):
+    def popResults(self, authdata):
         """
-        Returns a dictionary { job id: CheckResult.getData() } 
-        with results of all performed check jobs. Once
+        Returns a dictionary with the results of all performed jobs. Once the 
         results are polled, they are no longer stored.
 
         @param authdata username and password for authentication
         """
 
-        if not self._auth.test(authdata, self._auth.POLL_RESULTS):
+        if not self._auth.test(authdata, POP_RESULT):
             return (-2, self.ERROR_AUTH_FAILED)
 
-        rescache = self._results.pollResults()
-        obj = {}
-        for k,v in rescache.iteritems():
-            obj[k] = v.getData()
+        result = {}
 
-        return obj
+        for item in self._results.dequeue():
+            logging.info("Dequeuing result of job '%s'" % item.getId())
+            result[item.getId()] = item.getData()
+
+        return result
 
 
-    def pollResult(self, authdata, id):
+    def popResult(self, authdata, id):
         """
-        Returns a dictionary { job id: CheckResult.getData() } 
+        Returns a dictionary { job id: QueueItem.getData() } 
         with result of the performed check job for the given id. 
-        Once the result is polled, it is no longer stored.
+        Once the result is poped, it is no longer stored.
+        
+        {'aUniqueJobID': {
+            'id': 'same as aUniqueJobID',
+            'code': an integer,
+            'value': 'a result string'
+            },
+        }
 
         @param authdata username and password for authentication
-        @param id ID for a job
+        @param id a valid job ID
+        @return a dictionary with id as key and another dictionary with keys 
+                code and value representing the check result
         """
 
-        if not self._auth.test(authdata, self._auth.POLL_RESULTS):
+        if not self._auth.test(authdata, POP_RESULT):
             return (-2, self.ERROR_AUTH_FAILED)
 
-        res = self._results.pollResult(id)
-        obj = {}
-        
-        if res != None:
-            obj[id] = res.getData()
 
-        return obj
+        result = {}
+        item = self._results.dequeue(id)
+
+        if item: 
+            logging.info("Dequeuing result of job '%s'" % item.getId())
+            result[item.getId()] = item.getData()
+        
+        return result
 
 
     def getStatus(self, authdata):
@@ -279,7 +302,7 @@ class Spooler(AbstractServer):
         @param authdata username and password for authentication
         """
         
-        if not self._auth.test(authdata, self._auth.GET_STATUS):
+        if not self._auth.test(authdata, GET_STATUS):
             return (-2, self.ERROR_AUTH_FAILED)
 
         return (1, {
@@ -317,7 +340,7 @@ class Spooler(AbstractServer):
             return (0, "No such backend: %s" % uid)
 
         backend = self._backends.get(uid)
-        return self._callChecker(backend['url'], 'getStatus')
+        return self._callBackend(backend['url'], 'getStatus')
 
     
     def getBackendInputFields(self, auth, uid):
@@ -335,7 +358,7 @@ class Spooler(AbstractServer):
             return (0, "No such backend: %s" % uid)
 
         backend = self._backends.get(uid)
-        return self._callChecker(backend['url'], 'getInputFields')
+        return self._callBackend(backend['url'], 'getInputFields')
 
 
     def getBackendTestFields(self, auth, uid):
@@ -353,7 +376,7 @@ class Spooler(AbstractServer):
             return (0, "No such backend: %s" % uid)
 
         backend = self._backends.get(uid)
-        return self._callChecker(backend['url'], 'getTestFields')
+        return self._callBackend(backend['url'], 'getTestFields')
         
         
     def _doqueue(self):
@@ -366,61 +389,67 @@ class Spooler(AbstractServer):
         """
 
         while not self._doqueueThreadExit:
+
+            try:
+                #self._doqueueThreadLock.acquire()
             
-            #self._doqueueThreadLock.acquire()
-
-            # is the queue empty?
-            if not self._queue.isEmpty():
-                # get next job from the queue
-                job = self._queue.dequeue()
-
-                # get backend
-                chk = self._backends.get(job['backend'])
-                if not chk:
-                    logging.warn("Job %s can't be executed, no such "
-                                 "backend: %s" % (job['id'], job['backend']))
-                              
-                    # enqueue the job so that, if the backend
-                    # is evailable, we can check it
-                    self._queue.enqueue(job)
-
-                # is backend busy?
-                elif chk["current_job"] != 0:
-                    logging.debug('Backend is busy (%s)' % job)
-                    self._queue.enqueue(job)
-
+                # is the queue empty?
+                if not self._queue.isEmpty():
+                    # get next job from the queue
+                    job = self._queue.dequeue()
+    
+                    # get backend
+                    backend = self._backends.get(job['backend'], None)
+    
+                    if not backend:
+                        logging.warn("Job %s can not be executed, no such "
+                                     "backend: %s" % (job.getId(), backend['id']))
+                                  
+                        # enqueue the job so maybe later, if the backend
+                        # is available, we can process it
+                        self._queue.enqueue(job)
+    
+                    # is backend busy?
+                    elif backend.get('isBusy', False):
+                        # backend is bussy, try again later
+                        logging.debug('Backend %s is busy (%s)' % (backend['id'], job,))
+                        self._queue.enqueue(job)
+    
+                    else:
+                        # dispatch the job to the backend
+                        backend['isBusy'] = True
+    
+                        logging.info("Dispatching job '%s' to backend '%s'" % 
+                                     (job.getId(), job['backend']))
+    
+                        # invoke remote method call
+                        r = self._callBackend(backend['url'], 'execute', job.getData())
+    
+                        if type(r) not in [TupleType, ListType]:
+                            r = (-5, r)
+    
+                        result = BackendResult({'code':r[0], 'value':r[1]}, job.getId())
+    
+                        logging.debug("Adding result of job '%s' to results "
+                                      "queue" % job.getId())
+                        self._results.enqueue(result)
+    
+                        backend['isBusy'] = False
                 else:
-                    # hand over checkjob to backend
-                    chk["current_job"] = job
-
-                    logging.info("Dispatching job %s to backend '%s'" % 
-                                 (job["id"], job['backend']))
-
-                    # invoke remote method call
-                    r = self._callChecker(chk['url'], "execute", job.getData())
-
-                    if type(r) not in [TupleType, ListType]:
-                        r = (-5, r)
-
-                    result = checkresult.CheckResult(r[0], r[1])
-
-                    #logging.debug('result: %s' % str(result.getData()))
-                    self._results.addResult(result, job['id'])
-
-                    chk["current_job"] = 0
-            else:
-                #logging.debug('_doqueue: self._queue is empty.');
-                pass
+                    #logging.debug('_doqueue: self._queue is empty');
+                    pass
                     
-            #self._doqueueThreadLock.release()
-
+            except Exception, e:
+                msg = '%s: %s' % (sys.exc_info()[0], e)
+                logging.warn(msg)
+            
             # wait a defined time before resuming
             time.sleep(self.DEFAULT_DOQUEUE_WAKEUP)
 
         # end while loop
 
 
-    def _callChecker(self, url, method, *kw, **args):
+    def _callBackend(self, url, method, *kw, **args):
         """
         Executes an xmlrpc call to a backend.
         
@@ -433,44 +462,44 @@ class Spooler(AbstractServer):
         
         s = xmlrpclib.Server(url)
         try:
-            return getattr(s, method)({"srv_id": self._srvID}, *kw, **args)
-            #logging.debug('_callChecker: %s' % retval)
+            result = getattr(s, method)({"srv_id": self._srvId}, *kw, **args)
+            #logging.debug('_callBackend: %s' % repr(result))
+            return result
         
         #except (socket.error, xmlrpclib.Fault, xmlrpclib.ProtocolError), exc:
         except Exception, e:
-            msg = 'Server error: %s: %s (%s).' % (sys.exc_info()[0], e, method)
+            msg = 'Server error: %s: %s (%s)' % (sys.exc_info()[0], e, method)
 
-            #logging.error(msg)
             logging.error(''.join(traceback.format_exception(*sys.exc_info())))
             return msg
 
 
-    def _getUniqueId(self, id, version):
+    def _getBackendId(self, id, version):
         """
         Returns a new ID consisting of id and version. This method should be 
         even then a request is made for a backend with id and version 
         information.
         """
-        return '%s-%s' % (id, version)
-
+        #return '%s-%s' % (id, version)
+        return id
 
 
 # -- some testing -------------------------------------------------------------
-if __name__ == "__main__":
-    """
-    """
-    try:
-        cpid = os.fork()
-    except AttributeError, aerr:
-        print('os.fork not defined - skipping.')
-        cpid = 0
-
-    if cpid == 0:
-        tS = Spooler(socket.getfqdn(), 5050, 
-                      os.path.join(os.path.dirname(__file__), 
-                                    '..', 'etc', 'passwd'))
-        tS.start()
-
-    else:
-        time.sleep(1)
-        print 'pid=', cpid
+#if __name__ == "__main__":
+#    """
+#    """
+#    try:
+#        cpid = os.fork()
+#    except AttributeError, aerr:
+#        print('os.fork not defined - skipping')
+#        cpid = 0
+#
+#    if cpid == 0:
+#        tS = Spooler(socket.getfqdn(), 5050, 
+#                      os.path.join(os.path.dirname(__file__), 
+#                                    '..', 'etc', 'passwd'))
+#        tS.start()
+#
+#    else:
+#        time.sleep(1)
+#        print 'pid=', cpid

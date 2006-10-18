@@ -1,4 +1,12 @@
-# -- some hepler methods -------------------------------------------------------
+# -*- coding: utf-8 -*-
+# $Id$
+#
+# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+#
+# This file is part of ECSpooler.
+
+# -- some hepler methods ------------------------------------------------------
+
 import os, sys, time, random, md5, socket, tempfile
 import logging, traceback
 
@@ -105,7 +113,7 @@ def uuid(*args):
 
 
 def unique(seq, idfun=None):
-    """Returns a list with no duplicate items."""
+    """Returns a list with no duplicate items"""
 
     if idfun is None:
         def idfun(x): return x

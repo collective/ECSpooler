@@ -11,11 +11,12 @@ import logging
 
 from types import StringType, UnicodeType
 
-from AbstractBackend import AbstractBackend
-from util import utils
-from data import checkjob
-#from data.checkresult import CheckResult
-from data.exceptions import InvalidDataException
+from lib.AbstractBackend import AbstractBackend
+
+from lib.data.BackendJob import BackendJob
+from lib.data.BackendResult import BackendResult
+
+from lib.util import utils
 
 try:
     EX_OK = os.EX_OK
@@ -48,7 +49,7 @@ class AbstractProgrammingBackend(AbstractBackend):
     PROCESS_WAIT_TIME = 10
 
    
-    def process_execute(self, jobdata):
+    def process_execute(self, data):
         """
         Executes a check job.
 
@@ -57,41 +58,53 @@ class AbstractProgrammingBackend(AbstractBackend):
         """
 
         try:
-            job = checkjob.CheckJob(jobdata)
+            job = BackendJob(data)
+
             assert job, 'Invalid or insufficient data: %s' % job
 
+            # set a default result
             result = (1, '')
 
             try:
                 # invoke syntax check
-                logging.debug('Invoking syntax check (%s).' % job.getId())
+                logging.info('Invoking syntax check (%s)' % job.getId())
                 result = self.manage_checkSyntax(job)  #self.checkSyntax(job)
             
                 # FIXME: If the returned value is always of typ
                 #        CheckResult we could use isFailure!
                 #if not result.isFailure(): 
                 
+                #logging.debug('Result from syntax check: %s' % repr(result))
+                
                 if result and result[0] > 0: 
                     # invoke semantic check
-                    logging.debug('Invoking semantic check (%s).' % job.getId())
+                    logging.info('Invoking semantic check (%s)' % job.getId())
                     retval = self.manage_checkSemantics(job)
                     
                     # no return value == no test data and therefore no test resutls!
                     if retval:
                         result = retval
                 
+                    #logging.debug('Result from semantic check: %s' % repr(result))
+                # end if
+
             except Exception, e:
                 msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
                 logging.error(msg)
                 result = (-10, msg)
                 
+
             # delete all files and folders used in this test
-            self._cleanup(job['id'])
+            # FIXME: do not comment in productive environment
+            #self._cleanup(job.getId())
+            
+            #logging.debug('Returning result: %s' % repr(result))
             return result
 
-        except (InvalidDataException, AssertionError), exc:
-            logging.warn('%s: %s' % (exc, job))
-            return (-1, '%s: %s' % (exc, job))
+        except Exception, e:
+            msg = '%s: %s' % (sys.exc_info()[0], e)
+            logging.warn(msg)
+            return (-1, msg)
 
 
     # -- check syntax ---------------------------------------------------------
@@ -106,14 +119,14 @@ class AbstractProgrammingBackend(AbstractBackend):
         
         assert studentSolution and type(studentSolution) in (StringType, 
                                                              UnicodeType), \
-            "Syntax check requires a valid 'student solution' (%s)" % \
+            "Syntax check requires valid 'studentSolution': (%s)" % \
             repr(studentSolution)
             
         # src = TEMPLATE_SYNTAX % (self._job["studentSolution"],)
             
         # using test specifications
         for test in self._getTests(job):
-            result = self._process_checkSyntax(job['id'], test, studentSolution)
+            result = self._process_checkSyntax(job.getId(), test, studentSolution)
             
             if result and result[0] <= 0:
                 return result
@@ -137,13 +150,15 @@ class AbstractProgrammingBackend(AbstractBackend):
             src, mName = self._preProcessCheckSyntax(test, studentSolution)
 
             try:
-                logging.debug('Running syntax check with test: %s' % 
-                              test.getName())
+                logging.info('Running syntax check with test: %s' % 
+                             test.getName())
                               
                 module = self._writeModule(mName, src, 
                                            self.srcFileSuffix, 
                                            jobId,
                                            test.encoding)
+                
+                #logging.debug(repr(module))
                 
                 exitcode, result = \
                     self._runInterpreter(compiler, 
@@ -151,11 +166,14 @@ class AbstractProgrammingBackend(AbstractBackend):
                                    os.path.basename(module['file']))
                 
             except Exception, e:
+                import traceback
+                traceback.print_exc()
+
                 msg = 'Internal error during syntax check: %s: %s' % \
                       (sys.exc_info()[0], e)
                               
                 logging.error(msg)
-                return (0, msg)
+                return (-1, msg)
     
             # consider exit code
             if exitcode != EX_OK:
@@ -257,6 +275,11 @@ class AbstractProgrammingBackend(AbstractBackend):
         
         if not name:
             name = utils.getUniqueModuleName()
+            
+#        logging.debug('%s' % tempfile.gettempdir())
+#        logging.debug('%s' % dir)
+#        logging.debug('%s' % name)
+#        logging.debug('%s' % suffix)
         
         # get file name
         fName = os.path.join(tempfile.gettempdir(), dir, name + suffix)
@@ -311,8 +334,11 @@ class AbstractProgrammingBackend(AbstractBackend):
             logging.debug('Aborting %s: %d -> %i' %
                           (interpreter % fName, SIGKILL, handle.pid))
 
-            #os.kill(handle.pid, 15)
-            os.kill(handle.pid, SIGKILL)
+            try:
+                os.kill(handle.pid, SIGKILL)
+            except AttributeError:
+                # we will do nothing in this case
+                pass
 
         # end interruptProcess
 
@@ -351,6 +377,9 @@ class AbstractProgrammingBackend(AbstractBackend):
             os.chdir(tempfile.gettempdir())
 
             path = os.path.join(tempfile.gettempdir(), dir)
+
+            logging.debug('Deleting directory: %s' % path)
+
             # delete the entire directory tree
             shutil.rmtree(path)
 

@@ -24,16 +24,16 @@ class AbstractServer:
     def __init__(self, host, port):
 
         # set server identification
-        self._srvID = \
+        self._srvId = \
             md5.md5(repr(random.Random().random())).hexdigest()
 
         self._className = self.__class__.__name__
 
         assert host and type(host) in (StringType, UnicodeType), \
-            "%s requires a correct 'host' option." % self._className
+            "%s requires a correct 'host' option" % self._className
 
         assert port and type(port) == IntType, \
-            "%s requires a correct 'port' option." % self._className
+            "%s requires a correct 'port' option" % self._className
 
         # set class varia
         self.host = host
@@ -91,7 +91,7 @@ class AbstractServer:
                 self._stop(signal.SIGTERM, None)
 
         else:
-          return "Couldn't start server thread. See log for more details."
+          return "Couldn't start server thread. See log for more details"
 
 
     def _stop(self, signal, stack):
@@ -121,14 +121,14 @@ class AbstractServer:
         Register functions to self._server
         """
         raise NotImplementedError("Method _registerFunctions must be "
-                                  "implemented by subclass.")
+                                  "implemented by subclass")
 
     def _manageBeforeStart(self):
         """
         Do some necessary stuff before starting server thread.
         """
         raise NotImplementedError("Method _manageBeforeStart must be "
-                                  "implemented by subclass.")
+                                  "implemented by subclass")
 
 
     def _manageBeforeStop(self):
@@ -136,5 +136,5 @@ class AbstractServer:
         Do some necessary stuff before stopping server thread.
         """
         raise NotImplementedError("Method _manageBeforeStop must be "
-                                  "implemented by subclass.")
+                                  "implemented by subclass")
         

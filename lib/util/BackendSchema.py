@@ -76,7 +76,7 @@ class Field:
 
     def toString(self):
         """Utility method for converting a Field to a string for the
-        purpose of comparing fields.  Right now it's pretty crude."""
+        purpose of comparing fields.  Right now it's pretty crude"""
 
         retval = '%s(%s): {' % ( self.__class__.__name__, self.__name__ )
 
@@ -172,7 +172,7 @@ class Schemata:
     #__implements__ = ISchemata
 
     def __init__(self, name='default', fields=None):
-        """Initialize Schemata and add optional fields."""
+        """Initialize Schemata and add optional fields"""
 
         self.__name__ = name
         self._names = []
@@ -187,7 +187,7 @@ class Schemata:
 
 
     def getName(self):
-        """Returns the Schemata's name."""
+        """Returns the Schemata's name"""
         return self.__name__
 
 
@@ -218,7 +218,7 @@ class Schemata:
 
 
     def fields(self):
-        """Returns a list of my fields in order of their indices."""
+        """Returns a list of my fields in order of their indices"""
         return [self._fields[name] for name in self._names]
 
 
@@ -268,7 +268,7 @@ class Schemata:
 
 
     def addField(self, field):
-        """Adds a given field to my dictionary of fields."""
+        """Adds a given field to my dictionary of fields"""
         
         #field = aq_base(field)
         self._validateOnAdd(field)
@@ -289,18 +289,18 @@ class Schemata:
         if getattr(field, 'primary', False):
             res = self.hasPrimary()
             if res is not False and name != res.getName():
-                raise SchemaException("Tried to add '%s' as primary field " \
-                         "but %s already has the primary field '%s'." % \
+                raise Exception("Tried to add '%s' as primary field " \
+                         "but %s already has the primary field '%s'" % \
                          (name, repr(self), res.getName())
                       )
         # Do not allowed unqualified references
         if field.type in ('reference', ):
             relationship = getattr(field, 'relationship', '')
             if type(relationship) is not StringType or len(relationship) == 0:
-                raise ReferenceException("Unqualified relationship or "\
+                raise Exception("Unqualified relationship or "\
                           "unsupported relationship var type in field '%s'. "\
                           "The relationship qualifer must be a non empty "\
-                          "string." % name
+                          "string" % name
                       )
 
 
@@ -335,7 +335,7 @@ class Schemata:
     updateField = addField
 
     def searchable(self):
-        """Returns a list containing names of all searchable fields."""
+        """Returns a list containing names of all searchable fields"""
 
         return [f.getName() for f in self.fields() if f.searchable]
 
@@ -349,7 +349,7 @@ class Schemata:
 
 
 class BasicSchema(Schemata):
-    """Manage a list of fields and run methods over them."""
+    """Manage a list of fields and run methods over them"""
 
     #__implements__ = ISchema
 
@@ -423,29 +423,29 @@ class BasicSchema(Schemata):
             instance[name] = value
 
 
-    def setDefaults(self, instance):
-        """Only call during object initialization. Sets fields to
-        schema defaults
-        """
-        ## XXX think about layout/vs dyn defaults
-        for field in self.values():
-            if field.getName().lower() == 'id': continue
-            if field.type == "reference": continue
-
-            # always set defaults on writable fields
-            mutator = field.getMutator(instance)
-            if mutator is None:
-                continue
-            default = field.getDefault(instance)
-
-            args = (default,)
-            kw = {'field': field.__name__,
-                  '_initializing_': True}
-            if shasattr(field, 'default_content_type'):
-                # specify a mimetype if the mutator takes a
-                # mimetype argument
-                kw['mimetype'] = field.default_content_type
-            mapply(mutator, *args, **kw)
+#    def setDefaults(self, instance):
+#        """Only call during object initialization. Sets fields to
+#        schema defaults
+#        """
+#        ## XXX think about layout/vs dyn defaults
+#        for field in self.values():
+#            if field.getName().lower() == 'id': continue
+#            if field.type == "reference": continue
+#
+#            # always set defaults on writable fields
+#            mutator = field.getMutator(instance)
+#            if mutator is None:
+#                continue
+#            default = field.getDefault(instance)
+#
+#            args = (default,)
+#            kw = {'field': field.__name__,
+#                  '_initializing_': True}
+#            if shasattr(field, 'default_content_type'):
+#                # specify a mimetype if the mutator takes a
+#                # mimetype argument
+#                kw['mimetype'] = field.default_content_type
+#            mapply(mutator, *args, **kw)
 
 
     def updateAll(self, instance, **kwargs):
@@ -495,16 +495,15 @@ class BasicSchema(Schemata):
         return md5(self.toString()).digest()
 
 
-    def replaceField(self, name, field):
-        if IField.isImplementedBy(field):
-            oidx = self._names.index(name)
-            new_name = field.getName()
-            self._names[oidx] = new_name
-            del self._fields[name]
-            self._fields[new_name] = field
-        else:
-            raise ValueError, "Object doesn't implement IField: %r" % field
-
+#    def replaceField(self, name, field):
+#        if IField.isImplementedBy(field):
+#            oidx = self._names.index(name)
+#            new_name = field.getName()
+#            self._names[oidx] = new_name
+#            del self._fields[name]
+#            self._fields[new_name] = field
+#        else:
+#            raise ValueError, "Object doesn't implement IField: %r" % field
 
 
 class Schema(BasicSchema):

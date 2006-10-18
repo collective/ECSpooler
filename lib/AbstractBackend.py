@@ -5,7 +5,7 @@
 #
 # This file is part of ECSpooler.
 
-import os, sys, re, popen2, tempfile, thread, threading, signal
+import os, threading, signal
 import socket, xmlrpclib
 import logging
 
@@ -13,10 +13,8 @@ from types import StringType, UnicodeType, IntType, DictionaryType
 
 # local imports
 from AbstractServer import AbstractServer
-from data import checkjob
-from data.checkresult import CheckResult
-from data.BackendResult import BackendResult
-from data.exceptions import AuthorizationFailedException
+from lib.data import BackendJob, BackendResult
+
 from util.BackendSchema import TestEnvironment, InputField, Schema
 
 class AbstractBackend(AbstractServer):
@@ -38,15 +36,16 @@ class AbstractBackend(AbstractServer):
     testSchema = None
     version = None
     
-    def __init__(self, options):
+    def __init__(self, params):
         """
+        @params dict with all parameters which must be set for a backend
         """
-        AbstractServer.__init__(self, options['host'], options['port'])
+        AbstractServer.__init__(self, params['host'], params['port'])
 
         # FIXME:
         #self.spooler = options.get('spooler')
-        self.spooler = options['capeserver']
-        self.auth = options['srv_auth']
+        self.spooler = params['capeserver']
+        self.auth = params['srv_auth']
         
         assert self.id != '', 'A id is required for this backend.'
         assert self.name != '', 'A name is required for this backend.'
@@ -58,15 +57,15 @@ class AbstractBackend(AbstractServer):
             'A test schema is required for this backend'
         
         assert self.spooler and type(self.spooler) in (StringType, UnicodeType), \
-            "Backend requires a correct 'spooler' option."
+            "Backend requires a correct 'spooler' option"
 
         #assert self.auth and type(self.auth) == type({}), \
         assert self.auth and type(self.auth) == DictionaryType, \
-            "Backend requires a correct 'srv_auth' option."
+            "Backend requires a correct 'srv_auth' option"
 
         # set spoolerID to None; it will be set if backend was successfully
         # registered to a spooler
-        self._spoolerID = None
+        self._spoolerId = None
 
 
     def _registerFunctions(self):
@@ -96,8 +95,8 @@ class AbstractBackend(AbstractServer):
         try:
             spooler = xmlrpclib.Server(self.spooler)
 
-            logging.debug("Registering backend '%s' at spooler (%s)" % 
-                          (self.id, self.spooler))
+            logging.debug("Registering backend '%s (%s)' at spooler on '%s'" % 
+                          (self.id, self.version, self.spooler))
 
             (code, msg) = spooler.addBackend(self.auth, 
                                              self.id, 
@@ -111,9 +110,9 @@ class AbstractBackend(AbstractServer):
                               (msg, code))
             elif not msg:
                 logging.error("Internal error: Spooler returned an "
-                              "invalid id.")
+                              "invalid id")
             else:
-                self._spoolerID = msg
+                self._spoolerId = msg
                 registered = True
 
         except socket.error, serr:
@@ -135,8 +134,9 @@ class AbstractBackend(AbstractServer):
         Do nothing here right now.
         """
         try:
-            logging.debug("Removing backend '%s' from spooler (%s)" % 
-                          ('%s-%s' % (self.id, self.version), self.spooler))
+            logging.debug("Removing backend '%s' from spooler '%s'" % 
+                          ('%s %s (%s)' % (self.name, self.version, self.id), 
+                           self.spooler,))
 
             spooler = xmlrpclib.Server(self.spooler)
             spooler.removeBackend(self.auth, self.id, self.version)
@@ -251,8 +251,8 @@ class AbstractBackend(AbstractServer):
         @return CheckResult object or tupel consisting of result code and message
         """
 
-        raise NotImplementedError("Method execute must be "
-                                  "implemented by subclass.")
+        raise NotImplementedError("Method 'execute' must be "
+                                  "implemented by subclass")
 
 
     def _getTests(self, job):
@@ -266,9 +266,9 @@ class AbstractBackend(AbstractServer):
 
         if job.has_key('tests'):
             # user has selected one or more tests
-            testIDs = job['tests']
+            testIds = job['tests']
 
-            for id in testIDs:
+            for id in testIds:
                 result.extend(self.testSchema.filterFields(__name__=id))
         else:
             # not tests selected by the user, taking all available
@@ -279,20 +279,21 @@ class AbstractBackend(AbstractServer):
 
 
     def _authenticate(self, data):
-        """Checks the authorization information. 
-        @return True if given authorization data are valid, otherwise False.
         """
-        # FIXME: 
-        #return 1
+        Checks the authorization information. 
+        
+        @return True if given authorization data is valid, otherwise False.
+        """
+        #return True
 
-        if self._spoolerID == None: 
-            s = "Authorization failed: Invalid spooler connection settings."
+        if self._spoolerId == None: 
+            msg = "Authorization failed: Invalid spooler connection settings"
             logging.error(msg)
-            raise AuthorizationFailedException(s)
+            return False
 
-        if not data or type(data) != dict or data['srv_id'] != self._spoolerID:
-            s = "Authorization failed: Invalid data."
+        if not data or type(data) != dict or data['srv_id'] != self._spoolerId:
+            s = "Authorization failed: Invalid data"
             logging.error(s)
-            raise AuthorizationFailedException(s)
+            return False
 
-        return 1
+        return True

@@ -13,25 +13,33 @@ try:
 except ImportError, ierr:
     crypt = None
     
-userAuthFailSleep = 3.0 # prevent dictionary attacks 
+# authorization levels
+SHUTDOWN = 'le1'
+ADD_BACKEND = 'le2'
+STOP_BACKEND = 'le3'
+REMOVE_BACKEND = 'le4'
+APPEND_JOB = 'le5'
+POP_RESULT = 'le6'
+GET_STATUS = 'le7'
+GET_BACKEND_INFO = 'le8'
+UNDEFINED = 'le9'
 
 class AuthorizationBackend:
     """
     """
 
-    # authorization levels
-    ENQUEUE = POLL_RESULTS = 1
-    GET_STATUS  = 2
-    ADD_CHECKER = 3
-    SHUTDOWN = 4
-    UNDEFINED = 5
-    
+    _userAuthFailSleep = 3.0 # this will prevent dictionary attacks 
+
     def __init__(self):
+        """
+        """
         pass
 
-    def test(self, args, level=5):
-        raise NotImplementedError("Method test must be "
-                                  "implemented by subclass.")
+    def test(self, args, level=UNDEFINED):
+        """
+        """
+        raise NotImplementedError("Method 'test' must be "
+                                  "implemented by subclass")
 
 
 class UserAuth(AuthorizationBackend):
@@ -50,7 +58,7 @@ class UserAuth(AuthorizationBackend):
             self.crypt = lambda x, y: x
             logging.warn('Module crypt not found - using cleartext passwords!')
 
-    def test(self, args, level=5):
+    def test(self, args, level=UNDEFINED):
         """
         @param level unused/ignored
         @return True if username and password are correct, otherwise False
@@ -82,7 +90,7 @@ class UserAuth(AuthorizationBackend):
                self.db[username] == self.crypt(password, password[:2])
 
         if not ans:
-            time.sleep(userAuthFailSleep)
+            time.sleep(self._userAuthFailSleep)
 
         return ans
 
@@ -116,10 +124,10 @@ class UserAuthMD5(AuthorizationBackend):
         """
         self.db = self._load(userFile)
 
-    def test(self, args, level=5):
+    def test(self, args, level=UNDEFINED):
         """
         @param args A dictionary witj keys and values for username and password
-        @param level unused/ignored
+        @param level 
         @return True if username and password are correct, otherwise False
         """
         try:
@@ -151,8 +159,8 @@ class UserAuthMD5(AuthorizationBackend):
 
         if not ans:
             logging.warn('Wrong password. Waiting %d seconds to prevent ' 
-                         'dictionary attacks' % userAuthFailSleep)
-            time.sleep(userAuthFailSleep)
+                         'dictionary attacks' % self._userAuthFailSleep)
+            time.sleep(self._userAuthFailSleep)
 
         return ans
 

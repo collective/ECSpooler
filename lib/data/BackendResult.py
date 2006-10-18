@@ -1,67 +1,58 @@
-import exceptions
+# -*- coding: utf-8 -*-
+# $Id$
+#
+# Copyright (c) 2006 Otto-von-Guericke-Universit�t Magdeburg
+#
+# This file is part of ECSpooler.
 
-class BackendResult:
+from lib.util.QueueItem import QueueItem
+
+class BackendResult(QueueItem):
     """
-    Represents a return value from a backend.
-
-    Following data are enclosed
-    code: > 0 -> True, everthing is fine 
-          = 0 -> False, everything went wrong
-          < 0 -> internal error
+    Represents the values returned from a backend:
+    
+    code:  = 1 -> everthing is fine, e.g. a solution passed all tests
+           = 0 -> something went wrong, e.g. a test cases was missed
+           < 0 -> internal error
               
-    value:  the actually result value
+    value: a string with some more information about the result
     """
-
-    def __init__(self, code, value):
-        """
-        @param code
-        @param value
-        """
-        self._code = code
-        self._value = value
-        self.validate() # throws an exception if necessary
-
+    
+    PASSED = 1
+    FAILED = 0
+    UNDEFINED = -42
 
     def validate(self):
         """
-        Tests the given BackendResult data. Not implemented yet!
+        Tests if a backend is given or not.
+        
+        @see QueueItem.validate
+        @return True, if everything is ok, otherwise an assertion 
         """
-        # raise exceptions.InvalidDataException(
-        #                   'invalid BackendResult attributes')
-        return 1
+        #assert self._data['code'], \
+        #        "BackendResult requires a valid 'code' entry"
 
+        assert self._data['value'], \
+                "BackendResult requires a valid 'value' entry"
 
-#    def __repr__(self):
-#        """
-#        Returns the transport data structure which can be transmitted via XMLRPC.
-#        """
-#        return (self._code, self._value)
-#
-#
-#    def __str__(self):
-#        """
-#        Returns the transport data structure which can be transmitted via XMLRPC.
-#        """
-#        return (self._code, self._value)
-
+        return True
 
     def getResultCode(self):
-        return self._code
+        """
+        @return the result code or -42 if it is not set.
+        """
+        return self._data.get('code', self.UNDEFINED)
     
 
     def getResultValue(self):
-        return self._value
+        """
+        @return the result value or '' if it is not set.
+        """
+        return self.get('value', '')
 
 
     def isFailure(self):
         """
-        Returns wether or not the checkjob has failed
+        Returns wether or not a test has failed
         """
-        return (self._code == 0) or (self._code < 0)
-
-
-#    def isSolved(self):
-#        """
-#        Returns wether or not the students' solution has passed all tests
-#        """
-#        return self._solved
+        return (self.getResultCode() == self.FAILED) or (self.getResultCode() < 0)
