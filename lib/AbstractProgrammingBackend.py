@@ -326,6 +326,9 @@ class AbstractProgrammingBackend(AbstractBackend):
         #logging.debug('xxx: %s' % (interpreter % fName))    
         
         handle = popen2.Popen4(interpreter % fName)
+        logging.info('Started %s in %s with PID %d' % (interpreter,
+                                                       dir,
+                                                       handle.pid))
         handle.tochild.close()
         # we don't expect to send on stdin; instead we just wait for the 
         # process to end, or kill it.
