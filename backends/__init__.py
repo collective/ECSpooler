@@ -8,8 +8,13 @@
 #subpackages
 
 #classes
+from backends.erlang.Erlang import Erlang
+
 from backends.haskell.Haskell import Haskell
 from backends.haskell.Haskell import HaskellIO
 from backends.haskell.HaskellExtended import HaskellExtended
 
 from backends.java.Java import Java
+
+from backends.python.Python import Python
+
