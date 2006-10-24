@@ -11,7 +11,7 @@ import logging
 from types import StringType, UnicodeType
 
 # local imports
-from PythonConf import PythonConf
+from backends.python.PythonConf import PythonConf
 
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
 from lib.AbstractProgrammingBackend import EX_OK
