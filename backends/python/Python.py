@@ -16,7 +16,7 @@ from backends.python.PythonConf import PythonConf
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
 from lib.AbstractProgrammingBackend import EX_OK
 
-class PythonBackend(AbstractProgrammingBackend):
+class Python(AbstractProgrammingBackend):
     """
     Backend for checking Python programs. This class is inherited 
     from AbstractFPBackend.
