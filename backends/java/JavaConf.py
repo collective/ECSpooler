@@ -17,11 +17,10 @@ class JavaConf:
     """
     Properties used by backend Java.
     """
-    JAVA_PATH='/usr/pkg/bin/'
 
     systracePolicy = ''
-    compiler = os.path.join(JAVA_PATH, 'javac')
-    interpreter = os.path.join(JAVA_PATH, 'java')
+    compiler = '/usr/pkg/bin/javac'
+    interpreter = '/opt/ECSpooler/backends/java/java+systrace'
 
     if systracePolicy:
         interpreter = 'systrace -a -f %s %s' % (systracePolicy, interpreter)

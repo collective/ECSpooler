@@ -326,7 +326,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         #logging.debug('xxx: %s' % (interpreter % fName))    
         
         handle = popen2.Popen4(interpreter % fName)
-        logging.info('Started %s in %s with PID %d' % (interpreter,
+        logging.info('Started %s in %s with PID %d' % (interpreter % fName,
                                                        dir,
                                                        handle.pid))
         handle.tochild.close()

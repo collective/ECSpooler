@@ -30,7 +30,28 @@ class Haskell(AbstractProgrammingBackend):
 
     schema = HaskellConf.inputSchema
     testSchema = HaskellConf.tests
-    
+
+    def _preProcessCheckSyntax(self, test, src, **kwargs):
+        """
+        Pre process student's submissions and syntax check wrapper code. 
+        Override this method if you need to reformat the wrapper code or 
+        the student's submission. 
+        
+        @param test
+        @param src
+        @return source and module name if needed
+        """
+        result = ''
+        
+        if test.syntax:
+            result = re.sub('\$\{SOURCE\}', src, test.syntax)
+            
+        else:
+            result = src
+
+        return result, 'Student'
+
+
     def _postProcessCheckSyntax(self, test, message):
         """
         @see AbtractSimpleBackend._postProcessCheckSyntax

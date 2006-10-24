@@ -3,7 +3,7 @@
 WORK_DIR=`dirname $0`
 WORK_DIR=${WORK_DIR%%/bin}
 
-PYTHON="python"
+PYTHON="/opt/python/bin/python"
 
 BDCTL="$WORK_DIR/startup/backendctl.py"
 

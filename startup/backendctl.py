@@ -17,6 +17,8 @@ import traceback
 import getopt
 import logging
 
+os.setreuid(32767, 32767)
+
 # add parent directory to the system path
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
