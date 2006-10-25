@@ -19,13 +19,10 @@ class ErlangConf:
     Defines all properties used by backend Erlang.
     """
 
-    systracePolicy = ''
-    compiler = '/opt/erlang/bin/erlc %s'
-    interpreter = '/opt/erlang/bin/erl -noshell -s %s -s init stop'
+    compiler = '/opt/erlang/bin/erlc'
+    #interpreter = '/opt/erlang/bin/erl -noshell -s %s -s init stop'
     #                              erl -noshell -s  -s erlang halt
-
-    if systracePolicy:
-        interpreter = 'systrace -a -f %s %s' % (systracePolicy, interpreter)
+    interpreter = '/opt/ECSpooler/backends/erlang/erl+systrace'
 
     # load Haskell function to do a simple test
     try:

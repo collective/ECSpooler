@@ -1,0 +1,106 @@
+Policy: /usr/pkg/java/sun-1.5/bin/java, Emulation: linux
+	linux-uname: permit
+	linux-brk: permit
+	linux-fsread: filename eq "/etc/ld.so.preload" then permit
+	linux-stat64: permit
+	linux-fsread: filename eq "/etc/ld.so.cache" then permit
+	linux-fstat64: permit
+	linux-old_mmap: permit
+	linux-close: permit
+	linux-fsread: filename eq "/lib/libpthread.so.0" then permit
+	linux-read: permit
+	linux-madvise: permit
+	linux-fsread: filename eq "/lib/libdl.so.2" then permit
+	linux-fsread: filename eq "/lib/libc.so.6" then permit
+	linux-munmap: permit
+	linux-ugetrlimit: permit
+	linux-setrlimit: permit
+	linux-getpid: permit
+	linux-rt_sigaction: permit
+	linux-rt_sigprocmask: permit
+	linux-rt_sigreturn: permit
+	linux-__sysctl: permit
+	linux-fsread: filename eq "/proc/self/exe" then permit
+	linux-lstat64: permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/libjava.so" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/jvm.cfg" then permit
+	linux-fsread: filename eq "/etc/mtab" then permit
+	linux-fsread: filename eq "/usr/pkg/emul/linux/proc/meminfo" then permit
+	linux-getgid: permit
+	linux-getegid: permit
+	linux-getuid: permit
+	linux-geteuid: permit
+	linux-execve: filename eq "/usr/pkg/java/sun-1.5/bin/java" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/libpthread.so.0" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/libpthread.so.0" then permit
+	linux-fsread: filename eq "/usr/pkg/java/lib/i386/libpthread.so.0" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/libdl.so.2" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/libdl.so.2" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/libc.so.6" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/libc.so.6" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/libjvm.so" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/libm.so.6" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/libm.so.6" then permit
+	linux-fsread: filename eq "/lib/libm.so.6" then permit
+	linux-fsread: filename eq "/usr/pkg/emul/linux/proc/stat" then permit
+	linux-fsread: filename eq "/usr/pkg/emul/linux/proc/cpuinfo" then permit
+	linux-gettimeofday: permit
+	linux-fsread: filename eq "/dev/null" then permit
+	linux-fsread: filename eq "/proc/self/maps" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/native_threads/libhpi.so" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/libnsl.so.1" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/libnsl.so.1" then permit
+	linux-fsread: filename eq "/lib/libnsl.so.1" then permit
+	linux-socketcall: permit
+	linux-fsread: filename eq "/etc/nsswitch.conf" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/libnss_compat.so.2" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/libnss_compat.so.2" then permit
+	linux-fsread: filename eq "/lib/libnss_compat.so.2" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/libnss_nis.so.2" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/libnss_nis.so.2" then permit
+	linux-fsread: filename eq "/lib/libnss_nis.so.2" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/libnss_files.so.2" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/libnss_files.so.2" then permit
+	linux-fsread: filename eq "/lib/libnss_files.so.2" then permit
+	linux-fsread: filename eq "/etc/passwd" then deny
+	linux-fcntl64: permit
+	linux-llseek: permit
+	linux-mmap2: permit
+	linux-getdents64: permit
+	linux-ftruncate: permit
+	linux-#224 (unimplemented gettid): permit
+	linux-mprotect: permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/libverify.so" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/libzip.so" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/rt.jar" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/jsse.jar" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/jce.jar" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/charsets.jar" then permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/classes.jsa" then permit
+	linux-pipe: permit
+	linux-clone: permit
+	linux-write: permit
+	linux-poll: permit
+	linux-getppid: permit
+	linux-kill: permit
+	linux-rt_sigsuspend: permit
+	linux-sched_setscheduler: permit
+	linux-sigreturn: permit
+	linux-sched_getscheduler: permit
+	linux-sched_getparam: permit
+	linux-nanosleep: permit
+	linux-fsread: filename eq "/usr/lib/locale/locale-archive" then permit
+	linux-fsread: filename eq "/usr/share/locale/locale.alias" then permit
+	linux-fsread: filename match "/usr/lib/locale/*/LC_CTYPE" then permit
+	linux-fsread: filename eq "/usr/lib/gconv/gconv-modules.cache" then permit
+	linux-fsread: filename eq "/etc/localtime" then permit
+	linux-__getcwd: permit
+	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/ext" then deny
+	linux-sched_yield: permit
+	linux-fsread: filename match "/tmp/*/SemanticCheck.class" then permit
+	linux-fsread: filename match "/tmp/*/ModelPackage/*.class" then permit
+	linux-fsread: filename match "/tmp/*/StudentPackage/*.class" then permit
+	linux-exit_group: permit
+	linux-exit_group: permit
+	linux-waitpid: permit
+

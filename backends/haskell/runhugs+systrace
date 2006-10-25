@@ -1,0 +1,12 @@
+#! /opt/ast/bin/ksh
+
+POLICYDIR=/opt/ECSpooler/systrace-policy
+INTERPRETER=/opt/hugs/bin/runhugs
+
+trap 'kill $! && trap - TERM && kill $$' TERM
+
+systrace -a -d $POLICYDIR $INTERPRETER "$@" &
+wait %%
+
+
+#interpreter = '/opt/hugs/bin/runhugs -P"{HUGS}:/home/amelung/haskell_libs/:"'

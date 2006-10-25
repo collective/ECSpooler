@@ -1,0 +1,294 @@
+Policy: /opt/python/bin/python, Emulation: netbsd
+	netbsd-mmap: permit
+	netbsd-fsread: filename eq "/etc/ld.so.conf" then permit
+	netbsd-__fstat13: permit
+	netbsd-close: permit
+	netbsd-munmap: permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/xnview/lib/libpthread.so.0" then permit
+	netbsd-fsread: filename eq "/usr/lib/libpthread.so.0.6" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/xnview/lib/libutil.so.7" then permit
+	netbsd-fsread: filename eq "/lib/libutil.so.7.6" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/xnview/lib/libstdc++.so.5" then permit
+	netbsd-fsread: filename eq "/usr/lib/libstdc++.so.5.0" then permit
+	netbsd-__sysctl: permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/xnview/lib/libm387.so.0" then permit
+	netbsd-fsread: filename eq "/lib/libm387.so.0.0" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/xnview/lib/libm.so.0" then permit
+	netbsd-fsread: filename eq "/lib/libm.so.0.2" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/xnview/lib/libgcc_s.so.1" then permit
+	netbsd-fsread: filename eq "/usr/lib/libgcc_s.so.1.0" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/xnview/lib/libc.so.12" then permit
+	netbsd-fsread: filename eq "/lib/libc.so.12.128.2" then permit
+	netbsd-mprotect: permit
+	netbsd-rasctl: permit
+	netbsd-fsread: filename eq "/etc/malloc.conf" then permit
+	netbsd-break: permit
+	netbsd-mlock: permit
+	netbsd-getrlimit: permit
+	netbsd-__sigprocmask14: permit
+	netbsd-fsread: filename match "/tmp/*.py" then permit
+        netbsd-fsread: filename match "/tmp/*.pyc" then permit
+	netbsd-ioctl: permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/cups/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /usr/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /usr/pkg/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /usr/local/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/abcde/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/ast/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/audiofile/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/audiotag/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/bigloo/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/cd-discid/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/cdrtools/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/compface/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/curl/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/dialog/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/djvu/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/dockapps/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/emdros/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/exif/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/flac/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/fluxbox/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/fontforge/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/freetype/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/ghostpcl/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/gnupg/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/gs/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/hugs/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/id3/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/id3lib/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/ida/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/ImageMagick/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/ion/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/jam/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/jpeg2ps/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/kermit/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/kmp/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/lame/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/lua/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/libxml2/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/libxslt/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/lout/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/mairix/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/malaga/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/ml1/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/mpc/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/mpd/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/mplayer/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/mpg123/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/msu/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/mysql/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/ncmpc/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/normalize/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/openldap/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/opensp/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/perl5/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/plan/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/plotmtv/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/prcs/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/ps2eps/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/psutils/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/psview/bin/python" then permit
+	netbsd-fsread: filename eq "/opt/python/bin/python" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/bin/Modules/Setup" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/bin/lib/python2.4/os.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/bin/lib/python2.4/os.pyc" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/os.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/bin/lib/python2.4/lib-dynload" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/lib-dynload" then permit
+	netbsd-__sigaction_sigtramp: permit
+	netbsd-getpid: permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip" then permit
+	netbsd-fsread: filename eq "/opt/python/lib" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/site" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/site.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/sitemodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/site.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/site.pyc" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/site" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/site.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/sitemodule.so" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/site.py" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/site.pyc" then permit
+	netbsd-read: permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/os" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/os.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/osmodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/os.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/os.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/os" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/os.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/osmodule.so" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/os.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/posixpath" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/posixpath.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/posixpathmodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/posixpath.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/posixpath.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/posixpath" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/posixpath.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/posixpathmodule.so" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/posixpath.py" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/posixpath.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/stat" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/stat.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/statmodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/stat.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/stat.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/stat" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/stat.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/statmodule.so" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/stat.py" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/stat.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/UserDict" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/UserDict.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/UserDictmodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/UserDict.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/UserDict.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/UserDict" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/UserDict.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/UserDictmodule.so" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/UserDict.py" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/UserDict.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/copy_reg" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/copy_reg.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/copy_regmodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/copy_reg.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/copy_reg.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/copy_reg" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/copy_reg.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/copy_regmodule.so" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/copy_reg.py" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/copy_reg.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/types" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/types.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/typesmodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/types.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/types.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/types" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/types.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/typesmodule.so" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/types.py" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/types.pyc" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/site-packages" then permit
+	netbsd-fcntl: permit
+	netbsd-fstatvfs1: permit
+	netbsd-lseek: permit
+	netbsd-getdents: permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/site-packages/PIL.pth" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/site-packages/PIL" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/site-python" then permit
+	netbsd-issetugid: permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /usr/share/nls/nls.alias.db" then permit
+	netbsd-fsread: filename eq "/usr/share/nls/nls.alias" then permit
+	netbsd-fsread: filename eq "/usr/share/nls/C/libc.cat" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/sitecustomize" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/sitecustomize.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/sitecustomizemodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/sitecustomize.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/sitecustomize.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/sitecustomize" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/sitecustomize.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/sitecustomizemodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/sitecustomize.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/sitecustomize.pyc" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/plat-netbsd2" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/plat-netbsd2/sitecustomize" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/plat-netbsd2/sitecustomize.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/plat-netbsd2/sitecustomizemodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/plat-netbsd2/sitecustomize.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/plat-netbsd2/sitecustomize.pyc" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/lib-tk" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/lib-tk/sitecustomize" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/lib-tk/sitecustomize.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/lib-tk/sitecustomizemodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/lib-tk/sitecustomize.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/lib-tk/sitecustomize.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/lib-dynload/sitecustomize" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/lib-dynload/sitecustomize.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/lib-dynload/sitecustomizemodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/lib-dynload/sitecustomize.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/lib-dynload/sitecustomize.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/site-packages/sitecustomize" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/site-packages/sitecustomize.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/site-packages/sitecustomizemodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/site-packages/sitecustomize.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/site-packages/sitecustomize.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/site-packages/PIL/sitecustomize" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/site-packages/PIL/sitecustomize.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/site-packages/PIL/sitecustomizemodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/site-packages/PIL/sitecustomize.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/site-packages/PIL/sitecustomize.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/warnings" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/warnings.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/warningsmodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/warnings.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/warnings.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/warnings" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/warnings.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/warningsmodule.so" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/warnings.py" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/warnings.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/linecache" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/linecache.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/linecachemodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/linecache.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/linecache.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/linecache" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/linecache.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/linecachemodule.so" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/linecache.py" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/linecache.pyc" then permit
+	netbsd-fsread: filename eq "/usr/share/locale/de_DE.ISO8859-1/LC_CTYPE" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/encodings" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/encodings.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/encodingsmodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/encodings.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/encodings.pyc" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/encodings" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/encodings/__init__.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/__init__" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/__init__.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/__init__module.so" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/encodings/__init__.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/codecs" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/codecs.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/codecsmodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/codecs.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/codecs.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/codecs" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/codecs.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/codecsmodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/codecs.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python24.zip/codecs.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/codecs" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/codecs.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/codecsmodule.so" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/codecs.py" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/codecs.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/exceptions" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/exceptions.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/exceptionsmodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/exceptions.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/exceptions.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/types" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/types.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/typesmodule.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/types.py" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/types.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/aliases" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/aliases.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/aliasesmodule.so" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/encodings/aliases.py" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/encodings/aliases.pyc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/iso8859_1" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/iso8859_1.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/python/lib/python2.4/encodings/iso8859_1module.so" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/encodings/iso8859_1.py" then permit
+	netbsd-fsread: filename eq "/opt/python/lib/python2.4/encodings/iso8859_1.pyc" then permit
+	netbsd-__getcwd: permit
+	netbsd-exit: permit
+	netbsd-write: permit
+

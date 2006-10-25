@@ -221,6 +221,9 @@ class Erlang(AbstractProgrammingBackend):
                 # has the students' solution passed this tests?
                 else:
                     logging.debug(result)
+
+                    match = re.search('^isEqual=.*$', result, re.M)
+                    result = match.group()
                     
                     msgItems = result.split(';;')
                     
@@ -262,7 +265,7 @@ if __name__ == "__main__":
         cpid = 0
 
     if cpid == 0:
-        tB = ErlangBackend({
+        tB = Erlang({
                     'host': socket.getfqdn(), 
                     'port': 5060, 
                     'capeserver': 'http://%s:5050' % socket.getfqdn(), 

@@ -8,6 +8,7 @@
 import sys, os, re, popen2, tempfile, threading, signal
 import shutil
 import logging
+import traceback
 
 from types import StringType, UnicodeType
 
@@ -24,9 +25,9 @@ except AttributeError:
     EX_OK = 0
     
 try:
-    SIGKILL = signal.SIGKILL
+    SIGTERM = signal.SIGTERM
 except AttributeError:
-    SIGKILL = 15
+    SIGTERM = 15
     
 class AbstractProgrammingBackend(AbstractBackend):
     """
@@ -91,6 +92,7 @@ class AbstractProgrammingBackend(AbstractBackend):
             except Exception, e:
                 msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
                 logging.error(msg)
+                logging.error(traceback.format_exc())
                 result = (-10, msg)
                 
 
@@ -317,28 +319,29 @@ class AbstractProgrammingBackend(AbstractBackend):
         #executeOsCmd(sCommandCopy % (wFilename + '.hs'))
             
         # Popen4 will provide both stdout and stderr on handle.fromchild
-        if interpreter.find('%s') == -1:
-            interpreter = interpreter + ' %s'
+        # if interpreter.find('%s') == -1:
+        #     interpreter = interpreter + ' %s'
         
         # change dir to current job dir
         os.chdir(dir)
         
-        #logging.debug('xxx: %s' % (interpreter % fName))    
+        #logging.debug('xxx: %s %s' % (interpreter, fName))
         
-        handle = popen2.Popen4(interpreter % fName)
-        logging.info('Started %s in %s with PID %d' % (interpreter % fName,
-                                                       dir,
-                                                       handle.pid))
+        handle = popen2.Popen4((interpreter, fName, ))
+        logging.info('Started %s %s in %s with PID %d' % (interpreter,
+                                                          fName,
+                                                          dir,
+                                                          handle.pid))
         handle.tochild.close()
         # we don't expect to send on stdin; instead we just wait for the 
         # process to end, or kill it.
 
         def interruptProcess():
-            logging.debug('Aborting %s: %d -> %i' %
-                          (interpreter % fName, SIGKILL, handle.pid))
+            logging.debug('Killing %s %s: %d -> %i' %
+                          (interpreter, fName, SIGTERM, handle.pid))
 
             try:
-                os.kill(handle.pid, SIGKILL)
+                os.kill(handle.pid, SIGTERM)
             except AttributeError:
                 # we will do nothing in this case
                 pass
@@ -351,11 +354,12 @@ class AbstractProgrammingBackend(AbstractBackend):
         timer.cancel()
 
 
-        if exitcode == SIGKILL:
+        if exitcode == SIGTERM:
             # process has been interrupted by timer
             #os.remove(fName)
-            return (exitcode, ['Function call cancelled after %i seconds.' % 
-                            (self.PROCESS_WAIT_TIME,)])
+            return exitcode, 'Function call cancelled after %i seconds.  ' \
+                   'Check for infinite loops.' \
+                   % (self.PROCESS_WAIT_TIME,)
             
         buf = handle.fromchild.readlines()
         handle.fromchild.close()

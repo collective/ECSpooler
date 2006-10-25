@@ -18,12 +18,8 @@ class JavaConf:
     Properties used by backend Java.
     """
 
-    systracePolicy = ''
     compiler = '/usr/pkg/bin/javac'
     interpreter = '/opt/ECSpooler/backends/java/java+systrace'
-
-    if systracePolicy:
-        interpreter = 'systrace -a -f %s %s' % (systracePolicy, interpreter)
 
     # The packages that the model and student solution will be put in
     NS_MODEL = 'ModelPackage'

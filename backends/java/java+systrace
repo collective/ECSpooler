@@ -1,0 +1,14 @@
+#! /opt/ast/bin/ksh
+
+POLICYDIR=/opt/ECSpooler/systrace-policy
+INTERPRETER=/usr/pkg/java/sun-1.5/bin/java
+
+PATH=/usr/pkg/java/sun-1.5/bin:${PATH}; export PATH
+JAVA_HOME=/usr/pkg/java/sun-1.5; export JAVA_HOME
+JVM_HOME=/usr/pkg/java/sun-1.5; export JVM_HOME
+ulimit -d `ulimit -H -d`
+
+trap 'kill $! && trap - TERM && kill $$' TERM
+
+systrace -a -d $POLICYDIR $INTERPRETER "$@" &
+wait %%

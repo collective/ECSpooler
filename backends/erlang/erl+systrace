@@ -1,0 +1,13 @@
+#! /opt/ast/bin/ksh
+
+export PATH=$PATH:/opt/erlang/lib/erlang/erts-5.4.13/bin
+export ROOTDIR=/opt/erlang/lib/erlang
+export BINDIR=$ROOTDIR/erts-5.4.13/bin
+
+POLICYDIR=/opt/ECSpooler/systrace-policy
+INTERPRETER="beam -- -root $ROOTDIR -progname erlexec -- -home /tmp -noshell -noinput -s $1 -s erlang halt"
+
+trap 'kill $! && trap - TERM && kill $$' TERM
+
+systrace -a -d $POLICYDIR $INTERPRETER &
+wait %%

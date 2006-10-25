@@ -17,12 +17,7 @@ class HaskellConf:
     Defines all properties used by backend Haskell.
     """
 
-    systracePolicy = ''
     interpreter = '/opt/ECSpooler/backends/haskell/runhugs+systrace'
-    #interpreter = '/opt/hugs/bin/runhugs -P"{HUGS}:/home/amelung/haskell_libs/:"'
-
-    if systracePolicy:
-        interpreter = 'systrace -a -f %s %s' % (systracePolicy, interpreter)
 
     # load Haskell function to do a simple test
     try:
