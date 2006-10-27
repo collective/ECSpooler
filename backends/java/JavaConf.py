@@ -18,7 +18,8 @@ class JavaConf:
     Properties used by backend Java.
     """
 
-    compiler = '/usr/pkg/bin/javac'
+    #compiler = '/usr/pkg/bin/javac'
+    compiler = '/opt/ECSpooler/backends/java/javac'
     interpreter = '/opt/ECSpooler/backends/java/java+systrace'
 
     # The packages that the model and student solution will be put in

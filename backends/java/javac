@@ -1,0 +1,8 @@
+#! /opt/ast/bin/ksh
+
+PATH=/usr/pkg/java/sun-1.5/bin:${PATH}; export PATH
+JAVA_HOME=/usr/pkg/java/sun-1.5; export JAVA_HOME
+JVM_HOME=/usr/pkg/java/sun-1.5; export JVM_HOME
+ulimit -d `ulimit -H -d`
+
+/usr/pkg/java/sun-1.5/bin/javac "$@"
