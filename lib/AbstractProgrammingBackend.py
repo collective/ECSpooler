@@ -296,39 +296,29 @@ class AbstractProgrammingBackend(AbstractBackend):
         return {'module':mName, 'file':fName}
 
 
-    def _runInterpreter(self, interpreter, dir, fName):
+    #def _execute(self, command, options, dir, fName)
+    def _runInterpreter(self, command, dir, fName, options=()):
         """
         Change the current working directory to dir and runs the given 
         interpreter with the given file. Availability: Unix.
 
-        @param interpreter command line for a interpreter including flags and
-               in  most cases a %s conversion placeholder for the file name
+        @param command command which will be executed
+        @param options options for command including flags as list
         @param dir path to which we will change the current working directory 
         @param fName name of the file which will be called with the interpreter
         @return exitcode and result message, normally something like os.EX_OK
-                and the output from this interpreter run
         """
-        
-        #logging.debug('interpreter: ' + interpreter)
-            
-        # TODO: Maybe we should always use a sand-box environment!
-        #       On possible solution is to copy the files to a jail
-        #       using ssh
-        #executeOsCmd(sCommandCopy % (mSFilename + '.hs'))
-        #executeOsCmd(sCommandCopy % (sSFilename + '.hs'))
-        #executeOsCmd(sCommandCopy % (wFilename + '.hs'))
-            
-        # Popen4 will provide both stdout and stderr on handle.fromchild
-        # if interpreter.find('%s') == -1:
-        #     interpreter = interpreter + ' %s'
-        
         # change dir to current job dir
         os.chdir(dir)
         
-        #logging.debug('xxx: %s %s' % (interpreter, fName))
+        # create a list of alle command line elements
+        commandLine = [command]
+        commandLine.extend(options)
+        commandLine.append(fName)
         
-        handle = popen2.Popen4((interpreter, fName, ))
-        logging.info('Started %s %s in %s with PID %d' % (interpreter,
+        # Popen4 will provide both stdout and stderr on handle.fromchild
+        handle = popen2.Popen4(commandLine)
+        logging.info('Started %s %s in %s with PID %d' % (command,
                                                           fName,
                                                           dir,
                                                           handle.pid))
@@ -338,7 +328,7 @@ class AbstractProgrammingBackend(AbstractBackend):
 
         def interruptProcess():
             logging.debug('Killing %s %s: %d -> %i' %
-                          (interpreter, fName, SIGTERM, handle.pid))
+                          (command, fName, SIGTERM, handle.pid))
 
             try:
                 os.kill(handle.pid, SIGTERM)
