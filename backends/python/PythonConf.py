@@ -17,7 +17,7 @@ class PythonConf:
     Defines all properties used by backend Python.
     """
 
-    interpreter = '/opt/python/bin/python'
+    interpreter = '/opt/ECSpooler/backends/python/python+systrace'
 
     # load Haskell function to do a simple test
     try:
