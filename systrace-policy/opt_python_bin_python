@@ -26,8 +26,8 @@ Policy: /opt/python/bin/python, Emulation: netbsd
 	netbsd-mlock: permit
 	netbsd-getrlimit: permit
 	netbsd-__sigprocmask14: permit
-	netbsd-fsread: filename match "/tmp/*.py" then permit
-        netbsd-fsread: filename match "/tmp/*.pyc" then permit
+	netbsd-fsread: filename match "/tmp/*/*.py" then permit
+        netbsd-fsread: filename match "/tmp/*/*.pyc" then permit
 	netbsd-ioctl: permit
 	netbsd-fsread: filename eq "/<non-existent filename>: /opt/cups/bin/python" then permit
 	netbsd-fsread: filename eq "/<non-existent filename>: /usr/bin/python" then permit
