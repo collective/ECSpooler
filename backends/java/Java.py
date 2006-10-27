@@ -64,22 +64,18 @@ class Java(AbstractProgrammingBackend):
         """
         @see AbtractSimpleBackend._postProcessCheckSyntax
         """
-        
-#        # replace path and filename
-#        message =  re.sub('^.*%s:(\d+)' % self.srcFileSuffix, 
-#                          'line: \g<1>', 
-#                          message)
+        # search for path, filename and line numbers
+        # result is something like [('Tutor1.java:7', '7'), ('Tutor1.java:7', '7')]
+        matches = re.findall('(^.*%s:(\d+))' % 'java', message, re.MULTILINE)
 
-        # find line number in result
-        matches = re.findall('%s:(\d+)' % self.srcFileSuffix, message)
-        
-        if len(matches):
-            # set line number minus x lines and return
-            return re.sub('^.*%s:(\d+)'  % self.srcFileSuffix, 
-                          'line: %d' % (int(matches[0])-test.lineNumberOffset), 
-                          message)
-        else:
-            return message
+        # replace each filename and line number
+        for match in matches:
+            message = re.sub(match[0], 
+                             'line: %d' % (int(match[1]) - test.lineNumberOffset), 
+                             message, 
+                             1)
+
+        return message
                       
 
     # -- check semantics ------------------------------------------------------
@@ -147,6 +143,7 @@ class Java(AbstractProgrammingBackend):
             # compile the solutions
             compiler = test.compiler
             compiled = {}
+
             for sol in [('model',   JavaConf.NS_MODEL,   modelSolution),
                         ('student', JavaConf.NS_STUDENT, studentSolution)]:
                 name, ns, source = sol
@@ -159,17 +156,17 @@ class Java(AbstractProgrammingBackend):
                 cname = self.getClassName(source)
                 compiled[name+'Class'] = cname
                 compiled[name] = self._writeModule(
-                    cname,
-                    source,
-                    suffix=self.srcFileSuffix,
-                    dir=dir,
-                    encoding=test.encoding)
+                                    cname,
+                                    source,
+                                    suffix=self.srcFileSuffix,
+                                    dir=dir,
+                                    encoding=test.encoding)
 
                 # compile the solution
                 exitcode, result = self._runInterpreter(
-                    compiler,
-                    os.path.dirname(compiled[name]['file']),
-                    os.path.basename(compiled[name]['file']))
+                                    compiler,
+                                    os.path.dirname(compiled[name]['file']),
+                                    os.path.basename(compiled[name]['file']))
                 
                 assert exitcode == EX_OK, \
                        'Errors in %s solution: %s' % (name, result)
@@ -210,7 +207,7 @@ class Java(AbstractProgrammingBackend):
                     realClass = "%s.%s" % (ns, compiled['%sClass' % k])
                     v = re.sub(r"\b%s\b" % compiled['modelClass'], realClass,
                                t)
-                    if k=='student':
+                    if k == 'student':
                         # We use this for error reports.  It is like
                         # the test data that we actually use, but
                         # without the package qualifier.  After all,
