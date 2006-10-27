@@ -17,11 +17,7 @@ class PythonConf:
     Defines all properties used by backend Python.
     """
 
-    systracePolicy = 'opt_python_bin_python'
     interpreter = '/opt/python/bin/python'
-
-    if systracePolicy:
-        interpreter = 'systrace -a -f %s %s' % (systracePolicy, interpreter)
 
     # load Haskell function to do a simple test
     try:
