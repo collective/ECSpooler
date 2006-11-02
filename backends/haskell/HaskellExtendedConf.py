@@ -14,12 +14,12 @@ class HaskellExtendedConf(HaskellConf):
     """
     
     syntaxTemplate = \
-    """module Main where
+"""module Main where
     
-    ${SOURCE}
+${SOURCE}
        
-    main = putStr(\"\")
-    """
+main = putStr(\"\")
+"""
     
     semanticCheckTemplate = \
 """module ${MODULE} where
