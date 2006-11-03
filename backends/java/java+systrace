@@ -3,9 +3,9 @@
 POLICYDIR=/opt/ECSpooler/systrace-policy
 INTERPRETER=/usr/pkg/java/sun-1.5/bin/java
 
-POLICYFILE=${INTERPRETER//\//_}
+POLICYFILE=${INTERPRETER//[\/.-]/_}
 POLICYFILE=${POLICYFILE/_}
-if [[ -r $POLICYFILE ]]; then
+if [[ -r "$POLICYDIR/$POLICYFILE" ]]; then
    PATH=/usr/pkg/java/sun-1.5/bin:${PATH}; export PATH
    JAVA_HOME=/usr/pkg/java/sun-1.5; export JAVA_HOME
    JVM_HOME=/usr/pkg/java/sun-1.5; export JVM_HOME
