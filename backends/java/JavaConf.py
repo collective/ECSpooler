@@ -72,7 +72,7 @@ public class %s
     {
         if (o.getClass().isArray())
         {
-            LinkedList<Object> list = new java.util.LinkedList.LinkedList<Object>();
+            java.util.LinkedList<Object> list = new java.util.LinkedList<Object>();
 
             for (int i = 0; i < java.lang.reflect.Array.getLength(o); i++)
             {
@@ -94,7 +94,7 @@ public class %s
         Object  rec = ${student_testData};
         
         exp = isArray(exp);
-        exp = isArray(rec);
+        rec = isArray(rec);
         
         Boolean eql = new Boolean(test(exp, rec));
         
