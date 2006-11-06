@@ -66,20 +66,17 @@ class JavaConf:
 
     wrapperTemplate = \
 '''
-import java.lang.reflect.Array;
-import java.util.LinkedList;
-
 public class %s
 {
     private static Object isArray(Object o)
     {
         if (o.getClass().isArray())
         {
-            LinkedList<Object> list = new LinkedList<Object>();
+            LinkedList<Object> list = new java.util.LinkedList.LinkedList<Object>();
 
-            for (int i = 0; i < Array.getLength(o); i++)
+            for (int i = 0; i < java.lang.reflect.Array.getLength(o); i++)
             {
-                list.add(Array.get(o, i));
+                list.add(java.lang.reflect.Array.get(o, i));
             }
             
             return list;
