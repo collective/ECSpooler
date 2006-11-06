@@ -66,6 +66,9 @@ class JavaConf:
 
     wrapperTemplate = \
 '''
+import java.lang.reflect.Array;
+import java.util.LinkedList;
+
 public class %s
 {
     private static Object isArray(Object o)
