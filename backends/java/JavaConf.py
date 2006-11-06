@@ -68,6 +68,22 @@ class JavaConf:
 '''
 public class %s
 {
+    private static Object isArray(Object o)
+    {
+        if (o.getClass().isArray())
+        {
+            LinkedList<Object> list = new LinkedList<Object>();
+
+            for (int i = 0; i < Array.getLength(o); i++)
+            {
+                list.add(Array.get(o, i));
+            }
+            
+            return list;
+        }
+        return o;
+    }
+
     ${helpFunctions}
 
     ${testFunction}
@@ -76,6 +92,10 @@ public class %s
     {
         Object  exp = ${model_testData};
         Object  rec = ${student_testData};
+        
+        exp = isArray(exp);
+        exp = isArray(rec);
+        
         Boolean eql = new Boolean(test(exp, rec));
         
         System.out.println("isEqual=" + eql.toString()

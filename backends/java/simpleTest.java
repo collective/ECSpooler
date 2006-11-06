@@ -1,4 +1,4 @@
-    static boolean test(Object a, Object b)
+    private static boolean test(Object a, Object b)
     {
         return a.equals(b);
     }
