@@ -1,0 +1,56 @@
+#! /opt/ast/bin/ksh
+
+POLICYDIR=/opt/ECSpooler/systrace-policy
+INTERPRETER=/opt/swiprolog/bin/pl
+OPTIONS="-q -f none -t halt"
+
+trap 'kill $! && trap - TERM && kill $$' TERM
+
+# The problem with the SWI Prolog interpreter is that it doesn't exit
+# with an error if a syntax error is encountered.  So we execute the
+# script we were handed, collect all STDOUT and STDERR output in $OP
+# and exit with an error ourselves if the output from the interpreter
+# contains a line that starts with "ERROR".
+
+# Explanation of the command line options in use:
+#
+# -q
+#     Be quiet.
+#
+# -f none
+#     Don't load any startup scripts.
+#
+# -t halt
+#     Halt the interpreter after the script has been executed
+#     instead of switching to the top-level.
+#
+# -s script
+#    Execute this script.
+
+# OP=$(systrace -a -d $POLICYDIR $INTERPRETER $OPTIONS -s "$@" 2>&1 &)
+#ERR=$?
+
+tmpfile=$(mktemp -t pl+systrace)
+systrace -a -d $POLICYDIR $INTERPRETER $OPTIONS -s "$@" > $tmpfile 2>&1 &
+wait %%
+ERR=$?
+
+cat $tmpfile
+
+if [[ $ERR != 0 ]]
+then
+  # The interpreter's exit code is != 0.  Fine, exit with this one.
+  exit $ERR
+else
+  # Exit with an error if the interpreter's output contains a line
+  # that starts with "ERROR".
+  if grep -q '^ERROR' $tmpfile
+  then
+     #rm $tmpfile
+    exit 1
+  else
+     #rm $tmpfile
+    exit 0
+  fi
+fi
+
