@@ -18,7 +18,7 @@ class PrologConf:
     Properties used by backend Prolog.
     """
 
-    interpreter = '/home/wfenske/hiwi/zope/Products/ECSpooler/backends/prolog/pl'
+    interpreter = '/opt/ECSpooler/backends/prolog/pl+systrace'
     compiler = interpreter
 
     # The packages that the model and student solution will be put in
