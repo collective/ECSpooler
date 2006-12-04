@@ -18,3 +18,4 @@ from backends.java.Java import Java
 
 from backends.python.Python import Python
 
+from backends.prolog.Prolog import Prolog
