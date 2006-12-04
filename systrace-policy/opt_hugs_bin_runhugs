@@ -64,6 +64,7 @@ Policy: /opt/hugs/bin/runhugs, Emulation: netbsd
 	netbsd-__getcwd: permit
 	netbsd-fsread: filename match "/tmp/*/Student.hs" then permit
 	netbsd-fsread: filename match "/tmp/*/Model.hs" then permit
+	netbsd-fsread: filename match "/opt/ECSpooler/backends/haskell/haskell_libs" then permit
 	netbsd-fsread: filename match "/tmp/*/Prelude.hs" then deny[eperm]
 	netbsd-fsread: filename match "/tmp/*/Prelude.lhs" then deny[eperm]
 	netbsd-ioctl: permit
