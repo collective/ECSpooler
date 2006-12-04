@@ -2,11 +2,9 @@
 
 POLICYDIR=/opt/ECSpooler/systrace-policy
 INTERPRETER=/opt/hugs/bin/runhugs
+OPTIONS="-P{HUGS}:/opt/ECSpooler/backends/haskell/haskell_libs:"
 
 trap 'kill $! && trap - TERM && kill $$' TERM
 
-systrace -a -d $POLICYDIR $INTERPRETER "$@" &
+systrace -a -d $POLICYDIR $INTERPRETER $OPTIONS "$@" &
 wait %%
-
-
-#interpreter = '/opt/hugs/bin/runhugs -P"{HUGS}:/home/amelung/haskell_libs/:"'
