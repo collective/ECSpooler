@@ -28,7 +28,7 @@ class PrologConf:
     # The name of the wrapper class that performs the semantic check
     CLASS_SEMANTIC_CHECK = 'SemanticCheck'
 
-    VAR_NAME_RE = r'[A-Z][A-Z0-9_]*'
+    VAR_NAME_RE = r'[A-Z_][A-Za-z0-9_]*'
     
     # load Prolog function to do a simple test
 
