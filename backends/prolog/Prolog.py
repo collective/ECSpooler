@@ -71,24 +71,22 @@ class Prolog(AbstractProgrammingBackend):
                       
 
     # -- check semantics ------------------------------------------------------
-    def getVarName(self, testData):
+    def getVarNames(self, testData):
         """
-        Return the variable name that is used in the test data.  For
+        Return the list of uique variable names that are used in the
+        test data.  For
         
-           foo(1, 2, X)
+           foo(1, 2, X, Y, X)
 
-        return 'X'.
+        return ['X', 'Y'].
         """
-        matches = re.findall(PrologConf.VAR_NAME_RE, testData)
-        assert matches, \
-            "Could not determine the variable name in test data %s" % \
-            repr(testData)
-        
-        assert len(matches) == 1, \
-            "Found more than one variable name in test data %s: %s.\nThe system only support the use of exactly one variable name." % \
-            (repr(testData), repr(matches),)
-        
-        return matches[0]
+        raw = re.findall(PrologConf.VAR_NAME_RE, testData)
+        # remove duplicates but preserve order
+        uniq = []
+        for name in raw:
+            if name not in uniq:
+                uniq.append(name)
+        return uniq
     
     
     def _preProcessCheckSemantic(self, test, src, **kwargs):
@@ -197,9 +195,9 @@ class Prolog(AbstractProgrammingBackend):
                 # test data
                 wrapper = re.sub(r'\$\{%s\}' % rfn, t, wrapper)
 
-                # replace the variable name used in the test data
-                testVarName = self.getVarName(t)
-                wrapper = re.sub(r'\$\{testVarName\}', testVarName, wrapper)
+                # replace the variables name used in the test data
+                varNames = ', '.join(self.getVarNames(t))
+                wrapper = re.sub(r'\$\{testVarNames\}', varNames, wrapper)
         
                 # remove all remaining placeholders
                 wrapper = re.sub(r'\$\{[^\}]*\}', '', wrapper)

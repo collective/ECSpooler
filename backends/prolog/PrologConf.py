@@ -46,14 +46,14 @@ class PrologConf:
 
 ${helpFunctions}
 
-model(${testVarName})   :- %s:${testData}
-student(${testVarName}) :- %s:${testData}
+model([${testVarNames}])   :- %s:${testData}
+student([${testVarNames}]) :- %s:${testData}
 
 ${testFunction}
 """  % (NS_MODEL, NS_STUDENT, NS_MODEL, NS_STUDENT,)) + \
 """
-:- test(E), findall(M, model(M), Ms), findall(S, student(S), Ss),
-	writef('isEqual=%w;;expected=%w;;received=%w', [E, Ms, Ss]).
+:- test(E), findall(X, model(X), Ms), findall(X, student(X), Ss),
+     writef('isEqual=%w;;expected=%w;;received=%w', [E, Ms, Ss]).
 """
 
     # input schema
