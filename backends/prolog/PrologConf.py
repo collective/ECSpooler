@@ -18,7 +18,7 @@ class PrologConf:
     Properties used by backend Prolog.
     """
 
-    interpreter = '/opt/ECSpooler/backends/prolog/pl+systrace'
+    interpreter = join(dirname(__file__), 'pl+systrace')
     compiler = interpreter
 
     # The packages that the model and student solution will be put in
@@ -28,7 +28,7 @@ class PrologConf:
     # The name of the wrapper class that performs the semantic check
     CLASS_SEMANTIC_CHECK = 'SemanticCheck'
 
-    VAR_NAME_RE = r'[A-Z_][A-Za-z0-9_]*'
+    VAR_NAME_RE = r'\b[_A-Z][A-Za-z0-9_]*\b'
     
     # load Prolog function to do a simple test
 
