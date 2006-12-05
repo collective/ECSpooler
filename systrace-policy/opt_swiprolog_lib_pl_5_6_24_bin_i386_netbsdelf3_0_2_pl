@@ -1,47 +1,51 @@
 Policy: /opt/swiprolog/lib/pl-5.6.24/bin/i386-netbsdelf3.0.2/pl, Emulation: netbsd
-	netbsd-mmap: permit
-	netbsd-fsread: filename eq "/etc/ld.so.conf" then permit
 	netbsd-__fstat13: permit
-	netbsd-close: permit
-	netbsd-munmap: permit
-	netbsd-fsread: filename match "/usr/lib/librt.so.*" then permit
-	netbsd-fsread: filename match "/usr/lib/libcurses.so.*" then permit
-	netbsd-fsread: filename match "/lib/libm387.so.*" then permit
-	netbsd-fsread: filename match "/lib/libm.so.*" then permit
-	netbsd-fsread: filename match "/usr/lib/libpthread.so.*" then permit
-	netbsd-fsread: filename match "/lib/libc.so.*" then permit
-	netbsd-__sysctl: permit
-	netbsd-mprotect: permit
-	netbsd-fsread: filename eq "/etc/malloc.conf" then permit
-	netbsd-break: permit
-	netbsd-mlock: permit
-	netbsd-getrlimit: permit
-	netbsd-__sigprocmask14: permit
-	netbsd-issetugid: permit
-	netbsd-fsread: filename match "/usr/share/locale/*/LC_CTYPE" then permit
-	netbsd-lseek: permit
-	netbsd-read: permit
-	netbsd-ioctl: permit
-	netbsd-fsread: filename match "/opt/swiprolog/lib/*/bin/*/pl" then permit
-	netbsd-fsread: filename eq "/opt/swiprolog/bin/pl" then permit
- 	netbsd-fsread: filename match "/opt/swiprolog/lib/*" then permit
-	netbsd-fsread: filename match "/opt/swiprolog/lib/*/bin/swipl" then permit
-	netbsd-fsread: filename match "/opt/swiprolog/lib/*/bin/*/pl.prc" then permit
-	netbsd-fsread: filename match "/opt/swiprolog/lib/*/boot32.prc" then permit
+	netbsd-__getcwd: permit
 	netbsd-__sigaction_sigtramp: permit
+	netbsd-__sigprocmask14: permit
+	netbsd-__sysctl: permit
+	netbsd-break: permit
+	netbsd-close: permit
+	netbsd-exit: permit
 	netbsd-getpid: permit
-	netbsd-fsread: filename match "/usr/share/zoneinfo/*/*" then permit
-	netbsd-fsread: filename match "/opt/swiprolog/lib/*/boot" then permit
-	netbsd-fsread: filename match "/opt/swiprolog/lib/*/pl.rc" then permit
-	netbsd-fsread: filename match "/tmp/*/SemanticCheck.pl" then permit
+	netbsd-getrlimit: permit
 	netbsd-getrusage: permit
 	netbsd-gettimeofday: permit
-	netbsd-fsread: filename match "/tmp/*/SemanticCheck.pl.qlf" then permit
-	netbsd-__getcwd: permit
-	netbsd-fsread: filename match "/tmp/*/model.pl" then permit
-	netbsd-fsread: filename match "/tmp/*/model.qlf" then permit
-	netbsd-fsread: filename match "/tmp/*/student.pl" then permit
-	netbsd-fsread: filename match "/tmp/*/student.qlf" then permit
+	netbsd-ioctl: permit
+	netbsd-issetugid: permit
+	netbsd-lseek: permit
+	netbsd-mlock: permit
+	netbsd-mmap: permit
+	netbsd-mprotect: permit
+	netbsd-munmap: permit
+	netbsd-read: permit
 	netbsd-write: permit
-	netbsd-exit: permit
-
+	netbsd-fsread: filename eq    "/" then deny[eperm]
+	netbsd-fsread: filename eq    "/root" then deny[eperm]
+	netbsd-fsread: filename eq    "/tmp" then permit
+	netbsd-fsread: filename eq    "/etc/ld.so.conf" then permit
+	netbsd-fsread: filename eq    "/etc/malloc.conf" then permit
+	netbsd-fsread: filename match "/lib/libc.so.*" then permit
+	netbsd-fsread: filename match "/lib/libm.so.*" then permit
+	netbsd-fsread: filename match "/lib/libm387.so.*" then permit
+	netbsd-fsread: filename eq    "/opt" then deny[eperm]
+	netbsd-fsread: filename eq    "/opt/swiprolog" then permit
+	netbsd-fsread: filename eq    "/opt/swiprolog/bin/pl" then permit
+	netbsd-fsread: filename match "/opt/swiprolog/lib" then permit
+ 	netbsd-fsread: filename match "/opt/swiprolog/lib/*" then permit
+	netbsd-fsread: filename match "/opt/swiprolog/lib/*/bin/*/pl" then permit
+	netbsd-fsread: filename match "/opt/swiprolog/lib/*/bin/*/pl.prc" then permit
+	netbsd-fsread: filename match "/opt/swiprolog/lib/*/bin/swipl" then permit
+	netbsd-fsread: filename match "/opt/swiprolog/lib/*/boot" then permit
+	netbsd-fsread: filename match "/opt/swiprolog/lib/*/boot32.prc" then permit
+	netbsd-fsread: filename match "/opt/swiprolog/lib/*/pl.rc" then permit
+	netbsd-fsread: filename match "/tmp/*" then permit
+	netbsd-fsread: filename match "/tmp/*/*.pl.qlf" then permit	
+	netbsd-fsread: filename match "/tmp/*/SemanticCheck.pl" then permit
+	netbsd-fsread: filename match "/tmp/*/model.pl" then permit
+	netbsd-fsread: filename match "/tmp/*/student.pl" then permit
+	netbsd-fsread: filename match "/usr/lib/libcurses.so.*" then permit
+	netbsd-fsread: filename match "/usr/lib/libpthread.so.*" then permit
+	netbsd-fsread: filename match "/usr/lib/librt.so.*" then permit
+	netbsd-fsread: filename match "/usr/share/locale/*/LC_CTYPE" then permit
+	netbsd-fsread: filename match "/usr/share/zoneinfo/*/*" then permit
