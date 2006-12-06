@@ -40,9 +40,24 @@ class PrologConf:
     # This code *should* throw up if 'simpleTest.pl' cannot be loaded.
     simpleTest = file(join(dirname(__file__), 'simpleTest.pl'), 'r').read()
 
-    wrapperTemplate = (
+    wrapperTemplate = \
 """:- use_module('%s').
 :- use_module('%s').
+
+join([],    _, '').
+join([X],   _, O) :- swritef(O, '%%w', [X]).
+join([X|R], I, O) :- join(R, I, JR), swritef(O, '%%w%%w%%w', [X, I, JR]).
+
+format_res1_sub([], [], []).
+format_res1_sub([N|Rn], [V|Rv], [O|Ro]) :- format_res1_sub(Rn, Rv, Ro),
+	swritef(O, '%%w <- %%w', [N, V]).
+format_res1([], 'Yes').
+format_res1(V, O) :- format_res1_sub([${strTestVarNames}], V, A),
+	join(A, ', ', B),
+	swritef(O, '{%%w}', [B]).
+
+format_res([],   'No').
+format_res(I, O) :- maplist(format_res1, I, T), join(T, ' or ', O).
 
 ${helpFunctions}
 
@@ -50,11 +65,11 @@ model([${testVarNames}])   :- %s:${testData}
 student([${testVarNames}]) :- %s:${testData}
 
 ${testFunction}
-"""  % (NS_MODEL, NS_STUDENT, NS_MODEL, NS_STUDENT,)) + \
-"""
+
 :- test(E), findall(X, model(X), Ms), findall(X, student(X), Ss),
-     writef('isEqual=%w;;expected=%w;;received=%w', [E, Ms, Ss]).
-"""
+	format_res(Ms, FMs), format_res(Ss, FSs), 
+        writef('isEqual=%%w;;expected=%%w;;received=%%w', [E, FMs, FSs]).
+""" % (NS_MODEL, NS_STUDENT, NS_MODEL, NS_STUDENT,)
 
     # input schema
     inputSchema = Schema((

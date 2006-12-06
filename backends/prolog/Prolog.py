@@ -196,11 +196,19 @@ class Prolog(AbstractProgrammingBackend):
                 wrapper = re.sub(r'\$\{%s\}' % rfn, t, wrapper)
 
                 # replace the variables name used in the test data
-                varNames = ', '.join(self.getVarNames(t))
-                wrapper = re.sub(r'\$\{testVarNames\}', varNames, wrapper)
+                varNames = self.getVarNames(t)
+                # list of variables names as variables
+                testVarNames = ', '.join(varNames)
+                wrapper = re.sub(r'\$\{testVarNames\}', testVarNames,
+                                 wrapper)
+                # list of variables names as strings
+                strTestVarNames = ", ".join(["'" + n + "'" for n in varNames])
+                wrapper = re.sub(r'\$\{strTestVarNames\}', strTestVarNames,
+                                 wrapper)
         
                 # remove all remaining placeholders
                 wrapper = re.sub(r'\$\{[^\}]*\}', '', wrapper)
+                #logging.debug('WRAPPER IS:\n%s' % wrapper)
 
                 # write and execute wrapper
                 try:
