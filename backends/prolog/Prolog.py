@@ -60,10 +60,15 @@ class Prolog(AbstractProgrammingBackend):
 
         # replace each filename and line number
         for match in matches:
+            # The column number is stored in `match[3]', but we don't
+            # use it because the value reported by SWI-Prolog isn't
+            # reliable.  It seems to be like this: If the error is in
+            # the first line of a rule, the column number is always 0.
+            # If the error is in any other line, the column number is
+            # correct.
             message = re.sub(match[0], 
-                             'line: %d, column %s: %s' %
-                             (int(match[1]) - test.lineNumberOffset,
-                              match[2], match[3]),
+                             'line %d: %s' %
+                             (int(match[1]) - test.lineNumberOffset, match[3]),
                              message,
                              1)
         
