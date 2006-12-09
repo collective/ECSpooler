@@ -30,7 +30,7 @@ class PrologConf:
 
     VAR_NAME_RE = r'\b[_A-Z][A-Za-z0-9_]*\b'
     
-    # load Prolog function to do a simple test
+    # load Prolog functions to do tests
 
     # try:
     #     simpleTest = file(join(dirname(__file__), 'simpleTest.pl'), 'r').read()
@@ -39,6 +39,7 @@ class PrologConf:
     #     simpleTest = ''
     # This code *should* throw up if 'simpleTest.pl' cannot be loaded.
     simpleTest = file(join(dirname(__file__), 'simpleTest.pl'), 'r').read()
+    permTest   = file(join(dirname(__file__), 'permTest.pl'),   'r').read()
 
     wrapperTemplate = \
 """:- use_module('%s').
@@ -117,14 +118,14 @@ ${testFunction}
             interpreter = interpreter,
         ),
 
-#         TestEnvironment(
-#             'permutation',
-#             label = 'Permutation',
-#             description = 'Test with permutations',
-#             test = permTest,
-#             semantic = wrapperTemplate,
-#             lineNumberOffset = 0,
-#             compiler = compiler,
-#             interpreter = interpreter,
-#         ),
+        TestEnvironment(
+            'permutation',
+            label = 'Permutation',
+            description = 'Test with permutations',
+            test = permTest,
+            semantic = wrapperTemplate,
+            lineNumberOffset = 0,
+            compiler = compiler,
+            interpreter = interpreter,
+        ),
     ))
