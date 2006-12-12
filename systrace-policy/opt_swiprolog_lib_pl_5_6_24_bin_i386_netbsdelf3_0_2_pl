@@ -22,7 +22,7 @@ Policy: /opt/swiprolog/lib/pl-5.6.24/bin/i386-netbsdelf3.0.2/pl, Emulation: netb
 	netbsd-write: permit
         netbsd-fsread: filename match "/<non-existent filename>: *" then permit
 	netbsd-fsread: filename eq    "/" then deny[eperm]
-	netbsd-fsread: filename inpath "/root" then deny[eperm]
+	netbsd-fsread: filename eq    "/root" then deny[eperm]
 	netbsd-fsread: filename eq    "/tmp" then permit
 	netbsd-fsread: filename eq    "/etc/ld.so.conf" then permit
 	netbsd-fsread: filename eq    "/etc/malloc.conf" then permit
@@ -48,5 +48,8 @@ Policy: /opt/swiprolog/lib/pl-5.6.24/bin/i386-netbsdelf3.0.2/pl, Emulation: netb
 	netbsd-fsread: filename match "/usr/lib/libcurses.so.*" then permit
 	netbsd-fsread: filename match "/usr/lib/libpthread.so.*" then permit
 	netbsd-fsread: filename match "/usr/lib/librt.so.*" then permit
+
+	netbsd-fsread: filename match "/usr/share/nls/*" then permit
+	netbsd-fsread: filename match "/usr/share/nls/*/*.cat" then permit
 	netbsd-fsread: filename match "/usr/share/locale/*/LC_CTYPE" then permit
 	netbsd-fsread: filename match "/usr/share/zoneinfo/*/*" then permit
