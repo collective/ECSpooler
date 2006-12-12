@@ -20,8 +20,9 @@ Policy: /opt/swiprolog/lib/pl-5.6.24/bin/i386-netbsdelf3.0.2/pl, Emulation: netb
 	netbsd-munmap: permit
 	netbsd-read: permit
 	netbsd-write: permit
+        netbsd-fsread: filename match "/<non-existent filename>: *" then permit
 	netbsd-fsread: filename eq    "/" then deny[eperm]
-	netbsd-fsread: filename eq    "/root" then deny[eperm]
+	netbsd-fsread: filename inpath "/root" then deny[eperm]
 	netbsd-fsread: filename eq    "/tmp" then permit
 	netbsd-fsread: filename eq    "/etc/ld.so.conf" then permit
 	netbsd-fsread: filename eq    "/etc/malloc.conf" then permit
