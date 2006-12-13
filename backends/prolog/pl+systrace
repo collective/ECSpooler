@@ -46,11 +46,11 @@ else
   # that starts with "ERROR".
   if grep -q '^ERROR' $tmpfile
   then
-     #rm $tmpfile
-    exit 1
+     rm $tmpfile
+     exit 1
   else
-     #rm $tmpfile
-    exit 0
+     rm $tmpfile
+     exit 0
   fi
 fi
 
