@@ -1,0 +1,22 @@
+#! /opt/ast/bin/ksh
+
+POLICYDIR=/opt/ECSpooler/systrace-policy
+INTERPRETER=/opt/mzscheme/bin/mzscheme
+OPTIONS="-m -v -f "
+
+# Explanation of MzScheme command-line flags in use:
+#
+# -m
+#    Suppresses the startup banner text.
+#
+# -v 
+#    Don't load any startup scripts.
+#
+# -f file
+#    Loads file after MzScheme starts.
+
+trap 'kill $! && trap - TERM && kill $$' TERM
+
+#systrace -a -d $POLICYDIR $INTERPRETER $OPTIONS "$@" &
+$INTERPRETER $OPTIONS "$@" &
+wait %%
