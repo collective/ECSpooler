@@ -1,0 +1,70 @@
+Policy: /opt/mzscheme/bin/mzscheme, Emulation: netbsd
+	netbsd-mmap: permit
+	netbsd-fsread: filename eq "/etc/ld.so.conf" then permit
+	netbsd-__fstat13: permit
+	netbsd-close: permit
+	netbsd-munmap: permit
+	netbsd-fsread: filename eq "/opt/xnview/lib/libmzscheme-360.so" then permit
+	netbsd-fsread: filename eq "/opt/readline/lib/libmzscheme-360.so" then permit
+	netbsd-fsread: filename eq "/opt/mzscheme/lib/libmzscheme-360.so" then permit
+	netbsd-fsread: filename eq "/opt/xnview/lib/libmzgc-360.so" then permit
+	netbsd-fsread: filename eq "/opt/readline/lib/libmzgc-360.so" then permit
+	netbsd-fsread: filename eq "/opt/mzscheme/lib/libmzgc-360.so" then permit
+	netbsd-__sysctl: permit
+	netbsd-fsread: filename eq "/opt/xnview/lib/libm387.so.0" then permit
+	netbsd-fsread: filename eq "/opt/readline/lib/libm387.so.0" then permit
+	netbsd-fsread: filename eq "/opt/mzscheme/lib/libm387.so.0" then permit
+	netbsd-fsread: filename eq "/lib/libm387.so.0.0" then permit
+	netbsd-fsread: filename eq "/opt/xnview/lib/libm.so.0" then permit
+	netbsd-fsread: filename eq "/opt/readline/lib/libm.so.0" then permit
+	netbsd-fsread: filename eq "/opt/mzscheme/lib/libm.so.0" then permit
+	netbsd-fsread: filename eq "/lib/libm.so.0.2" then permit
+	netbsd-fsread: filename eq "/opt/xnview/lib/libc.so.12" then permit
+	netbsd-fsread: filename eq "/opt/readline/lib/libc.so.12" then permit
+	netbsd-fsread: filename eq "/opt/mzscheme/lib/libc.so.12" then permit
+	netbsd-fsread: filename eq "/lib/libc.so.12.128.2" then permit
+	netbsd-break: permit
+	netbsd-__sigaction_sigtramp: permit
+	netbsd-fsread: filename eq "/etc/malloc.conf" then permit
+	netbsd-getrlimit: permit
+	netbsd-__getcwd: permit
+	netbsd-gettimeofday: permit
+	netbsd-ioctl: permit
+	netbsd-pipe: permit
+	netbsd-fcntl: permit
+	netbsd-setitimer: permit
+	netbsd-compat_16___sigreturn14: permit
+	netbsd-getrusage: permit
+	netbsd-__sigprocmask14: permit
+	netbsd-mprotect: permit
+	netbsd-issetugid: permit
+	netbsd-fsread: filename eq "/usr/share/locale/de_DE.ISO8859-1/LC_CTYPE" then permit
+	netbsd-lseek: permit
+	netbsd-read: permit
+	netbsd-fsread: filename eq "/usr/share/i18n/iconv/iconv.alias.db" then permit
+	netbsd-fsread: filename eq "/usr/share/i18n/iconv/iconv.alias" then permit
+	netbsd-fsread: filename eq "/usr/share/i18n/iconv/iconv.dir.db" then permit
+	netbsd-fsread: filename eq "/usr/share/i18n/iconv/iconv.dir" then permit
+	netbsd-fsread: filename eq "/usr/lib/i18n" then permit
+	netbsd-fstatvfs1: permit
+	netbsd-getdents: permit
+	netbsd-fsread: filename eq "/usr/lib/i18n/libiconv_std.so.4.3" then permit
+	netbsd-fsread: filename eq "/usr/share/i18n/esdb/esdb.alias.db" then permit
+	netbsd-fsread: filename eq "/usr/share/i18n/esdb/esdb.dir.db" then permit
+	netbsd-fsread: filename eq "/usr/share/i18n/esdb/UTF/UTF-32LE.esdb" then permit
+	netbsd-fsread: filename eq "/opt/mzscheme/lib/plt/collects/srfi" then permit
+	netbsd-fsread: filename eq "/opt/mzscheme/lib/plt/collects/srfi/40.ss" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/mzscheme/lib/plt/collects/srfi/compiled/native/i386-netbsd/_loader.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/mzscheme/lib/plt/collects/srfi/compiled/native/i386-netbsd/40.so" then permit
+	netbsd-fsread: filename eq "/opt/mzscheme/lib/plt/collects/srfi/compiled/40.zo" then permit
+	netbsd-fsread: filename eq "/opt/mzscheme/lib/plt/collects/srfi/40" then permit
+	netbsd-fsread: filename eq "/opt/mzscheme/lib/plt/collects/srfi/40/stream.ss" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/mzscheme/lib/plt/collects/srfi/40/compiled/native/i386-netbsd/_loader.so" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /opt/mzscheme/lib/plt/collects/srfi/40/compiled/native/i386-netbsd/stream.so" then permit
+	netbsd-fsread: filename eq "/opt/mzscheme/lib/plt/collects/srfi/40/compiled/stream.zo" then permit
+	netbsd-write: permit
+	netbsd-exit: permit
+	netbsd-fsread: filename match "/tmp/*/wrapper.scm" then permit
+	netbsd-fsread: filename match "/tmp/*/student.scm" then permit
+	netbsd-fsread: filename eq "/home/amelung/.mzschemerc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /home/amelung/.plt-scheme/360/collects/srfi" then permit
