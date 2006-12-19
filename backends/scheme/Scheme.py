@@ -36,14 +36,20 @@ class Scheme(AbstractProgrammingBackend):
         """
         @see AbtractSimpleBackend._postProcessCheckSyntax
         """
-#        # find line number in result
-#        matches = re.findall('%s":(\d+)' % self.srcFileSuffix, message)
-#
-#        # set line number minus x lines and return
-#        return re.sub('".*%s":(\d+)'  % self.srcFileSuffix, 
-#                      'line: %d' % (int(matches[0])-test.lineNumberOffset), 
-#                      message)
-        return message
+        try:
+            # find line number in result
+            matches = re.findall('%s:(\d+)' % self.srcFileSuffix, message)
+    
+            logging.debug("xxx: %s" % matches)
+    
+            # set line number minus x lines and return
+            return re.sub('.*%s:(\d+)'  % self.srcFileSuffix, 
+                          'line: %d' % (int(matches[0])-test.lineNumberOffset), 
+                          message)
+            
+        except Exception, e:
+            logging.warn('%s: %s' % (sys.exc_info()[0], e))
+            return message
 
 
     def _process_checkSemantics(self, job):
