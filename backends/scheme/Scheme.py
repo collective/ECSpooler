@@ -32,6 +32,21 @@ class Scheme(AbstractProgrammingBackend):
     testSchema = SchemeConf.tests
 
 
+    def _preProcessCheckSyntax(self, test, src, **kwargs):
+        """
+        @see _preProcessCheckSyntax in lib/AbstractProgrammingBackend
+        """
+        result = ''
+        
+        if test.syntax:
+            result = re.sub('\$\{SOURCE\}', src, test.syntax)
+            
+        else:
+            result = src
+
+        return result, 'student'
+
+
     def _postProcessCheckSyntax(self, test, message):
         """
         @see AbtractSimpleBackend._postProcessCheckSyntax
