@@ -416,24 +416,32 @@ class Spooler(AbstractServer):
                         self._queue.enqueue(job)
     
                     else:
-                        # dispatch the job to the backend
-                        backend['isBusy'] = True
-    
-                        logging.info("Dispatching job '%s' to backend '%s'" % 
-                                     (job.getId(), job['backend']))
-    
-                        # invoke remote method call
-                        r = self._callBackend(backend['url'], 'execute', job.getData())
-    
-                        if type(r) not in [TupleType, ListType]:
-                            r = (-5, r)
-    
-                        result = BackendResult({'code':r[0], 'value':r[1]}, job.getId())
-    
-                        logging.debug("Adding result of job '%s' to results "
-                                      "queue" % job.getId())
-                        self._results.enqueue(result)
-    
+                        try:
+                            # dispatch the job to the backend
+                            backend['isBusy'] = True
+        
+                            logging.info("Dispatching job '%s' to backend '%s'" % 
+                                         (job.getId(), job['backend']))
+        
+                            # invoke remote method call
+                            r = self._callBackend(backend['url'], 'execute', job.getData())
+        
+                            if type(r) not in [TupleType, ListType]:
+                                r = (-5, r)
+        
+                            result = BackendResult({'code':r[0], 'value':r[1]}, job.getId())
+        
+                            logging.debug("Adding result of job '%s' to results "
+                                          "queue" % job.getId())
+                            self._results.enqueue(result)
+                            
+                        except Exception, e:
+                            msg = '%s: %s' % (sys.exc_info()[0], e)
+                            logging.error(msg)
+
+                            result = BackendResult({'code':-42, 'value':str(e)})
+                            self._results.enqueue(result)
+        
                         backend['isBusy'] = False
                 else:
                     #logging.debug('_doqueue: self._queue is empty');
@@ -441,7 +449,7 @@ class Spooler(AbstractServer):
                     
             except Exception, e:
                 msg = '%s: %s' % (sys.exc_info()[0], e)
-                logging.warn(msg)
+                logging.error(msg)
             
             # wait a defined time before resuming
             time.sleep(self.DEFAULT_DOQUEUE_WAKEUP)
