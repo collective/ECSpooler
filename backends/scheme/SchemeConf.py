@@ -40,27 +40,22 @@ class SchemeConf:
 (require (lib "40.ss" "srfi"))
 
 ${SOURCE}
-   
-(print "")
 """
 
     wrapperTemplate = \
-""";; SRFI-40
-(require (lib "40.ss" "srfi"))
-
-;;  model solution
+""";;  model solution
 (module model mzscheme 
 (require (lib "40.ss" "srfi"))
 ${modelSolution}
 (provide (all-defined)))
 
-;; students' solution
+;; student's solution
 (module student mzscheme
 (require (lib "40.ss" "srfi"))
 ${studentSolution} 
 (provide (all-defined)))
 
-;; require modules
+;; required modules
 (require (prefix model. model))
 (require (prefix student. student))
 
@@ -73,7 +68,6 @@ ${testFunction}
 ;;  main function
 (let-values (((ms ss) (values (model.${testData}) (student.${testData}))))
   (printf "isEqual=~s;;expected=~s;;received=~s" (test ms ss) ss ms))
-
 """
 
     # input schema
