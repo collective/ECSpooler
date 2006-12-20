@@ -67,7 +67,7 @@ ${testFunction}
 
 ;;  main function
 (let-values (((ms ss) (values (model.${testData}) (student.${testData}))))
-  (printf "isEqual=~s;;expected=~s;;received=~s" (test ms ss) ss ms))
+  (printf "isEqual=~s;;expected=~s;;received=~s" (test ms ss) ms ss))
 """
 
     # input schema
@@ -96,7 +96,8 @@ ${testFunction}
             description = 'Enter one or more function calls. '+ 
                         'A function call consists of the ' + 
                         'function name (given in the exercise directives) ' + 
-                        'and test data as parameters of this funtion. '+
+                        'and test data as parameters of this funtion, e.g, '+
+                        "tally 'a '(a b c 1 2 3 b c a)"+
                         'Each function call must be written in a single line.',
             i18n_domain = 'EC',
         ),
