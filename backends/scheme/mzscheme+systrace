@@ -17,6 +17,6 @@ OPTIONS="-m -v -f "
 
 trap 'kill $! && trap - TERM && kill $$' TERM
 
-#systrace -a -d $POLICYDIR $INTERPRETER $OPTIONS "$@" &
-$INTERPRETER $OPTIONS "$@" &
+systrace -a -d $POLICYDIR $INTERPRETER $OPTIONS "$@" &
+#$INTERPRETER $OPTIONS "$@" &
 wait %%
