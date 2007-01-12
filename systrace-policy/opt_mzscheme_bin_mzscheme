@@ -66,5 +66,5 @@ Policy: /opt/mzscheme/bin/mzscheme, Emulation: netbsd
 	netbsd-exit: permit
 	netbsd-fsread: filename match "/tmp/*/wrapper.scm" then permit
 	netbsd-fsread: filename match "/tmp/*/student.scm" then permit
-	netbsd-fsread: filename eq "/home/amelung/.mzschemerc" then permit
-	netbsd-fsread: filename eq "/<non-existent filename>: /home/amelung/.plt-scheme/360/collects/srfi" then permit
+	netbsd-fsread: filename match "*/.mzschemerc" then permit
+	netbsd-fsread: filename eq "/<non-existent filename>: /.plt-scheme/360/collects/srfi" then permit
