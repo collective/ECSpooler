@@ -24,7 +24,7 @@ class Scheme(AbstractProgrammingBackend):
     
     id = 'scheme'
     name = 'Scheme'
-    version = '1.0'
+    version = '1.1'
 
     srcFileSuffix = '.scm'
 
@@ -55,11 +55,11 @@ class Scheme(AbstractProgrammingBackend):
             # find line number in result
             matches = re.findall('%s:(\d+)' % self.srcFileSuffix, message)
     
-            logging.debug("xxx: %s" % matches)
+            #logging.debug("xxx: %s" % matches)
     
             # set line number minus x lines and return
             return re.sub('.*%s:(\d+)'  % self.srcFileSuffix, 
-                          'line: %d' % (int(matches[0])-test.lineNumberOffset), 
+                          'line:%d' % (int(matches[0])-test.lineNumberOffset), 
                           message)
             
         except Exception, e:
@@ -67,6 +67,13 @@ class Scheme(AbstractProgrammingBackend):
             return message
 
 
+    def _postProcessCheckSemantic(self, test, message):
+        """
+        @see _postProcessCheckSyntax
+        """
+        return self._postProcessCheckSyntax(test, message)
+   
+    
     def _process_checkSemantics(self, job):
         """
         Checks semantic of a Haskell programs.
@@ -98,8 +105,13 @@ class Scheme(AbstractProgrammingBackend):
             "Semantic check requires valid 'student solution' (%s)" % \
             repr(studentSolution)
 
-        #modelSolution = TEMPLATE_MODULE % ('Model', modelSolution)
-        #studentSolution = TEMPLATE_MODULE % ('Student', studentSolution)
+        # prepare source code for model and student' solution which will be
+        # stored in seperate files as modules
+        modelSrc = re.sub('\$\{SOURCE}', modelSolution, SchemeConf.semanticCheckTemplate)
+        modelSrc = re.sub('\$\{MODULE}', 'model', modelSrc)
+        
+        studentSrc = re.sub('\$\{SOURCE}', studentSolution, SchemeConf.semanticCheckTemplate)
+        studentSrc = re.sub('\$\{MODULE}', 'student', studentSrc)
 
         # define return values
         feedback = ''
@@ -117,34 +129,45 @@ class Scheme(AbstractProgrammingBackend):
             interpreter = test.interpreter
            
             # get wrapper code for semantic check
-            src = test.semantic
+            wrapper = test.semantic
             
-            # insert model solution as module in wrapper code
-            src = re.sub('\$\{modelSolution\}', modelSolution, src)
-            
-            # insert student's solution as module in wrapper code
-            src = re.sub('\$\{studentSolution\}', studentSolution, src)
-
             # get values for all other input fields from schema which are 
-            # available in the job data
+            # available in the job data, e.g., helpFunctions
             for field in self.schema.filterFields(type='InputField'):
                 if job.has_key(field.getName()):
                     repl = job[field.getName()]
-                    src = re.sub('\$\{%s\}' % field.getName(), repl, src)
+                    wrapper = re.sub('\$\{%s\}' % field.getName(), repl, wrapper)
+                    modelSrc = re.sub('\$\{%s\}' % field.getName(), repl, modelSrc)
+                    studentSrc = re.sub('\$\{%s\}' % field.getName(), repl, studentSrc)
 
             # insert test function in wrapper code
-            src = re.sub('\$\{testFunction\}', test.test, src)
+            wrapper = re.sub('\$\{testFunction\}', test.test, wrapper)
 
-            # 4.4. run with all test data
+            # remove all remaining placeholders
+            wrapper = re.sub('\$\{.*\}', '', wrapper)
+
+            # run with all test data
             for t in testdata:
-                # and now add repeatable data values
-                wrapper = re.sub('\$\{%s\}' % repeatField.getName(), t, src)
-        
-                # remove all remaining placeholders
-                wrapper = re.sub('\$\{.*\}', '', wrapper)
-                                 
-                # execute wrapper code in haskell interpreter
+                # add testdata to model and student modules source code
+                model = re.sub('\$\{%s\}' % repeatField.getName(), t, modelSrc)
+                student = re.sub('\$\{%s\}' % repeatField.getName(), t, studentSrc)
+
+                #logging.debug('xxx: %s' % t)
+                
                 try:
+                    # 1st write model solution
+                    modelModule = self._writeModule('model', model, 
+                                                    self.srcFileSuffix, 
+                                                    job.getId(), 
+                                                    test.encoding)
+                   
+                    # 2nd write students' solution
+                    studentModule = self._writeModule('student', student, 
+                                                      self.srcFileSuffix, 
+                                                      job.getId(), 
+                                                      test.encoding)
+
+                    # last write the wrapper and execute
                     wrapperModule = self._writeModule('wrapper', wrapper, 
                                                       self.srcFileSuffix, 
                                                       job.getId(),
@@ -166,7 +189,9 @@ class Scheme(AbstractProgrammingBackend):
                 if exitcode != os.EX_OK:
                     result = "\nYour submission failed. Test case was: " \
                              "'%s' (%s) \n\n Received result: %s" \
-                             % (t, test.getName(), result)
+                             % (t, test.getName(), 
+                                self._postProcessCheckSemantic(test, result))
+
                     return (0, result)
                         
                 # has the students' solution passed this tests?

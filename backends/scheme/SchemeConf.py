@@ -5,8 +5,8 @@
 #
 # This file is part of ECSpooler.
 
-import sys, logging
-from os.path import join, dirname
+import sys, logging 
+from os.path import join, dirname, abspath
 
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -19,6 +19,10 @@ class SchemeConf:
     """
 
     interpreter = '/opt/ECSpooler/backends/scheme/mzscheme+systrace'
+    streamLib = 'streams.scm'
+
+    # construct path for stream lib
+    streamLibPath = join(abspath(dirname(__file__)), 'scheme_libs', streamLib)
 
     # load Scheme function to do a simple test
     try:
@@ -36,37 +40,42 @@ class SchemeConf:
         
     
     syntaxCheckTemplate = \
-""";; SRFI-40
-(require (lib "40.ss" "srfi"))
+""";; import SICP streams
+(require (file "%s")) 
 
+
+
+;; -------------------------------------------------------------------
 ${SOURCE}
-"""
+;; -------------------------------------------------------------------
+""" % streamLibPath
 
-    wrapperTemplate = \
-""";;  model solution
-(module model mzscheme 
-(require (lib "40.ss" "srfi"))
-${modelSolution}
-(provide (all-defined)))
+    semanticCheckTemplate = \
+"""(module ${MODULE} mzscheme
+(require (file "%s")) ;; import SICP streams
 
-;; student's solution
-(module student mzscheme
-(require (lib "40.ss" "srfi"))
-${studentSolution} 
-(provide (all-defined)))
+(define (main) ${testData})
 
-;; required modules
-(require (prefix model. model))
-(require (prefix student. student))
+;; -------------------------------------------------------------------
+${SOURCE}
+;; -------------------------------------------------------------------
 
 ;; helper functions
 ${helpFunctions}
 
+(provide main))
+""" % streamLibPath
+
+    wrapperTemplate = \
+""";; required modules
+(require (prefix model. (file "model.scm")))
+(require (prefix student. (file "student.scm")))
+
 ;; test function
 ${testFunction}
 
-;;  main function
-(let-values (((ms ss) (values (model.${testData}) (student.${testData}))))
+;; print test results
+(let-values (((ms ss) (values (model.main) (student.main))))
   (printf "isEqual=~s;;expected=~s;;received=~s" (test ms ss) ms ss))
 """
 
@@ -113,7 +122,7 @@ ${testFunction}
             test = simpleTest,
             syntax = syntaxCheckTemplate,
             semantic = wrapperTemplate,
-            lineNumberOffset = 3,
+            lineNumberOffset = 6,
             compiler = interpreter,
             interpreter = interpreter,
         ),
@@ -125,8 +134,12 @@ ${testFunction}
             test = permTest,
             syntax = syntaxCheckTemplate,
             semantic = wrapperTemplate,
-            lineNumberOffset = 3,
+            lineNumberOffset = 6,
             compiler = interpreter,
             interpreter = interpreter,
         ),
     ))
+
+# --Test ----------------------------------------------------------------------
+#if __name__ == "__main__":
+#    print SchemeConf.syntaxCheckTemplate
