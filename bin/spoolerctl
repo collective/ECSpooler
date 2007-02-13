@@ -3,7 +3,7 @@
 WORK_DIR=`dirname $0`
 WORK_DIR=${WORK_DIR%%/bin}
 
-PYTHON="/opt/pythonDUMMY-2.4.2/bin/python"
+PYTHON="/opt/python/bin/python"
 
 SDCTL="$WORK_DIR/startup/spoolerctl.py"
 
