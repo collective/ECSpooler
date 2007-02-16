@@ -27,9 +27,6 @@ trap 'kill $! && trap - TERM && kill $$' TERM
 # -s script
 #    Execute this script.
 
-# OP=$(systrace -a -d $POLICYDIR $INTERPRETER $OPTIONS -s "$@" 2>&1 &)
-#ERR=$?
-
 tmpfile=$(mktemp -t pl+systrace)
 systrace -a -d $POLICYDIR $INTERPRETER $OPTIONS -s "$@" > $tmpfile 2>&1 &
 wait %%
@@ -43,8 +40,9 @@ then
   exit $ERR
 else
   # Exit with an error if the interpreter's output contains a line
-  # that starts with "ERROR".
-  if grep -q '^ERROR' $tmpfile
+  # that starts with "ERROR" or if it contains a line that says "Goal
+  # (directive) failed".
+  if grep -q '^ERROR\|Goal (directive) failed:' $tmpfile
   then
      rm $tmpfile
      exit 1
