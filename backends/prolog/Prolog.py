@@ -32,6 +32,18 @@ class Prolog(AbstractProgrammingBackend):
     testSchema = PrologConf.tests
     version = '0.9'
 
+    def cleanUpErrMsg(self, msg, path):
+        if not path.endswith(os.path.sep):
+            path += os.path.sep
+        msg = msg.replace(path, '')
+        m=re.compile('^Warning:\s*\(.*\):$'
+                     '\s+Goal \(directive\) failed: user: .*',
+                     re.MULTILINE).search(msg)
+        if m:
+            msg=(msg[:m.start()]+msg[m.end():]).rstrip()
+        
+        return msg
+
     # -- check syntax ---------------------------------------------------------
     def _preProcessCheckSyntax(self, test, src, **kwargs):
         """
@@ -78,7 +90,7 @@ class Prolog(AbstractProgrammingBackend):
     # -- check semantics ------------------------------------------------------
     def getVarNames(self, testData):
         """
-        Return the list of uique variable names that are used in the
+        Return the list of unique variable names that are used in the
         test data.  For
         
            foo(1, 2, X, Y, X)
@@ -202,11 +214,12 @@ class Prolog(AbstractProgrammingBackend):
 
                 # replace the variables name used in the test data
                 varNames = self.getVarNames(t)
-                # list of variables names as variables
+                # list of variable names as variables
                 testVarNames = ', '.join(varNames)
+                
                 wrapper = re.sub(r'\$\{testVarNames\}', testVarNames,
                                  wrapper)
-                # list of variables names as strings
+                # list of variable names as strings
                 strTestVarNames = ", ".join(["'" + n + "'" for n in varNames])
                 wrapper = re.sub(r'\$\{strTestVarNames\}', strTestVarNames,
                                  wrapper)
@@ -240,11 +253,16 @@ class Prolog(AbstractProgrammingBackend):
 
                 # an error occured
                 if exitcode != EX_OK:
+                    path = os.path.dirname(wrapperModule['file'])
+
+                    #logging.error("ORIGINAL: %s" % result)
+                    
+                    result = self.cleanUpErrMsg(result, path)
                     result = "\nYour submission failed. Test " \
                              "case was: '%s' (%s)" \
                              "\n\n Received result: %s"\
                              % (t, test.getName(), result)
-
+                    
                     return (0, result)
                         
                 # has the students' solution passed this tests?
