@@ -4,7 +4,7 @@
 # Copyright (c) 2005 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
-import sys, os
+import sys, os, pwd
 import logging.handlers
 
 # -- project properties -------------------------------------------------------
@@ -47,6 +47,8 @@ sLH.setFormatter(shortFmt)
 #logger.addHandler(cH)
 logger.addHandler(fH)
 logger.addHandler(sLH)
+
+NOBODY_UID=pwd.getpwnam("nobody")[2]
 
 # defining log settings for (later) usage in a config file
 #[handler_hand02]

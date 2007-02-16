@@ -10,13 +10,14 @@ import os, sys, time, signal, socket, xmlrpclib, getopt
 import traceback
 import logging
 
-os.setreuid(32767, 32767)
-
 # add parent directory to the system path
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
-from config import LOGLEVEL
+from config import LOGLEVEL, NOBODY_UID
 from lib.Spooler import Spooler
+
+# Run process as nobody
+os.setreuid(NOBODY_UID, NOBODY_UID)
 
 def _startSpooler(host, port, pwdFile):
     """

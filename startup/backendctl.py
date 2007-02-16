@@ -17,13 +17,14 @@ import traceback
 import getopt
 import logging
 
-os.setreuid(32767, 32767)
-
 # add parent directory to the system path
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
-from config import LOGLEVEL
+from config import LOGLEVEL, NOBODY_UID
 from backends import *
+
+# Run process as nobody
+os.setreuid(NOBODY_UID, NOBODY_UID)
 
 MAX_TRIALS = 15
 BACKEND_HOST = socket.getfqdn()
@@ -34,8 +35,17 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
     Starts a backend with the given parameters.
     """
     backendHost = BACKEND_HOST
+
+    try:
+        exec 'id = %s.id' % (backendId,)
+    except NameError, ne:
+        print >> sys.stderr, "No such backend: '%s'" % (backendId,)
+        raise ne
+    except AttributeError, ae:
+        print >> sys.stderr, "No such backend: '%s'.  Did you mean '%s'?" \
+              % (backendId, backendId.capitalize(),)
+        raise ae
     
-    exec 'id = %s.id' % (backendId,)
     exec 'version = %s.version' % (backendId,)
 
     print "Starting backend '%s %s (%s)' on %s........." % (backendId, version, id, backendHost)
