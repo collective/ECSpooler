@@ -18,10 +18,9 @@ from lib.Spooler import Spooler
 
 # Run process as nobody
 try:
-    os.setegid(NOBODY_GID)
-    os.seteuid(NOBODY_UID)
+    os.setuid(NOBODY_UID)
 except os.error, e:
-    print >> sys.stderr, "Cannot change effective uid and/or gid:", e
+    print >> sys.stderr, "Cannot change uid:", e
 
 def _startSpooler(host, port, pwdFile):
     """

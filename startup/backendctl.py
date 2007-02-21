@@ -25,10 +25,9 @@ from backends import *
 
 # Run process as nobody
 try:
-    os.setegid(NOBODY_GID)
-    os.seteuid(NOBODY_UID)
+    os.setuid(NOBODY_UID)
 except os.error, e:
-    print >> sys.stderr, "Cannot change effective uid and/or gid:", e
+    print >> sys.stderr, "Cannot change uid:", e
 
 MAX_TRIALS = 15
 BACKEND_HOST = socket.getfqdn()
