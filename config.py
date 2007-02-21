@@ -10,7 +10,6 @@ import logging.handlers
 # -- project properties -------------------------------------------------------
 PROJECTNAME = 'ECSpooler'
 
-
 # -- i18n properties ----------------------------------------------------------
 I18N_DOMAIN = 'eduComponents'
 
@@ -32,7 +31,8 @@ if not os.path.exists(logDir):
 
 # create log handlers for console, file, and syslog
 cH  = logging.StreamHandler(sys.stdout)
-fH  = logging.FileHandler(os.path.join(logDir, 'messages'))
+fH  = logging.handlers.RotatingFileHandler(os.path.join(logDir, 'messages'),
+                                           'a', 1000000, 7)
 sLH = logging.handlers.SysLogHandler()
 
 longFmt  = logging.Formatter('%(asctime)s %(levelname)s: %(message)s ' \
@@ -48,7 +48,8 @@ sLH.setFormatter(shortFmt)
 logger.addHandler(fH)
 logger.addHandler(sLH)
 
-NOBODY_UID=pwd.getpwnam("nobody")[2]
+# -- uid and gid for nobody ---------------------------------------------------
+NOBODY_UID, NOBODY_GID = pwd.getpwnam('nobody')[2:4]
 
 # defining log settings for (later) usage in a config file
 #[handler_hand02]

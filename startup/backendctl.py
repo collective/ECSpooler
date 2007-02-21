@@ -20,11 +20,15 @@ import logging
 # add parent directory to the system path
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
-from config import LOGLEVEL, NOBODY_UID
+from config import LOGLEVEL, NOBODY_UID, NOBODY_GID
 from backends import *
 
 # Run process as nobody
-os.setreuid(NOBODY_UID, NOBODY_UID)
+try:
+    os.setegid(NOBODY_GID)
+    os.seteuid(NOBODY_UID)
+except os.error, e:
+    print >> sys.stderr, "Cannot change effective uid and/or gid:", e
 
 MAX_TRIALS = 15
 BACKEND_HOST = socket.getfqdn()
