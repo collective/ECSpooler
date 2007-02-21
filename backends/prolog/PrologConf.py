@@ -18,7 +18,7 @@ class PrologConf:
     Properties used by backend Prolog.
     """
 
-    interpreter = join(dirname(__file__), 'pl')
+    interpreter = join(dirname(__file__), 'pl+systrace')
     compiler = interpreter
 
     # The packages that the model and student solution will be put in
