@@ -26,7 +26,7 @@ except os.error, e:
 def _startSpooler(host, port, pwdFile):
     """
     """
-    print "Starting ECSpooler on %s port %d ........." % (host, port)
+    print "Starting ECSpooler on %s port %d ..." % (host, port)
 
     try:
         if sys.platform in ['unixware7']:
@@ -53,7 +53,7 @@ def _stopSpooler(host, port, auth):
     """
     """
     try:
-        print "Stopping ECSpooler on %s port %d ........." % (host, port)
+        print "Stopping ECSpooler on %s port %d ..." % (host, port)
         spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
         pid = spooler.getStatus(auth)[1]['pid']
         

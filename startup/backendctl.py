@@ -52,7 +52,7 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
     
     exec 'version = %s.version' % (backendId,)
 
-    print "Starting backend '%s %s (%s)' on %s........." % (backendId, version, id, backendHost)
+    print "Starting backend '%s %s (%s)' on %s ..." % (backendId, version, id, backendHost)
 
     try:
         if sys.platform in ['unixware7']:
@@ -155,7 +155,7 @@ def _stopBackend(backendId, spoolerHost, spoolerPort, spoolerAuth):
     exec 'id = %s.id' % (backendId,)
     exec 'version = %s.version' % (backendId,)
 
-    print "Stopping backend '%s %s (%s)' on %s........." % (backendId, version, id, backendHost)
+    print "Stopping backend '%s %s (%s)' on %s ..." % (backendId, version, id, backendHost)
 
     
     spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost, spoolerPort))

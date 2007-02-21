@@ -33,7 +33,7 @@ if not os.path.exists(logDir):
 cH  = logging.StreamHandler(sys.stdout)
 fH  = logging.handlers.RotatingFileHandler(os.path.join(logDir, 'messages'),
                                            'a', 1000000, 7)
-sLH = logging.handlers.SysLogHandler()
+#sLH = logging.handlers.SysLogHandler()
 
 longFmt  = logging.Formatter('%(asctime)s %(levelname)s: %(message)s ' \
                              '(%(filename)s:%(lineno)d)')
@@ -42,11 +42,11 @@ shortFmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
 cH.setFormatter(longFmt)
 fH.setFormatter(longFmt)
-sLH.setFormatter(shortFmt)
+#sLH.setFormatter(shortFmt)
 
 #logger.addHandler(cH)
 logger.addHandler(fH)
-logger.addHandler(sLH)
+#logger.addHandler(sLH)
 
 # -- uid and gid for nobody ---------------------------------------------------
 NOBODY_UID, NOBODY_GID = pwd.getpwnam('nobody')[2:4]
