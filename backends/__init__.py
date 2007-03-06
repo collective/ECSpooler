@@ -21,3 +21,5 @@ from backends.python.Python import Python
 from backends.prolog.Prolog import Prolog
 
 from backends.scheme.Scheme import Scheme
+
+from backends.keywords.Keywords import Keywords
