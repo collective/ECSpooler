@@ -118,7 +118,7 @@ class Keywords(AbstractBackend):
                     if test.getName() == 'keywords':
                         t = r'\b' + re.escape(t.strip()) + r'\b'
 
-                    if re.search(t, studentSolution):
+                    if re.search(t, studentSolution, re.IGNORECASE):
                         matches += 1
 
                 except Exception, e:
@@ -130,10 +130,12 @@ class Keywords(AbstractBackend):
             # end inner for loop
         #end outer for loop 
 
+        inverted = job['inverted']
         # int/int -> float requires division from future!
         solved = int(round(matches/len(testdata) * 100))
+        if inverted:
+            solved = 100 - solved
 
-        feedback = '''\nYour submission was automatically pre-tested.
-Our analysis indicates that your submission is %d%% correct.''' % solved
+        feedback = '''\nYour automatically determined score: %d of 100.''' % solved
 
         return (solved, feedback)

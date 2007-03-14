@@ -18,7 +18,15 @@ class KeywordsConf:
 
     # input schema
     inputSchema = Schema((
-
+        InputField(
+            'inverted',
+            format = 'boolean',
+            label = 'Inverted matching',
+            description = 'Invert the sense of matching, i.e., ' +
+                          'the keywords must not appear in the text and '
+                          'matches result in a lower score.',
+            i18n_domain = 'EC',
+        ),
         RepeatField(
             'keywords',
             #accessor = # must return a list; default is one element per line
