@@ -33,7 +33,8 @@ class BackendResult(QueueItem):
         #        "BackendResult requires a valid 'code' entry"
 
         assert self._data['value'], \
-                "BackendResult requires a valid 'value' entry"
+                "BackendResult: 'value' entry is invalid: %s" \
+                % repr(self._data['value'])
 
         return True
 
