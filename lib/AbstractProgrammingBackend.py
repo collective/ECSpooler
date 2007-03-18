@@ -297,7 +297,7 @@ class AbstractProgrammingBackend(AbstractBackend):
 
 
     #def _execute(self, command, options, dir, fName)
-    def _runInterpreter(self, command, dir, fName, options=()):
+    def _runInterpreter(self, command, dir, fName, options=(), args=()):
         """
         Change the current working directory to dir and runs the given 
         interpreter with the given file. Availability: Unix.
@@ -306,6 +306,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         @param options options for command including flags as list
         @param dir path to which we will change the current working directory 
         @param fName name of the file which will be called with the interpreter
+        @param args command line arguments that fName will be called with
         @return exitcode and result message, normally something like os.EX_OK
         """
         # change dir to current job dir
@@ -315,6 +316,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         commandLine = [command]
         commandLine.extend(options)
         commandLine.append(fName)
+        commandLine.extend(args)
         
         # Popen4 will provide both stdout and stderr on handle.fromchild
         handle = popen2.Popen4(commandLine)
