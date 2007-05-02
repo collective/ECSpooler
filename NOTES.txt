@@ -1,0 +1,104 @@
+<!-- -*- coding: utf-8 -*- -->
+
+Spooler
+
+  - manages backends and jobs (TestJob, TestResult)
+  
+  - public methods (frontends): getStatus, getBackends, getBackendStatus, 
+    getBackendInputFields, getBackendTestFields, appendJob, popResult,
+  
+  - normal progress (frontend): 
+  
+     - get spooler handle
+     
+     - append a job (call appendJob; see BackendJob for required 
+       key-value-pairs); you will get a job id
+     
+     - get the result (call popResult with the job id; popResult returns a dictionary)
+
+  - public methods (backends): addBackend, removeBackend
+
+
+Backend
+
+  - make tests
+
+  - attributes: id, name, version, input fields, test environments
+  
+  - public methods: execute, getInputFields, getTestFields, shutdown
+  
+  - normal progress:
+  
+    - spooler calls execute
+    
+    - execute calls process_execute, which must be implemented by each backend 
+    
+    - execute returns a dictionary
+
+
+BackendJob/TestJob
+
+  - at least a dictionary with key-value-pairs
+
+  - required keys: backend, submission/testTerm
+
+  - all other keys are specified by the backend's input schema 
+
+
+BackendResult/TestResult
+
+  - at least a dictionary with key-value-pairs
+  
+  - required keys: value, message
+
+  *value*
+
+  - normal case: True/False (e.g., Haskell or Scheme backend) or 0..100 
+    (e.g., Keywords backend)
+
+  - error case: a negative integer
+   
+    - undefinded error: -42
+   
+   
+    - internal error (spooler): -100
+    
+    - authentication failed (spooler): -110
+    
+    - backend not registered (spooler): -120
+    
+    - backend already registered (spooler): -121
+
+    - backend not found (spooler): -122
+
+    - invalid or insufficient job data (spooler): -150
+
+    - unexpected backend result type (spooler): -151
+
+    - internal error during backend call or in backend (spooler): -152
+ 
+    - internal error during job processing (spooler): -153
+    
+    - no result for a job (spooler): -160
+   
+   
+    - internal error (backend): -200
+  
+    - authentication failed (backend): -210
+
+    - internal error during test (backend): -215
+
+    - no test data found (backend): -216
+
+    - no test environment/specification selected (backend): -217
+
+    - internal error during syntax check (ProgrammingBackend): -220
+    
+    - no compiler/interpreter defined (ProgrammingBackend): -221
+
+    - internal error during semantic check (ProgrammingBackend): -230
+
+
+  *message*
+
+  - backend specific messages used as feedback
