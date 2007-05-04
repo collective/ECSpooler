@@ -20,7 +20,7 @@ class testHaskellIO(ProgrammingBackendTestCase):
     # -- individual tests -----------------------------------------------------
     jobdata = {'backend':'haskell-io', 
                'submission':'square x = x * x',
-               'model': 'square x = x * x',
+               'modelSolution': 'square x = x * x',
                'tests': ['simple'],
                'testData': 'square 0\nsquare 2\nsquare 3',
                }

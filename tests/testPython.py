@@ -19,7 +19,7 @@ class testPython(ProgrammingBackendTestCase):
     # -- individual tests -----------------------------------------------------
     jobdata = {'backend':'python', 
                'submission':'def square(x): return x * x',
-               'model': 'def square(x): return x * x',
+               'modelSolution': 'def square(x): return x * x',
                'tests': ['simple'],
                'testData': 'square(0)\nsquare(2)\nsquare(3)',
                }

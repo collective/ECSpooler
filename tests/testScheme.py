@@ -92,7 +92,7 @@ class testScheme(ProgrammingBackendTestCase):
         
         jobdata = {'backend':'scheme', 
                    'submission':'(define (square x) (* x 2))',
-                   'model': '(define (square x) (* x x))',
+                   'modelSolution': '(define (square x) (* x x))',
                    'tests': ['simple'],
                    'testData': '(square 0)\n(square 2)\n(square 3)',
                    }
@@ -114,7 +114,7 @@ class testScheme(ProgrammingBackendTestCase):
         
         jobdata = {'backend':'scheme', 
                    'submission':'(define (square x) (* x x))',
-                   'model': '(define (square x) (* x x))',
+                   'modelSolution': '(define (square x) (* x x))',
                    'tests': ['simple'],
                    'testData': '(square 0)\n(square 2)\n(square 3)',
                    }

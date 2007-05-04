@@ -44,7 +44,7 @@ class testErlang(ProgrammingBackendTestCase):
 
     jobdata = {'backend':'erlang', 
                'submission':'-module(fac).\n-export([fac/1]).\nfac(0) -> 1;\nfac(N) -> N * fac(N-1).',
-               'model': '-module(fac).\n-export([fac/1]).\nfac(0) -> 1;\nfac(N) -> N * fac(N-1).',
+               'modelSolution': '-module(fac).\n-export([fac/1]).\nfac(0) -> 1;\nfac(N) -> N * fac(N-1).',
                'tests': ['simple'],
                'testData': 'fac(2)\nfac(3)',
                }
