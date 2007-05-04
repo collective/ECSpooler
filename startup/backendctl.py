@@ -95,13 +95,13 @@ def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost,
     for i in range(backendPort, backendPort + MAX_TRIALS, 1):
     
         # get a instance, e.g., PythonBackend
-        # FIXME: use spooler instead of capeserver
+        # FIXME: use spooler instead of spooler
         instanceCreateStmt = \
         "backend = %s({ \
                     'host': '%s', \
                     'port': %d, \
-                    'capeserver': 'http://%s:%d', \
-                    'srv_auth': %s})" \
+                    'spooler': 'http://%s:%d', \
+                    'auth': %s})" \
                 % (moduleName, backendHost, i, \
                    spoolerHost, spoolerPort, repr(spoolerAuth),)
                 
@@ -161,7 +161,7 @@ def _stopBackend(backendId, spoolerHost, spoolerPort, spoolerAuth):
     retval = spooler.stopBackend(spoolerAuth, id)
     
     if retval:
-        if retval[0] == 0:
+        if retval[0]:
             print 'Done.'
         else:
             print retval[1]
