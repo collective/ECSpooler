@@ -59,8 +59,7 @@ public class Test
         result = backend._manage_checkSyntax(job)
         
         if result:
-            #print >> sys.stderr, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), False)
+            self.assertEqual(result.getValue(), False, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -78,8 +77,7 @@ public class Test
         #print 'jobId', job.getId()
         
         if result:
-            #print >> sys.stdout, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), True)
+            self.assertEqual(result.getValue(), True, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -104,8 +102,7 @@ public class Test
         result = backend._manage_checkSemantics(job)
         
         if result:
-            #print >> sys.stdout, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), False)
+            self.assertEqual(result.getValue(), False, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -123,8 +120,7 @@ public class Test
         #print 'jobId', job.getId()
 
         if result:
-            #print >> sys.stdout, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), True)
+            self.assertEqual(result.getValue(), True, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 

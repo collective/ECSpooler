@@ -36,8 +36,7 @@ class testKeywords(BackendTestCase):
         result = backend._process_execute(job)
         
         if result:
-            #print >> sys.stderr, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), 0)
+            self.assertEqual(result.getValue(), 0, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -53,8 +52,7 @@ class testKeywords(BackendTestCase):
         result = backend._process_execute(job)
         
         if result:
-            #print >> sys.stderr, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), 100)
+            self.assertEqual(result.getValue(), 100, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -72,8 +70,7 @@ class testKeywords(BackendTestCase):
         result = backend._process_execute(job)
         
         if result:
-            #print >> sys.stderr, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), 0)
+            self.assertEqual(result.getValue(), 0, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -91,8 +88,7 @@ class testKeywords(BackendTestCase):
         result = backend._process_execute(job)
         
         if result:
-            #print >> sys.stderr, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), 100)
+            self.assertEqual(result.getValue(), 100, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 

@@ -37,7 +37,7 @@ class testErlang(ProgrammingBackendTestCase):
         result = Erlang(self.params)._process_checkSemantics(self.job)
         
         if result:
-            self.assertEqual(result.getValue(), -216)
+            self.assertEqual(result.getValue(), -216, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -63,8 +63,7 @@ class testErlang(ProgrammingBackendTestCase):
         #print 'jobId', job.getId()
 
         if result:
-            #print result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), False)
+            self.assertEqual(result.getValue(), False, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -82,8 +81,7 @@ class testErlang(ProgrammingBackendTestCase):
         #print 'jobId', job.getId()
         
         if result:
-            #print result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), True)
+            self.assertEqual(result.getValue(), True, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -101,8 +99,7 @@ class testErlang(ProgrammingBackendTestCase):
         #print 'jobId', job.getId()
         
         if result:
-            #print result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), False)
+            self.assertEqual(result.getValue(), False, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -120,8 +117,7 @@ class testErlang(ProgrammingBackendTestCase):
         #print 'jobId', job.getId()
         
         if result:
-            #print result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), True)
+            self.assertEqual(result.getValue(), True, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 

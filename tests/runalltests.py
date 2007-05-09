@@ -1,17 +1,17 @@
+# -*- coding: utf-8 -*-
+# $Id$
 #
+# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
+#
+# This file is part of ECSpooler.
+
 # Runs all tests in the current directory
 #
 # Execute like:
 #   python runalltests.py
-#
-# Alternatively use the testrunner:
-#   python /path/to/Zope/utilities/testrunner.py -qa
-#
 
-import os, sys
-
-#if __name__ == '__main__':
-#    execfile(os.path.join(sys.path[0], 'framework.py'))
+import os
+import sys
 
 import unittest
 
@@ -25,8 +25,9 @@ for test in tests:
     m = __import__(test)
         
     if hasattr(m, 'test_suite'):
-        #print 'adding', m.__name__
+        print >> sys.stdout, m.__name__
         suite.addTest(m.test_suite())
+
 
 if __name__ == '__main__':
     TestRunner().run(suite)

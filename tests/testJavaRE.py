@@ -40,8 +40,7 @@ class testJavaRE(ProgrammingBackendTestCase):
         #print 'jobId', job.getId()
         
         if result:
-            #print >> sys.stdout, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), False)
+            self.assertEqual(result.getValue(), False, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -59,8 +58,7 @@ class testJavaRE(ProgrammingBackendTestCase):
         #print 'jobId', job.getId()
         
         if result:
-            #print >> sys.stdout, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), True)
+            self.assertEqual(result.getValue(), True, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -78,8 +76,7 @@ class testJavaRE(ProgrammingBackendTestCase):
         #print 'jobId', job.getId()
 
         if result:
-            #print >> sys.stdout, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), False)
+            self.assertEqual(result.getValue(), False, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -97,8 +94,7 @@ class testJavaRE(ProgrammingBackendTestCase):
         #print 'jobId', job.getId()
 
         if result:
-            #print >> sys.stdout, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), True)
+            self.assertEqual(result.getValue(), True, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 

@@ -29,7 +29,7 @@ class testScheme(ProgrammingBackendTestCase):
         result = Scheme(self.params)._process_checkSemantics(self.job)
         
         if result:
-            self.assertEqual(result.getValue(), -217)
+            self.assertEqual(result.getValue(), -217, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -42,7 +42,7 @@ class testScheme(ProgrammingBackendTestCase):
         result = Scheme(self.params)._process_checkSemantics(self.job)
         
         if result:
-            self.assertEqual(result.getValue(), -216)
+            self.assertEqual(result.getValue(), -216, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -61,8 +61,7 @@ class testScheme(ProgrammingBackendTestCase):
         result = backend._manage_checkSyntax(job)
         
         if result:
-            #print >> sys.stderr, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), False)
+            self.assertEqual(result.getValue(), False, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -81,8 +80,7 @@ class testScheme(ProgrammingBackendTestCase):
         result = backend._manage_checkSyntax(job)
         
         if result:
-            #print >> sys.stderr, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), True)
+            self.assertEqual(result.getValue(), True, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -103,8 +101,7 @@ class testScheme(ProgrammingBackendTestCase):
         result = backend._manage_checkSemantics(job)
         
         if result:
-            #print >> sys.stderr, result.getValue(), result.getMessage()
-            self.assertEqual(result.getValue(), False)
+            self.assertEqual(result.getValue(), False, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 
@@ -125,7 +122,7 @@ class testScheme(ProgrammingBackendTestCase):
         result = backend._manage_checkSemantics(job)
         
         if result:
-            self.assertEqual(result.getValue(), True)
+            self.assertEqual(result.getValue(), True, result.getMessage())
         else:
             self.assertFalse('No result: %s' % repr(result))
 

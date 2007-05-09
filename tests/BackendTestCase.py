@@ -12,14 +12,14 @@ from backends import *
 from lib.data.BackendJob import BackendJob
 from lib.data.BackendResult import BackendResult
 
-portRange = range(5061,6060)
+portRange = range(15061,16060)
 
 class BackendTestCase(unittest.TestCase):
     """
     """
     host = socket.getfqdn()
-    port = 5060
-    spooler = 'http://%s:%d' % (socket.getfqdn(), 5050)
+    port = 15060
+    spooler = 'http://%s:%d' % (socket.getfqdn(), 15050)
     auth = {"username":"demo", "password":"foobar"}
     
     def setUp(self):
