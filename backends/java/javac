@@ -1,8 +1,9 @@
 #! /opt/ast/bin/ksh
 
-PATH=/usr/pkg/java/sun-1.5/bin:${PATH}; export PATH
-JAVA_HOME=/usr/pkg/java/sun-1.5; export JAVA_HOME
-JVM_HOME=/usr/pkg/java/sun-1.5; export JVM_HOME
-ulimit -d `ulimit -H -d`
+#JAVA_HOME=/opt/diablo-jdk1.5.0_07;	export JAVA_HOME
+JAVA_HOME=/usr/pkg/java/sun-6;  	export JAVA_HOME
+JVM_HOME=${JAVA_HOME};			export JVM_HOME
+PATH=${JAVA_HOME}/bin:${PATH};		export PATH
 
-/usr/pkg/java/sun-1.5/bin/javac -encoding utf-8 "$@"
+ulimit -d `ulimit -H -d`
+${JAVA_HOME}/bin/javac -encoding utf-8 "$@"
