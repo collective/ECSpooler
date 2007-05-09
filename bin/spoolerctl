@@ -1,10 +1,12 @@
 #! /bin/sh
 
-WORK_DIR=`dirname $0`
+cd `dirname $0`
+
+WORK_DIR=`pwd`
 WORK_DIR=${WORK_DIR%%/bin}
 
 PYTHON="/opt/python/bin/python"
 
-SDCTL="$WORK_DIR/startup/spoolerctl.py"
+SDCTL="$WORK_DIR/lib/spoolerctl.py"
 
 exec "$PYTHON" "$SDCTL" "$@"

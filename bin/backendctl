@@ -1,10 +1,12 @@
 #! /bin/sh
 
-WORK_DIR=`dirname $0`
+cd `dirname $0`
+
+WORK_DIR=`pwd`
 WORK_DIR=${WORK_DIR%%/bin}
 
 PYTHON="/opt/python/bin/python"
 
-BDCTL="$WORK_DIR/startup/backendctl.py"
+BDCTL="$WORK_DIR/lib/backendctl.py"
 
 exec "$PYTHON" "$BDCTL" "$@"
