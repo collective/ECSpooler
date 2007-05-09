@@ -19,6 +19,8 @@ class PrologConf:
     """
 
     interpreter = join(dirname(__file__), 'pl+systrace')
+    #interpreter = join(dirname(__file__), 'pl.sh')
+    
     compiler = interpreter
 
     # The packages that the model and student solution will be put in

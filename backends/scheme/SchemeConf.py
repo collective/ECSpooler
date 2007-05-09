@@ -18,7 +18,9 @@ class SchemeConf:
     Defines all properties used by backend Scheme.
     """
 
-    interpreter = '/opt/ECSpooler/backends/scheme/mzscheme+systrace'
+    interpreter = join(dirname(__file__), 'mzscheme+systrace')
+    #interpreter = join(dirname(__file__), 'mzscheme.sh')
+    
     streamLib = 'streams.scm'
 
     # construct path for stream lib

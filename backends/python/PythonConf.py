@@ -17,7 +17,8 @@ class PythonConf:
     Defines all properties used by backend Python.
     """
 
-    interpreter = '/opt/ECSpooler/backends/python/python+systrace'
+    interpreter = join(dirname(__file__), 'python+systrace')
+    #interpreter = join(dirname(__file__), 'python.sh')
 
     # load Haskell function to do a simple test
     try:

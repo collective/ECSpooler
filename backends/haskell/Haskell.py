@@ -7,12 +7,13 @@
 import sys, os, re
 import logging
 
-from types import StringType, UnicodeType
+from types import StringTypes
 
 # local imports
 from backends.haskell.HaskellConf import HaskellConf
-from backends.haskell.HaskellIOConf import HaskellIOConf
+from backends.haskell.HaskellConf import HaskellIOConf
 
+from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
 from lib.AbstractProgrammingBackend import EX_OK
 
@@ -75,60 +76,63 @@ class Haskell(AbstractProgrammingBackend):
         
         @param message
         """
-        return re.sub('isEqual=', '', message)
+        result = re.sub('isEqual=', '', message)
+        result = re.sub('/.*/ECSpooler/backends/haskell/', '', result)
 
+        return result
+    
     
     def _process_checkSemantics(self, job):
         """
         Checks semantic of a Haskell programs.
         @return a BackendResult object with result code and value
         """
+        # test for available test specs
+        testSpecs = self._getTests(job)
 
-        # get all test data and iterate through them
+        if len(testSpecs) == 0:
+            msg = 'No test specification selected.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-217, msg)
+        
+        # test for defined repeat fields in the schema definition
         repeatFields = self.schema.filterFields(type='RepeatField')
         
-        assert repeatFields and len(repeatFields) == 1, \
-            "None or more than one field of type 'RepeatField' found"
+        assert repeatFields, 'No RepeatField found.'
+        assert len(repeatFields) == 1, 'More than one RepeatField found.'
         
+        # test for available test data
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
-        
-        if len(testdata) == 0:
-            #msg = 'No test data found.'
-            #logging.warn(msg)
-            return
 
-        if len(self._getTests(job)) == 0:
-            msg = 'No test specification found.'
-            logging.warn(msg)
-            return(0, msg)
+        if len(testdata) == 0:
+            msg = 'No test data defined.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-216, msg)
+
 
         # we have some test data -> lets start the evaluation
         # get model solution and student's submission
-        modelSolution = job['modelSolution']
-        studentSolution = job['studentSolution']
+        model = job['modelSolution']
+        submission = job['submission']
 
-        assert modelSolution and type(modelSolution) in (StringType,
-                                                         UnicodeType), \
-            "Semantic check requires valid 'model solution' (%s)" % \
-            modelSolution
+        assert model and type(model) in StringTypes, \
+            "Semantic check requires valid 'model solution' (%s)" % model
 
-        assert studentSolution and type(studentSolution) in (StringType,
-                                                             UnicodeType), \
-            "Semantic check requires valid 'student solution' (%s)" % \
-            studentSolution
+        assert submission and type(submission) in StringTypes, \
+            "Semantic check requires valid 'student solution' (%s)" % submission
 
-        modelSolution = HaskellConf.genericModulTemplate % ('Model', modelSolution)
-        studentSolution = HaskellConf.genericModulTemplate % ('Student', studentSolution)
+        model = HaskellConf.genericModulTemplate % ('Model', model)
+        submission = HaskellConf.genericModulTemplate % ('Student', submission)
 
         # define return values
-        feedback = ''
-        solved = 1 # 1 means testing was successful
+        feedback = BackendResult.UNKNOWN
+        solved = True
 
         # run selected test specifications
-        for test in self._getTests(job):
+        for test in testSpecs:
 
-            if solved == 0: break
+            if not solved: break
 
             logging.debug('Running semantic check with test: %s' % 
                           test.getName())
@@ -136,9 +140,9 @@ class Haskell(AbstractProgrammingBackend):
             # get the interpreter
             interpreter = test.interpreter
            
-            # write model solution and student solutions to file
-            model = self._writeModule('Model', modelSolution, '.hs', job.getId(), test.encoding)
-            student = self._writeModule('Student', studentSolution, '.hs', job.getId(), test.encoding)
+            # write model solution and students' solution to a file
+            self._writeModule('Model', model, '.hs', job.getId(), test.encoding)
+            self._writeModule('Student', submission, '.hs', job.getId(), test.encoding)
 
             # get wrapper code
             src = test.semantic
@@ -183,7 +187,7 @@ class Haskell(AbstractProgrammingBackend):
                           (sys.exc_info()[0], e)
                                   
                     logging.error(msg)
-                    return (0, msg)
+                    return BackendResult(-230, msg)
 
                 # an error occured
                 # FIXME: os.EX_OK is available only for Macintosh and Unix!
@@ -194,7 +198,7 @@ class Haskell(AbstractProgrammingBackend):
                              % (t, test.getName(), 
                                 self._postProcessCheckSemantic(test, result))
 
-                    return (0, result)
+                    return BackendResult(False, result)
                         
                 # has the students' solution passed this tests?
                 else:
@@ -215,17 +219,17 @@ class Haskell(AbstractProgrammingBackend):
                                     'Received result: %s' \
                                     % (expected, received,)
                         
-                        solved = 0;
+                        solved = False;
                         
                         break # means: end testing right now
             # end inner for loop
         #end out for loop 
 
-        if solved == 1:
+        if solved :
             # TODO: i18n
             feedback = '\nYour submission passed all tests.'
 
-        return (solved, feedback)
+        return BackendResult(solved, feedback)
 
 
 

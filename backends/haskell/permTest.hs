@@ -1,3 +1,4 @@
+--test :: Eq a => [a] -> [a] -> Bool
 test a b = test_ispermutation a b
 
 remove item [] = []

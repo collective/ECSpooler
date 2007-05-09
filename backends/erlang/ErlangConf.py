@@ -19,19 +19,20 @@ class ErlangConf:
     Defines all properties used by backend Erlang.
     """
 
-    compiler = '/opt/erlang/bin/erlc'
-    #interpreter = '/opt/erlang/bin/erl -noshell -s %s -s init stop'
-    #                              erl -noshell -s  -s erlang halt
-    interpreter = '/opt/ECSpooler/backends/erlang/erl+systrace'
+    compiler = join(dirname(__file__), 'erlc')
+    #compiler = join(dirname(__file__), 'erlc.sh')
+    
+    interpreter = join(dirname(__file__), 'erl+systrace')
+    #interpreter = join(dirname(__file__), 'erl.sh')
 
-    # load Haskell function to do a simple test
+    # load source for simple testing
     try:
         simpleTest = file(join(dirname(__file__), 'simpleTest.erl'), 'r').read()
     except IOError, ioe:
         logging.warn('%s: %s' % (sys.exc_info()[0], ioe))
         simpleTest = ''
 
-    # load Haskell function to do a test which allows permutation of list elems
+    # load source for testing permutations
     try:
         permTest = file(join(dirname(__file__), 'permTest.erl'), 'r').read()
     except IOError, ioe:

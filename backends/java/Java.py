@@ -11,8 +11,10 @@ import logging
 from types import StringType, UnicodeType
 
 # local imports
-from JavaConf import JavaConf
+from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend, EX_OK
+
+from JavaConf import JavaConf
 
 def non_null_str(s):
     return s and type(s) in (StringType, UnicodeType)
@@ -95,45 +97,48 @@ class Java(AbstractProgrammingBackend):
         
         @return a BackendResult object with result code and value
         """
-            
-        # get the repeat field and iterate through the corresponding data
-        #repeatFields = self.schema.filterFields(__name__='testData')
+        # test for available test specs
+        testSpecs = self._getTests(job)
+
+        if len(testSpecs) == 0:
+            msg = 'No test specification selected.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-217, msg)
+        
+        # test for defined repeat fields in the schema definition
         repeatFields = self.schema.filterFields(type='RepeatField')
         
-        assert repeatFields and len(repeatFields) == 1, \
-            'None or more than one RepeatField found.'
+        assert repeatFields, 'No RepeatField found.'
+        assert len(repeatFields) == 1, 'More than one RepeatField found.'
         
+        # test for available test data
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
 
         if len(testdata) == 0:
-            #msg = 'No test data found.'
-            #logging.warn(msg)
-            return
+            msg = 'No test data defined.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-216, msg)
 
-        if len(self._getTests(job)) == 0:
-            msg = 'No test specification found.'
-            logging.warn(msg)
-            return(0, msg)
 
-        # 1. get model solution and student's submission
-        modelSolution = job['modelSolution']
-        studentSolution = job['studentSolution']
+        # get model solution and student's submission
+        model = job['modelSolution']
+        submission = job['submission']
 
-        assert non_null_str(modelSolution), \
+        assert non_null_str(model), \
             "Semantic check requires valid 'model solution' (%s)" % \
-            repr(modelSolution)
+            repr(model)
 
-        assert non_null_str(studentSolution), \
+        assert non_null_str(submission), \
             "Semantic check requires valid 'student solution' (%s)" % \
-            repr(studentSolution)
+            repr(submission)
 
         # define return values
-        feedback = ''
+        feedback = BackendResult.UNKNOWN
         solved = True
 
         # run selected test specifications
-        for test in self._getTests(job):
+        for test in testSpecs:
 
             if not solved: break
 
@@ -143,33 +148,40 @@ class Java(AbstractProgrammingBackend):
             # compile the solutions
             compiler = test.compiler
             compiled = {}
-
-            for sol in [('model',   JavaConf.NS_MODEL,   modelSolution),
-                        ('student', JavaConf.NS_STUDENT, studentSolution)]:
-                name, ns, source = sol
-                # FIXME: move the 're.sub' code to _preProcessCheckSyntax
-                # replace module name in the solution
-                source = ("package %s;\n\n" % ns) + source
-
-                # write solution to a file
-                dir=os.path.join(job.getId(), ns)
-                cname = self.getClassName(source)
-                compiled[name+'Class'] = cname
-                compiled[name] = self._writeModule(
-                                    cname,
-                                    source,
-                                    suffix=self.srcFileSuffix,
-                                    dir=dir,
-                                    encoding=test.encoding)
-
-                # compile the solution
-                exitcode, result = self._runInterpreter(
-                                    compiler,
-                                    os.path.dirname(compiled[name]['file']),
-                                    os.path.basename(compiled[name]['file']))
-                
-                assert exitcode == EX_OK, \
-                       'Errors in %s solution: %s' % (name, result)
+            
+            try:
+                for sol in [('model',   JavaConf.NS_MODEL,   model),
+                            ('student', JavaConf.NS_STUDENT, submission)]:
+                    name, ns, source = sol
+                    # FIXME: move the 're.sub' code to _preProcessCheckSyntax
+                    # replace module name in the solution
+                    source = ("package %s;\n\n" % ns) + source
+    
+                    # write solution to a file
+                    dir=os.path.join(job.getId(), ns)
+                    cname = self.getClassName(source)
+                    compiled[name+'Class'] = cname
+                    compiled[name] = self._writeModule(
+                                        cname,
+                                        source,
+                                        suffix=self.srcFileSuffix,
+                                        dir=dir,
+                                        encoding=test.encoding)
+    
+                    # compile the solution
+                    exitcode, result = self._runInterpreter(
+                                        compiler,
+                                        os.path.dirname(compiled[name]['file']),
+                                        os.path.basename(compiled[name]['file']))
+                    
+                    assert exitcode == EX_OK, \
+                           'Errors in %s solution: %s' % (name, result)
+    
+            except AssertionError, err:
+                msg = 'Internal error during semantic check: %s: %s' % \
+                      (sys.exc_info()[0], err)
+                logging.error(msg)
+                return BackendResult(-230, msg)
 
             model   = compiled['model']
             student = compiled['student']
@@ -254,7 +266,7 @@ class Java(AbstractProgrammingBackend):
                           (sys.exc_info()[0], e)
                                   
                     logging.error(msg)
-                    return (0, msg)
+                    return BackendResult(-230, msg)
 
                 # an error occured
                 if exitcode != EX_OK:
@@ -263,7 +275,7 @@ class Java(AbstractProgrammingBackend):
                              "\n\n Received result: %s"\
                              % (t, test.getName(), result)
 
-                    return (0, result)
+                    return BackendResult(False, result)
                         
                 # has the students' solution passed this tests?
                 else:
@@ -294,7 +306,7 @@ class Java(AbstractProgrammingBackend):
             # TODO: i18n
             feedback = '\nYour submission passed all tests.'
 
-        return ([0, 1][solved], feedback)
+        return BackendResult(solved, feedback)
 
 # -- some testing -------------------------------------------------------------
 import socket
@@ -312,8 +324,8 @@ if __name__ == "__main__":
         tB = Java({
                     'host': socket.getfqdn(), 
                     'port': 5060, 
-                    'capeserver': 'http://%s:5050' % socket.getfqdn(), 
-                    'srv_auth': {'username':'demo', 'password':'foobar'}
+                    'spooler': 'http://%s:5050' % socket.getfqdn(), 
+                    'auth': {'username':'demo', 'password':'foobar'}
                 })
 
         tB.start()

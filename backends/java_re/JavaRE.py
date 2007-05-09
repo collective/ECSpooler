@@ -4,7 +4,6 @@
 # Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
-
 import sys, os, re, time
 import logging
 import httplib
@@ -14,8 +13,10 @@ from urlparse import urlparse
 from types import StringType, UnicodeType
 
 # local imports
-from JavaREConf import JavaREConf
+from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend, EX_OK
+
+from JavaREConf import JavaREConf
 
 def non_null_str(s):
     return s and type(s) in (StringType, UnicodeType)
@@ -27,8 +28,35 @@ def string_p(s):
 
 class JavaRE(AbstractProgrammingBackend):
     """
-    A simple checker class for checking Haskell programs by comparing
-    student and model solution on given test data.
+    A backend class for checking regulare expressions using Java.
+    
+    Solutions have to be entered as they would appear in the Java program,
+    i. e. you'd enter things like
+
+      "!^.*foo.*$"
+    
+    or
+    
+      "Match \\[ a bracket"
+    
+    in the "Answer" field.  Invalid examples would be
+    
+      !^.*foo.*$
+    
+    (missing quote marks) or
+    
+      "Match \[ a bracket"
+    
+    ('\[' is not valid in a Java string.  To escape a reg-exp meta char,
+    you need to prefix it with '\\', not just '\').
+    
+    Issues:
+    
+      * Syntax check has to be improved.  In particular, we'd have to run
+        the syntax check wrapper, too, to find out whether Java's
+        "Pattern.compile()" raises an error.
+    
+      * Need better test environments (find all, compare sub groups, etc.)
     """
     
     id = 'java_re'
@@ -39,6 +67,7 @@ class JavaRE(AbstractProgrammingBackend):
     schema = JavaREConf.inputSchema
     testSchema = JavaREConf.tests
     version = '0.1'
+
 
     def download(self, url):
         parts		= urlparse(url)
@@ -65,6 +94,7 @@ class JavaRE(AbstractProgrammingBackend):
             raise Exception("Cannot download file: %s "
                             "Unsupported protocol: %s"
                             % (url, prot,))
+
 
     # -- check syntax ---------------------------------------------------------
     def _preProcessCheckSyntax(self, test, src, **kwargs):
@@ -118,29 +148,33 @@ class JavaRE(AbstractProgrammingBackend):
         def unescape(s):
             return s.replace("\\\\", "\\")
             
-        # get the repeat field and iterate through the corresponding data
-        #repeatFields = self.schema.filterFields(__name__='testData')
+        # test for available test specs
+        testSpecs = self._getTests(job)
+
+        if len(testSpecs) == 0:
+            msg = 'No test specification selected.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-217, msg)
+        
+        # test for defined repeat fields in the schema definition
         repeatFields = self.schema.filterFields(type='RepeatField')
         
-        assert repeatFields and len(repeatFields) == 1, \
-            'None or more than one RepeatField found.'
+        assert repeatFields, 'No RepeatField found.'
+        assert len(repeatFields) == 1, 'More than one RepeatField found.'
         
+        # test for available test data
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
 
         if len(testdata) == 0:
-            #msg = 'No test data found.'
-            #logging.warn(msg)
-            return
+            msg = 'No test data defined.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-216, msg)
 
-        if len(self._getTests(job)) == 0:
-            msg = 'No test specification found.'
-            logging.warn(msg)
-            return(0, msg)
 
         # 1. get model solution and student's submission
         modelSolution    = job['modelSolution']
-        studentSolution  = job['studentSolution']
+        studentSolution  = job['submission']
 
         assert non_null_str(modelSolution), \
             "Semantic check requires valid 'model solution' (%s)" % \
@@ -214,9 +248,9 @@ class JavaRE(AbstractProgrammingBackend):
             except Exception, e:
                 msg = 'Internal error during semantic check: %s: %s' % \
                       (sys.exc_info()[0], e)
-
+                              
                 logging.error(msg)
-                return (0, msg)
+                return BackendResult(-230, msg)
 
             # 4.4. run with all test data
             for t in testdata:
@@ -228,12 +262,13 @@ class JavaRE(AbstractProgrammingBackend):
                 contents = None
                 try:
                     contents = self.download(t)
+                    #print >> sys.stdout, contents
                 except Exception, e:
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
 
                     logging.error(msg)
-                    return (0, msg)
+                    return BackendResult(-230, msg)
 
                 # write the test data to a file
                 fn = None
@@ -262,7 +297,7 @@ class JavaRE(AbstractProgrammingBackend):
                           (sys.exc_info()[0], e)
 
                     logging.error(msg)
-                    return (0, msg)
+                    return BackendResult(-230, msg)
 
                 # execute wrapper
                 try:
@@ -278,7 +313,7 @@ class JavaRE(AbstractProgrammingBackend):
                           (sys.exc_info()[0], e)
                                   
                     logging.error(msg)
-                    return (0, msg)
+                    return BackendResult(-230, msg)
 
                 # an error occured
                 if exitcode != EX_OK:
@@ -287,7 +322,7 @@ class JavaRE(AbstractProgrammingBackend):
                              "\n\n Received result: %s"\
                              % (t, test.getName(), result)
 
-                    return 0, result
+                    return BackendResult(False, result)
                         
                 # has the student's solution passed this tests?
                 else:
@@ -318,30 +353,6 @@ class JavaRE(AbstractProgrammingBackend):
             # TODO: i18n
             feedback = '\nYour submission passed all tests.'
 
-        return ([0, 1][solved], feedback)
+        #return ([0, 1][solved], feedback)
+        return BackendResult(solved, feedback)
 
-# -- some testing -------------------------------------------------------------
-import socket
-
-if __name__ == "__main__":
-    """
-    """
-    try:
-        cpid = os.fork()
-    except AttributeError, aerr:
-        print('os.fork not defined - skipping.')
-        cpid = 0
-
-    if cpid == 0:
-        tB = Java({
-                    'host': socket.getfqdn(), 
-                    'port': 5060, 
-                    'capeserver': 'http://%s:5050' % socket.getfqdn(), 
-                    'srv_auth': {'username':'demo', 'password':'foobar'}
-                })
-
-        tB.start()
-
-    else:
-        time.sleep(1)
-        print 'pid=', cpid

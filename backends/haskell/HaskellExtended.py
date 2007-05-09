@@ -8,12 +8,13 @@
 import sys, os, re
 import logging
 
-from types import StringType, UnicodeType
+from types import StringTypes
 
 # local imports
 from Haskell import Haskell
 from HaskellExtendedConf import HaskellExtendedConf
 
+from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import EX_OK
 
 class HaskellExtended(Haskell):
@@ -42,61 +43,57 @@ class HaskellExtended(Haskell):
         
         @return a tuple with result code and value
         """
+        # test for available test specs
+        testSpecs = self._getTests(job)
 
-        # get all test data to iterate through them
+        if len(testSpecs) == 0:
+            msg = 'No test specification selected.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-217, msg)
+        
+        # test for defined repeat fields in the schema definition
         repeatFields = self.schema.filterFields(type='RepeatField')
         
-        assert repeatFields and len(repeatFields) == 1, \
-            "None or more than one field of type 'RepeatField' found"
+        assert repeatFields, 'No RepeatField found.'
+        assert len(repeatFields) == 1, 'More than one RepeatField found.'
         
+        # test for available test data
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
 
         if len(testdata) == 0:
-            #msg = 'No test data found.'
-            #logging.warn(msg)
-            return
+            msg = 'No test data defined.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-216, msg)
 
-        if len(self._getTests(job)) == 0:
-            msg = 'No test specification found.'
-            logging.warn(msg)
-            return(0, msg)
 
         # get model solution and student's submission
-        modelSolution = job['modelSolution']
-        studentSolution = job['studentSolution']
+        model = job['modelSolution']
+        submission = job['submission']
 
-        assert modelSolution and type(modelSolution) in (StringType,
-                                                         UnicodeType), \
-            "Semantic check requires valid 'model solution' (%s)" % \
-            modelSolution
+        assert model and type(model) in StringTypes, \
+            "Semantic check requires valid 'model solution' (%s)" % model
 
-        assert studentSolution and type(studentSolution) in (StringType,
-                                                             UnicodeType), \
-            "Semantic check requires valid 'student solution' (%s)" % \
-            studentSolution
+        assert submission and type(submission) in StringTypes, \
+            "Semantic check requires valid 'student solution' (%s)" % submission
 
-        #modelSolution = TEMPLATE_DEFAULT_MODULE % ('Model', modelSolution)
-        #studentSolution = TEMPLATE_DEFAULT_MODULE % ('Student', studentSolution)
+        #model = TEMPLATE_DEFAULT_MODULE % ('Model', model)
+        #submission = TEMPLATE_DEFAULT_MODULE % ('Student', submission)
 
-        modelSolution = re.sub('\$\{SOURCE}', modelSolution, 
-                               HaskellExtendedConf.semanticCheckTemplate)
-        modelSolution = re.sub('\$\{MODULE}', 'Model', 
-                               modelSolution)
+        model = re.sub('\$\{SOURCE}', model, HaskellExtendedConf.semanticCheckTemplate)
+        model = re.sub('\$\{MODULE}', 'Model', model)
         
-        studentSolution = re.sub('\$\{SOURCE}', studentSolution,
-                                 HaskellExtendedConf.semanticCheckTemplate)
-        studentSolution = re.sub('\$\{MODULE}', 'Student',
-                                 studentSolution)
+        submission = re.sub('\$\{SOURCE}', submission, HaskellExtendedConf.semanticCheckTemplate)
+        submission = re.sub('\$\{MODULE}', 'Student', submission)
 
         # define return values
-        feedback = ''
-        solved = 1 # 1 means testing was successful
+        feedback = BackendResult.UNKNOWN
+        solved = True
 
         # run selected test specifications
         for test in self._getTests(job):
 
-            if solved == 0: break
+            if not solved: break
 
             logging.debug('Running semantic check with test: %s' % 
                           test.getName())
@@ -125,48 +122,32 @@ class HaskellExtended(Haskell):
             for t in testdata:
                 # set testdata in model and students' code
                 modelSrc = re.sub('\$\{%s\}' % repeatField.getName(), t, 
-                                  modelSolution)
+                                  model)
                 studentSrc = re.sub('\$\{%s\}' % repeatField.getName(), t, 
-                                    studentSolution)
+                                    submission)
                 
                 try:
-                    # 1st execute model solution
-                    modelModule = self._writeModule('Model', modelSrc, 
-                                                    self.srcFileSuffix, 
-                                                    job.getId(), 
-                                                    test.encoding)
-                   
-                    #exitcode, result = \
-                    #    self._runInterpreter(interpreter, 
-                    #                os.path.dirname(modelModule['file']),
-                    #                os.path.basename(modelModule['file']))
-                    #
-                    #if exitcode == os.EX_OK:
-                    #    received = result
-                    
-                    # 2nd execute students' solution
-                    studentModule = self._writeModule('Student', 
-                                                      studentSrc, 
-                                                      self.srcFileSuffix, 
-                                                      job.getId(), 
-                                                      test.encoding)
+                    # 1st write model solution
+                    self._writeModule('Model', modelSrc, 
+                                      self.srcFileSuffix, 
+                                      job.getId(), 
+                                      test.encoding)
+                                       
+                    # 2nd write students' solution
+                    self._writeModule('Student', 
+                                      studentSrc, 
+                                      self.srcFileSuffix, 
+                                      job.getId(), 
+                                      test.encoding)
 
-                    #exitcode, result = \
-                    #    self._runInterpreter(interpreter, 
-                    #            os.path.dirname(studentModule['file']),
-                    #            os.path.basename(studentModule['file']))
-                    #
-                    #if exitcode == os.EX_OK:
-                    #    received = result
-
-                    # last write the wrapper and execute
+                    # at least write the wrapper and execute
                     wrapperModule = self._writeModule('wrapper', 
                                                       wrapperSrc, 
                                                       self.srcFileSuffix, 
                                                       job.getId(),
                                                       test.encoding)
 
-                    logging.debug('xxx: %s' % os.path.dirname(wrapperModule['file']))
+                    #logging.debug('xxx: %s' % os.path.dirname(wrapperModule['file']))
 
                     exitcode, result = \
                         self._runInterpreter(interpreter, 
@@ -182,7 +163,7 @@ class HaskellExtended(Haskell):
                           (sys.exc_info()[0], e)
                                   
                     logging.error(msg)
-                    return (0, msg)
+                    return BackendResult(-230, msg)
 
                 # an error occured
                 if exitcode != EX_OK:
@@ -192,7 +173,7 @@ class HaskellExtended(Haskell):
                              % (t, test.getName(), 
                                 self._postProcessCheckSemantic(test, result))
 
-                    return (0, result)
+                    return BackendResult(False, result)
                         
                 # has the students' solution passed this tests?
                 else:
@@ -213,7 +194,7 @@ class HaskellExtended(Haskell):
                                     'Received result: %s' \
                                     % (expected, received,)
                         
-                        solved = 0;
+                        solved = False;
                         
                         # in case of one failed testcase we will
                         # return right now
@@ -222,8 +203,8 @@ class HaskellExtended(Haskell):
             # end inner for loop
         #end out for loop 
 
-        if solved == 1:
+        if solved:
             # TODO: i18n
             feedback = '\nYour submission passed all tests.'
 
-        return (solved, feedback)
+        return BackendResult(solved, feedback)

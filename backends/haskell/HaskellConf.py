@@ -17,7 +17,8 @@ class HaskellConf:
     Defines all properties used by backend Haskell.
     """
 
-    interpreter = '/opt/ECSpooler/backends/haskell/runhugs+systrace'
+    interpreter = join(dirname(__file__), 'runhugs+systrace')
+    #interpreter = join(dirname(__file__), 'runhugs.sh')
 
     # load Haskell function to do a simple test
     try:
@@ -33,6 +34,13 @@ class HaskellConf:
         logging.warn('%s: %s' % (sys.exc_info()[0], ioe))
         permTest = ''
 
+    # load Haskell function to do a test which allows permutation of list elems
+    try:
+        toleranceTest = file(join(dirname(__file__), 'toleranceTest.hs'), 'r').read()
+    except IOError, ioe:
+        logging.warn('%s: %s' % (sys.exc_info()[0], ioe))
+        permTest = ''
+
     wrapperTemplate = \
 """module Main where
 import Model
@@ -43,10 +51,10 @@ ${helpFunctions}
 -- must be named 'test'
 ${testFunction}
 
-o1 = Model.${testData}
-o2 = Student.${testData}
-
 main = putStr(\"isEqual=\" ++ show(test (o1) (o2)) ++ \";;expected=\" ++ show(o1) ++ \";;received=\" ++ show(o2))
+    where
+        o1 = Model.${testData}
+        o2 = Student.${testData}
 """
 
     syntaxCheckTemplate = \
@@ -122,4 +130,50 @@ main = putStr(\"\")
             compiler = interpreter,
             interpreter = interpreter,
         ),
-    ))
+
+            TestEnvironment(
+            'tolerance',
+            label = 'Tolerance',
+            description = 'Tolerance of 1/10^15 in result values allowed.',
+            test = toleranceTest,
+            syntax = syntaxCheckTemplate,
+            semantic = wrapperTemplate,
+            lineNumberOffset = 2,
+            compiler = interpreter,
+            interpreter = interpreter,
+        ),
+))
+
+
+
+class HaskellIOConf(HaskellConf):
+    """
+    This class will be used to define all neccessary propertis for the Haskell
+    backend.
+    """
+    
+    # set a modified wrapper code for the semantic check
+    wrapperTemplate = \
+"""module Main where
+import Model
+import Student
+
+${helpFunctions}
+
+${testFunction}
+
+o1 = Model.${testData}
+o2 = Student.${testData}
+
+main = do v1 <- o1
+          v2 <- o2
+          putStr("isEqual=" ++ show(test (v1) (v2)) ++ ";;expected=" ++ show(v1) ++ ";;received=" ++ show(v2))
+"""
+
+    # modify schema for testing
+    tests = HaskellConf.tests.copy()
+
+    tests['simple'].semantic = wrapperTemplate
+    tests['permutation'].semantic = wrapperTemplate
+    tests['tolerance'].semantic = wrapperTemplate
+

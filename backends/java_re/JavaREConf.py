@@ -18,9 +18,12 @@ class JavaREConf:
     Properties used by backend Java.
     """
 
-    #interpreter = join(dirname(__file__), 'java')
-    interpreter = join(dirname(__file__), 'java+systrace')
     compiler = join(dirname(__file__), 'javac')
+    #compiler = join(dirname(__file__), 'javac.sh')
+
+    interpreter = join(dirname(__file__), 'java+systrace')
+    #interpreter = join(dirname(__file__), 'java.sh')
+
 
     # The name of the wrapper class that performs the syntactic check
     CLASS_SYNTACTIC_CHECK = 'SyntacticCheck'

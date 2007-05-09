@@ -12,6 +12,7 @@ from types import StringType, UnicodeType
 
 # local imports
 from PrologConf import PrologConf
+from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend, EX_OK
 
 def non_null_str(s):
@@ -122,41 +123,41 @@ class Prolog(AbstractProgrammingBackend):
         
         @return a BackendResult object with result code and value
         """
+        # test for available test specs
+        testSpecs = self._getTests(job)
 
-        # get the repeat field and iterate through the corresponding data
-        #repeatFields = self.schema.filterFields(__name__='testData')
+        if len(testSpecs) == 0:
+            msg = 'No test specification selected.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-217, msg)
+        
+        # test for defined repeat fields in the schema definition
         repeatFields = self.schema.filterFields(type='RepeatField')
         
-        assert repeatFields, \
-            'No RepeatField found.'
-
-        assert len(repeatFields) == 1, \
-            'More than one RepeatField found.'
+        assert repeatFields, 'No RepeatField found.'
+        assert len(repeatFields) == 1, 'More than one RepeatField found.'
         
+        # test for available test data
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
 
         if len(testdata) == 0:
-            #msg = 'No test data found.'
-            #logging.warn(msg)
-            return
+            msg = 'No test data defined.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-216, msg)
 
-        if len(self._getTests(job)) == 0:
-            msg = 'No test specification found.'
-            logging.warn(msg)
-            return(0, msg)
 
         # 1. get model solution and student's submission
-        modelSolution = job['modelSolution']
-        studentSolution = job['studentSolution']
+        model = job['modelSolution']
+        submission = job['submission']
 
-        assert non_null_str(modelSolution), \
+        assert non_null_str(model), \
             "Semantic check requires valid 'model solution' (%s)" % \
-            repr(modelSolution)
+            repr(model)
 
-        assert non_null_str(studentSolution), \
+        assert non_null_str(submission), \
             "Semantic check requires valid 'student solution' (%s)" % \
-            repr(studentSolution)
+            repr(submission)
 
         # define return values
         feedback = ''
@@ -174,8 +175,8 @@ class Prolog(AbstractProgrammingBackend):
             files = {} #XXX not used
 
             for name, ns, source in \
-                    [('model',   PrologConf.NS_MODEL,   modelSolution),
-                     ('student', PrologConf.NS_STUDENT, studentSolution)]:
+                    [('model',   PrologConf.NS_MODEL,   model),
+                     ('student', PrologConf.NS_STUDENT, submission)]:
                 # replace module name in the solution
                 source = (":- module('%s', []).\n\n" % ns) + source
 
@@ -249,7 +250,8 @@ class Prolog(AbstractProgrammingBackend):
                           (sys.exc_info()[0], e)
                                   
                     logging.error(msg)
-                    return (0, msg)
+                    #return (0, msg)
+                    return BackendResult(-230, msg)
 
                 # an error occured
                 if exitcode != EX_OK:
@@ -263,7 +265,8 @@ class Prolog(AbstractProgrammingBackend):
                              "\n\n Received result: %s"\
                              % (t, test.getName(), result)
                     
-                    return (0, result)
+                    #return (0, result)
+                    return BackendResult(False, result)
                         
                 # has the students' solution passed this tests?
                 else:
@@ -294,30 +297,6 @@ class Prolog(AbstractProgrammingBackend):
             # TODO: i18n
             feedback = '\nYour submission passed all tests.'
 
-        return ([0, 1][solved], feedback)
+        #return ([0, 1][solved], feedback)
+        return BackendResult(solved, feedback)
 
-# -- some testing -------------------------------------------------------------
-import socket
-
-if __name__ == "__main__":
-    """
-    """
-    try:
-        cpid = os.fork()
-    except AttributeError, aerr:
-        print('os.fork not defined - skipping.')
-        cpid = 0
-
-    if cpid == 0:
-        tB = Prolog({
-                    'host': socket.getfqdn(), 
-                    'port': 5060, 
-                    'capeserver': 'http://%s:5050' % socket.getfqdn(), 
-                    'srv_auth': {'username':'demo', 'password':'foobar'}
-                })
-
-        tB.start()
-
-    else:
-        time.sleep(1)
-        print 'pid=', cpid

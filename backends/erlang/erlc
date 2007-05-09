@@ -1,0 +1,5 @@
+#! /opt/ast/bin/ksh
+
+COMPILER=/opt/erlang/bin/erlc
+
+$COMPILER "$@"

@@ -1,4 +1,4 @@
-#! /opt/ast/bin/ksh
+#! /bin/sh
 
 # The problem with the SWI Prolog interpreter is that it doesn't exit
 # with an error if a syntax error is encountered.  So we execute the

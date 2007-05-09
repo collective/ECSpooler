@@ -4,21 +4,21 @@
 # Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
-
 import sys, os, re
 import logging
 
-from types import StringType, UnicodeType
+from types import StringTypes
 
 # local imports
 from backends.scheme.SchemeConf import SchemeConf
 
+from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
-from lib.AbstractProgrammingBackend import EX_OK
+#from lib.AbstractProgrammingBackend import EX_OK
 
 class Scheme(AbstractProgrammingBackend):
     """
-    This backends tests Scheme programs by comparing student and 
+    This backend tests Scheme programs by comparing student and 
     model solution on given test data.
     """
     
@@ -31,10 +31,10 @@ class Scheme(AbstractProgrammingBackend):
     schema = SchemeConf.inputSchema
     testSchema = SchemeConf.tests
 
-
+    # -- syntax check ---------------------------------------------------------
     def _preProcessCheckSyntax(self, test, src, **kwargs):
         """
-        @see _preProcessCheckSyntax in lib/AbstractProgrammingBackend
+        @see: lib.AbtractProgrammingBackend._preProcessCheckSyntax
         """
         result = ''
         
@@ -49,27 +49,30 @@ class Scheme(AbstractProgrammingBackend):
 
     def _postProcessCheckSyntax(self, test, message):
         """
-        @see AbtractSimpleBackend._postProcessCheckSyntax
+        @see: lib.AbtractProgrammingBackend._postProcessCheckSyntax
         """
         try:
             # find line number in result
             matches = re.findall('%s:(\d+)' % self.srcFileSuffix, message)
     
             #logging.debug("xxx: %s" % matches)
-    
-            # set line number minus x lines and return
-            return re.sub('.*%s:(\d+)'  % self.srcFileSuffix, 
-                          'line:%d' % (int(matches[0])-test.lineNumberOffset), 
-                          message)
+
+            if matches:
+                # set line number minus x lines and return
+                return re.sub('.*%s:(\d+)'  % self.srcFileSuffix, 
+                              'line:%d' % (int(matches[0])-test.lineNumberOffset), 
+                              message)
             
         except Exception, e:
             logging.warn('%s: %s' % (sys.exc_info()[0], e))
-            return message
+
+        return message
 
 
+    # -- semantic check ---------------------------------------------------------
     def _postProcessCheckSemantic(self, test, message):
         """
-        @see _postProcessCheckSyntax
+        @see: lib.AbtractProgrammingBackend._postProcessCheckSyntax
         """
         return self._postProcessCheckSyntax(test, message)
    
@@ -77,50 +80,62 @@ class Scheme(AbstractProgrammingBackend):
     def _process_checkSemantics(self, job):
         """
         Checks semantic of a Haskell programs.
-        @return a BackendResult object with result code and value
+        
+        @return: a BackendResult object with result value and message
+        @see: lib.AbstractProgrammingBackend._process_checkSemantics
         """
+        # test for available test specs
+        testSpecs = self._getTests(job)
 
-        # get all test data to iterate through them
-        repeatFields = self.schema.filterFields(__name__='testData')
+        if len(testSpecs) == 0:
+            msg = 'No test specification selected.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-217, msg)
         
-        assert repeatFields and len(repeatFields) == 1, \
-            'None or more than one RepeatField found.'
+        # test for defined repeat fields in the schema definition
+        repeatFields = self.schema.filterFields(type='RepeatField')
         
+        assert repeatFields, 'No RepeatField found.'
+        assert len(repeatFields) == 1, 'More than one RepeatField found.'
+        
+        # test for available test data
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
 
-        # define return values
-        feedback = ''
-        solved = 1 # 1 means testing was successful
+        if len(testdata) == 0:
+            msg = 'No test data defined.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-216, msg)
 
-        # get model solution and student's submission
-        modelSolution = job['modelSolution']
-        studentSolution = job['studentSolution']
 
-        assert modelSolution and type(modelSolution) in (StringType, UnicodeType), \
+        # get model solution and students' submission
+        model = job['modelSolution']
+        submission = job.getSubmission()
+
+        assert model and type(model) in StringTypes, \
             "Semantic check requires valid 'model solution' (%s)" % \
-            repr(modelSolution)
+            repr(model)
 
-        assert studentSolution and type(studentSolution) in (StringType, UnicodeType), \
+        assert submission and type(submission) in StringTypes, \
             "Semantic check requires valid 'student solution' (%s)" % \
-            repr(studentSolution)
+            repr(submission)
 
         # prepare source code for model and student' solution which will be
         # stored in seperate files as modules
-        modelSrc = re.sub('\$\{SOURCE}', modelSolution, SchemeConf.semanticCheckTemplate)
+        modelSrc = re.sub('\$\{SOURCE}', model, SchemeConf.semanticCheckTemplate)
         modelSrc = re.sub('\$\{MODULE}', 'model', modelSrc)
         
-        studentSrc = re.sub('\$\{SOURCE}', studentSolution, SchemeConf.semanticCheckTemplate)
+        studentSrc = re.sub('\$\{SOURCE}', submission, SchemeConf.semanticCheckTemplate)
         studentSrc = re.sub('\$\{MODULE}', 'student', studentSrc)
 
         # define return values
-        feedback = ''
-        solved = 1 # 1 means testing was successful
+        feedback = BackendResult.UNKNOWN
+        solved = True
 
         # run selected test specifications
-        for test in self._getTests(job):
+        for test in testSpecs:
 
-            if solved == 0: break
+            if not solved: break
 
             logging.debug('Running semantic check with test: %s' % 
                           test.getName())
@@ -148,24 +163,26 @@ class Scheme(AbstractProgrammingBackend):
 
             # run with all test data
             for t in testdata:
-                # add testdata to model and student modules source code
+                # add testdata to model and student modules' source code
                 model = re.sub('\$\{%s\}' % repeatField.getName(), t, modelSrc)
                 student = re.sub('\$\{%s\}' % repeatField.getName(), t, studentSrc)
 
-                #logging.debug('xxx: %s' % t)
-                
+                # remove all remaining placeholders
+                model = re.sub('\$\{.*\}', '', model)
+                student = re.sub('\$\{.*\}', '', student)
+
                 try:
                     # 1st write model solution
-                    modelModule = self._writeModule('model', model, 
-                                                    self.srcFileSuffix, 
-                                                    job.getId(), 
-                                                    test.encoding)
+                    self._writeModule('model', model, 
+                                      self.srcFileSuffix, 
+                                      job.getId(), 
+                                      test.encoding)
                    
                     # 2nd write students' solution
-                    studentModule = self._writeModule('student', student, 
-                                                      self.srcFileSuffix, 
-                                                      job.getId(), 
-                                                      test.encoding)
+                    self._writeModule('student', student, 
+                                      self.srcFileSuffix, 
+                                      job.getId(), 
+                                      test.encoding)
 
                     # last write the wrapper and execute
                     wrapperModule = self._writeModule('wrapper', wrapper, 
@@ -183,7 +200,7 @@ class Scheme(AbstractProgrammingBackend):
                           (sys.exc_info()[0], e)
                                   
                     logging.error(msg)
-                    return (0, msg)
+                    return BackendResult(-230, msg)
 
                 # an error occured
                 if exitcode != os.EX_OK:
@@ -192,7 +209,7 @@ class Scheme(AbstractProgrammingBackend):
                              % (t, test.getName(), 
                                 self._postProcessCheckSemantic(test, result))
 
-                    return (0, result)
+                    return BackendResult(False, result)
                         
                 # has the students' solution passed this tests?
                 else:
@@ -217,14 +234,14 @@ class Scheme(AbstractProgrammingBackend):
                                     'Received result: %s' \
                                     % (expected, received,)
                         
-                        solved = 0;
+                        solved = False;
                         
                         break # means: end testing right now
             # end inner for loop
         #end out for loop 
 
-        if solved == 1:
+        if solved:
             # TODO: i18n
             feedback = '\nYour submission passed all tests.'
 
-        return (solved, feedback)
+        return BackendResult(solved, feedback)

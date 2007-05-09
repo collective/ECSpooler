@@ -5,7 +5,7 @@
 #
 # This file is part of ECSpooler.
 
-import sys, os, re, time
+import sys, os, re
 import logging
 
 from types import StringType, UnicodeType
@@ -13,6 +13,7 @@ from types import StringType, UnicodeType
 # local imports
 from backends.python.PythonConf import PythonConf
 
+from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
 from lib.AbstractProgrammingBackend import EX_OK
 
@@ -46,46 +47,50 @@ class Python(AbstractProgrammingBackend):
         Checks semantic of a Python programs.
         @return a BackendResult object with result code and value
         """
+        # test for available test specs
+        testSpecs = self._getTests(job)
+
+        if len(testSpecs) == 0:
+            msg = 'No test specification selected.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-217, msg)
         
-        # get all test data to iterate through them
-        repeatFields = self.schema.filterFields(__name__='testData')
+        # test for defined repeat fields in the schema definition
+        repeatFields = self.schema.filterFields(type='RepeatField')
         
-        assert repeatFields and len(repeatFields) == 1, \
-            'None or more than one RepeatField found.'
+        assert repeatFields, 'No RepeatField found.'
+        assert len(repeatFields) == 1, 'More than one RepeatField found.'
         
+        # test for available test data
         repeatField = repeatFields[0]
         testdata = repeatField.getAccessor()(job[repeatField.getName()])
 
         if len(testdata) == 0:
-            #msg = 'No test data found.'
-            #logging.warn(msg)
-            return
+            msg = 'No test data defined.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-216, msg)
 
-        if len(self._getTests(job)) == 0:
-            msg = 'No test specification found.'
-            logging.warn(msg)
-            return(0, msg)
 
         # get model solution and student's submission
-        modelSolution = job['modelSolution']
-        studentSolution = job['studentSolution']
+        model = job['modelSolution']
+        submission = job['submission']
 
-        assert modelSolution and type(modelSolution) in (StringType, UnicodeType), \
+        assert model and type(model) in (StringType, UnicodeType), \
             "Semantic check requires valid 'model solution' (%s)" % \
-            repr(modelSolution)
+            repr(model)
 
-        assert studentSolution and type(studentSolution) in (StringType, UnicodeType), \
+        assert submission and type(submission) in (StringType, UnicodeType), \
             "Semantic check requires valid 'student solution' (%s)" % \
-            repr(studentSolution)
+            repr(submission)
 
         # define return values
-        feedback = ''
-        solved = 1 # 1 means testing was successful
+        feedback = BackendResult.UNKNOWN
+        solved = True
 
         # run selected test specifications
         for test in self._getTests(job):
 
-            if solved == 0: break
+            if not solved: break
 
             logging.debug('Running semantic check with test: %s' % 
                           test.getName())
@@ -94,8 +99,8 @@ class Python(AbstractProgrammingBackend):
             interpreter = test.interpreter
            
             # 4.0 write model solution and answer files
-            model = self._writeModule('Model', modelSolution, '.py', job.getId(), test.encoding)
-            student = self._writeModule('Student', studentSolution, '.py', job.getId(), test.encoding)
+            self._writeModule('Model', model, '.py', job.getId(), test.encoding)
+            self._writeModule('Student', submission, '.py', job.getId(), test.encoding)
 
             # 4.1. get wrapper code
             src = test.semantic
@@ -135,7 +140,7 @@ class Python(AbstractProgrammingBackend):
                           (sys.exc_info()[0], e)
                                   
                     logging.error(msg)
-                    return (0, msg)
+                    return BackendResult(-230, msg)
 
                 # an error occured
                 if exitcode != EX_OK:
@@ -144,7 +149,7 @@ class Python(AbstractProgrammingBackend):
                              "\n\n Received result: %s"\
                              % (t, test.getName(), result)
 
-                    return (0, result)
+                    return BackendResult(False, result)
                 
                 # has the students' solution passed this tests?
                 else:
@@ -163,41 +168,15 @@ class Python(AbstractProgrammingBackend):
                                     'Received result: %s' \
                                     % (expected, received,)
                         
-                        solved = 0;
+                        solved = False;
                         
                         break # means: end testing right now
             # end inner for loop
         #end out for loop 
 
-        if solved == 1:
+        if solved:
             # TODO: i18n
             feedback = '\nYour submission passed all tests.'
 
-        return (solved, feedback)
+        return BackendResult(solved, feedback)
 
-
-# -- some testing -------------------------------------------------------------
-import socket
-
-if __name__ == "__main__":
-    """
-    """
-    try:
-        cpid = os.fork()
-    except AttributeError, aerr:
-        print('os.fork not defined - skipping.')
-        cpid = 0
-
-    if cpid == 0:
-        tB = PythonBackend({
-                    'host': socket.getfqdn(), 
-                    'port': 5060, 
-                    'capeserver': 'http://%s:5050' % socket.getfqdn(), 
-                    'srv_auth': {'username':'demo', 'password':'foobar'}
-                })
-
-        tB.start()
-
-    else:
-        time.sleep(1)
-        print 'pid=', cpid
