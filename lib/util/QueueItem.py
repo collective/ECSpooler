@@ -23,7 +23,7 @@ class QueueItem:
 
         # if id is None...
         if not id: 
-            # ...use possible available id in data
+            # ...use id in data if available
             if data.has_key('id'):
                 id = data.get('id')
             # ...or create a new unique id
@@ -51,7 +51,7 @@ class QueueItem:
         self._data['id'] = self._id
 
         # valide the inputs; an exception can be thrown
-        self.validate()
+        self._validate()
 
 
     def getData(self):
@@ -62,7 +62,7 @@ class QueueItem:
         return self._data
 
 
-    def validate(self):
+    def _validate(self):
         """
         Validates the data. Will be called from setData. Overwrite this 
         method in subclasses if needed.
@@ -89,7 +89,7 @@ class QueueItem:
         Sets a value for the given key.
         """
         self._data[key] = value
-        self.validate()
+        self._validate()
 
 
 # -- test section -------------------------------------------------------------

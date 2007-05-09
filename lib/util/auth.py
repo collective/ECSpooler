@@ -4,6 +4,7 @@
 # Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
+import md5
 
 from types import StringType, UnicodeType, DictionaryType
 import logging, md5, shelve, time
@@ -19,7 +20,7 @@ ADD_BACKEND = 'le2'
 STOP_BACKEND = 'le3'
 REMOVE_BACKEND = 'le4'
 APPEND_JOB = 'le5'
-POP_RESULT = 'le6'
+GET_RESULT = 'le6'
 GET_STATUS = 'le7'
 GET_BACKEND_INFO = 'le8'
 UNDEFINED = 'le9'
@@ -202,15 +203,18 @@ class UserAuthMD5(AuthorizationBackend):
 # -- --------------------------------------------------------------------------
 if __name__ == '__main__': 
 
-    # testing UserAuth
+    from os.path import join, dirname
 
-    #ua = UserAuth('passwd_db')
-    #ua.addUser('demo', 'foobar')
-    #print ua.authorize('test', 'SuPPe')
-    #print ua.authorize('demo', 'foobar')
+#    # testing UserAuth
+#    ua = UserAuth('passwd_db')
+#    ua.addUser('demo', 'foobar')
+#    print ua.authorize('test', 'SuPPe')
+#    print ua.authorize('demo', 'foobar')
 
 
     # testing UserAuthMD5
-    uamd5 = UserAuthMD5('passwd_md5')
+    uamd5 = UserAuthMD5(join(dirname(__file__), '..', '..', 'etc', 'passwd'))
     print uamd5.authorize('test', 'SuPPe')
     print uamd5.authorize('demo', 'foobar')
+    
+    print md5.md5('Asdf,.').hexdigest()

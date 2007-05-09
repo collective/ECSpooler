@@ -4,64 +4,64 @@
 # Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
+import traceback
 
-import os, threading, signal
+import sys, os, threading, signal
 import socket, xmlrpclib
 import logging
 
-from types import StringType, UnicodeType, IntType, DictionaryType
+from types import StringTypes, DictionaryType
 
 # local imports
-from AbstractServer import AbstractServer
-from lib.data import BackendJob, BackendResult
-
-from util.BackendSchema import TestEnvironment, InputField, Schema
+from lib.AbstractServer import AbstractServer
+from lib.data.BackendJob import BackendJob
+from lib.data.BackendResult import BackendResult
 
 class AbstractBackend(AbstractServer):
     """
-    AbstractBackend is the basic class of all backends. It
-    implements an XMLRPC server, which is waiting for check
-    jobs.
+    AbstractBackend is the basic class of all backends.  It implements an 
+    XMLRPC server, which is waiting for test jobs.
 
-    Backend implementations should be derived from this class and *must*
-    implement the following method(s):
-
-      execute(self, authdata, jobdata):) -> CheckResult
+    Backend implementations should be derived from this class by implementing 
+    the _process_execute method and defining their own input and test schema.
     """
+    # resourcestring
+    ERROR_AUTH_FAILED = "Authorization failed"
     
-    # must be set in subclasses !!
+    # set in subclasses !!
     id = ''
     name =  ''
     schema = None
     testSchema = None
     version = None
     
+    
     def __init__(self, params):
         """
         @params dict with all parameters which must be set for a backend
         """
-        AbstractServer.__init__(self, params['host'], params['port'])
-
-        # FIXME:
-        #self.spooler = options.get('spooler')
-        self.spooler = params['capeserver']
-        self.auth = params['srv_auth']
+        AbstractServer.__init__(self, 
+                                params.get('host', None), 
+                                params.get('port', None))
         
-        assert self.id != '', 'A id is required for this backend.'
-        assert self.name != '', 'A name is required for this backend.'
-        assert self.version != '', 'A version is required for this backend.'
+        assert self.id != '', 'An valid ID is required for this backend.'
+        assert self.name != '', 'A valid name is required for this backend.'
+        assert self.version != '', 'A valid version is required for this backend.'
 
         assert self.schema != None, \
             'A input schema is required for this backend'
         assert self.testSchema != None, \
             'A test schema is required for this backend'
         
-        assert self.spooler and type(self.spooler) in (StringType, UnicodeType), \
+        self.spooler = params.get('spooler', None)
+        self.auth = params.get('auth', None)
+
+        assert self.spooler and type(self.spooler) in StringTypes, \
             "Backend requires a correct 'spooler' option"
 
         #assert self.auth and type(self.auth) == type({}), \
         assert self.auth and type(self.auth) == DictionaryType, \
-            "Backend requires a correct 'srv_auth' option"
+            "Backend requires a correct 'auth' option"
 
         # set spoolerID to None; it will be set if backend was successfully
         # registered to a spooler
@@ -105,7 +105,7 @@ class AbstractBackend(AbstractServer):
                                              'http://%s:%i' % 
                                              (self.host, self.port))
 
-            if code != 0:
+            if code != 1:
                 logging.error("Can't add backend to spooler: %s (%i)" % 
                               (msg, code))
             elif not msg:
@@ -131,7 +131,7 @@ class AbstractBackend(AbstractServer):
     
     def _manageBeforeStop(self):
         """
-        Do nothing here right now.
+        @see: AbstractServer._manageBeforeStop()
         """
         try:
             logging.debug("Removing backend '%s' from spooler '%s'" % 
@@ -150,28 +150,34 @@ class AbstractBackend(AbstractServer):
 
     def shutdown(self, auth):
         """
-        Shutting down backend; called from spooler or other client
+        Shutting down the backend.  This method is called from spooler or 
+        another client. Authentication is required.
+        
+        @return: a tuple
         """
-        self._authenticate(auth)
+        if not self._authenticate(auth):
+            return (-210, self.ERROR_AUTH_FAILED)
+        
         # start a new thread to stop the backend but let this method some time
         # to return a value to the spooler or other calling client
-        #logging.debug('Waiting 0.5s before stopping backend.')
         sT = threading.Timer(0.5, self._stop, (signal.SIGTERM, None))
         sT.start()
 
-        return (1, '')
+        return (1, "Signal '%s' sent" % signal.SIGTERM)
 
 
-    # -- methods used by the frontends ----------------------------------------
+    # -- public methods (for spoolers/frontends) ------------------------------
     def getStatus(self, auth):
-        """Returns a dictionary with some status information about 
+        """
+        Returns a dictionary with some status information about 
         this backend. In case the authentication fails, a 
         AuthorizationFailedException will be raised.
         
         @param auth authorization information
         @return a dictionary with id, name, version, host, and port infos
         """
-        self._authenticate(auth)
+        if not self._authenticate(auth):
+            return(-210, self.ERROR_AUTH_FAILED)
 
         return (1, {
             'pid':     os.getpid(),
@@ -184,16 +190,22 @@ class AbstractBackend(AbstractServer):
 
 
     def getInputSchema(self, auth):
-        """Return the input schema defined for this backend.
+        """
+        Return the input schema defined for this backend.
+        
         @return the input schema as string
         """
+        # FIXME: add authentification
         return (1, str(self.schema))
     
     
     def getTestSchema(self, auth):
-        """Return the test schema defined for this backend.
+        """
+        Return the test schema defined for this backend.
+        
         @return the test schema as string
         """
+        # FIXME: add authentification
         return (1, str(self.testSchema))
 
         
@@ -202,6 +214,7 @@ class AbstractBackend(AbstractServer):
         Returns a dictionary where keys are the field names and the values
         are all the properties defined by the input schema.
         """
+        # FIXME: add authentification
         
         result = {}
         
@@ -217,8 +230,9 @@ class AbstractBackend(AbstractServer):
         """
         Returns a dictionary where keys are the ids and the values are the 
         label of all definied tests in testSchema.
-        
         """
+        # FIXME: add authentification
+        
         result = {}
 
         for test in self.testSchema.fields():
@@ -227,34 +241,51 @@ class AbstractBackend(AbstractServer):
         return (1, result)
 
 
-    # -- internal methods used by subclasses ----------------------------------
     def execute(self, authdata, jobdata):
-        """This method first checks the authentication and then 
-        calls _process_execute which executes the job.
+        """
+        Call _process_execute which executes the job.
 
-        @param authdata authorization information.
-        @param jobdata all relevant job data
-        @return CheckResult object or tupel consisting of result code and message
+        @param authdata: authorization information
+        @param jobdata: all relevant job data
+        @return: a dictionary with at least result value and message
         """
         # check authentication
-        self._authenticate(authdata)
+        if not self._authenticate(authdata):
+            return(-210, self.ERROR_AUTH_FAILED)
         
-        # check the job
-        return self.process_execute(jobdata)
+        # create a test job with the given data
+        try:
+            job = BackendJob(data=jobdata)
+
+            # start testing
+            result = self._process_execute(job)
+            
+        except Exception, e:
+            logging.error(''.join(traceback.format_exception(*sys.exc_info())))
+            
+            msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
+            logging.error(msg)
+            result = BackendResult(-200, msg)
+
+            
+        return result.getData()
 
 
-    def process_execute(self, jobdata):
-        """Executes a check job using the given job data. This method 
-        must be overridden in subclasses.
+    # -- methodes which must be overwritten in subclasses ---------------------
+    def _process_execute(self, job):
+        """
+        Executes a test job with the given test data.  This method must be 
+        overridden in subclasses.
 
-        @param jobdata all relevant job data
-        @return CheckResult object or tupel consisting of result code and message
+        @param job: a BackendJob object with all relevant test data
+        @return: a BackendResult object with at least result value and message
         """
 
-        raise NotImplementedError("Method 'execute' must be "
+        raise NotImplementedError("Method 'process_execute' must be "
                                   "implemented by subclass")
 
 
+    # -- internal or private methodes (used or overwritten in subclasses) -----
     def _getTests(self, job):
         """
         @return a list of test specifications depending on the ids given
@@ -270,9 +301,9 @@ class AbstractBackend(AbstractServer):
 
             for id in testIds:
                 result.extend(self.testSchema.filterFields(__name__=id))
-        else:
-            # not tests selected by the user, taking all available
-            result = self.testSchema.fields()
+        #else:
+        #    # not tests selected by the user, taking all available
+        #    result = self.testSchema.fields()
             
         #logging.debug('Following tests will be used %s: ' % result)
         return result

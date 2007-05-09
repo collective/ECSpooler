@@ -125,14 +125,14 @@ class SpoolerQueue:
 #    
 #    data = {}
 #    data['backend'] = "checker_val"
-#    data["studentSolution"] = "student_val"
-#    data["modelSolution"] = "sample_val"
+#    data["submission"] = "student_val"
+#    data["model"] = "sample_val"
 #    data["comparator"] = "comp_val"
 #    
 #    data2 = {}
 #    data2['backend'] = "checker_val2"
-#    data2["studentSolution"] = "student_val2"
-#    data2["modelSolution"] = "sample_val2"
+#    data2["submission"] = "student_val2"
+#    data2["model"] = "sample_val2"
 #    data2["comparator"] = "comp_val2"
 #
 #    j = BackendJob(data)

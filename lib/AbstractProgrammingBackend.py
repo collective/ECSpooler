@@ -4,20 +4,17 @@
 # Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
+from types import BooleanType
 
-import sys, os, re, popen2, tempfile, threading, signal
+import sys, os, re, popen2, tempfile, threading, signal, traceback
 import shutil
 import logging
-import traceback
 
-from types import StringType, UnicodeType
+#from types import StringType, UnicodeType
 
 from lib.AbstractBackend import AbstractBackend
-
-from lib.data.BackendJob import BackendJob
-from lib.data.BackendResult import BackendResult
-
 from lib.util import utils
+from lib.data.BackendResult import BackendResult
 
 try:
     EX_OK = os.EX_OK
@@ -28,6 +25,7 @@ try:
     SIGTERM = signal.SIGTERM
 except AttributeError:
     SIGTERM = 15
+
     
 class AbstractProgrammingBackend(AbstractBackend):
     """
@@ -44,121 +42,115 @@ class AbstractProgrammingBackend(AbstractBackend):
     ... test the student solution for semantical correctness using input data.
     """
     
+    # set in subclasses
     srcFileSuffix = ''
     
     # resourcestring
+    # set default time (in seconds) before killing a test job's execution
     PROCESS_WAIT_TIME = 10
-
    
-    def process_execute(self, data):
+    def _process_execute(self, job):
         """
         Executes a check job.
 
-        @param jobdata relevant job data, see class CheckJob for more details
-        @return CheckResult-object/tupel consisting of result code and message
+        @param job: a BackendJob with all relevant test data
+        @return: a BackendResult
+        @see: BackendJob, BackendResult
+        @see: AbstractBackend.execute, AbstractBackend._process_execute
         """
 
         try:
-            job = BackendJob(data)
-
-            assert job, 'Invalid or insufficient data: %s' % job
-
-            # set a default result
-            result = (1, '')
-
-            try:
-                # invoke syntax check
-                logging.info('Invoking syntax check (%s)' % job.getId())
-                result = self.manage_checkSyntax(job)  #self.checkSyntax(job)
+            # invoke syntax check
+            logging.info('Invoking syntax check (%s)' % job.getId())
+            result = self._manage_checkSyntax(job) # returns a BackendResult
+        
+            # FIXME: If the returned value is always of typ
+            #        BackendResult we could use isFailure!
+            #if not result.hasFailed: 
             
-                # FIXME: If the returned value is always of typ
-                #        CheckResult we could use isFailure!
-                #if not result.isFailure(): 
+            logging.debug('Result from syntax check: %s' % result.getData())
+            
+            if result:
+                rValue = result.getValue()
                 
-                #logging.debug('Result from syntax check: %s' % repr(result))
-                
-                if result and result[0] > 0: 
+                if (type(rValue) == BooleanType and rValue == True):
                     # invoke semantic check
                     logging.info('Invoking semantic check (%s)' % job.getId())
-                    retval = self.manage_checkSemantics(job)
-                    
-                    # no return value == no test data and therefore no test resutls!
-                    if retval:
-                        result = retval
-                
-                    #logging.debug('Result from semantic check: %s' % repr(result))
-                # end if
-
-            except Exception, e:
-                msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
-                logging.error(msg)
-                logging.error(traceback.format_exc())
-                result = (-10, msg)
-                
-
-            # delete all files and folders used in this test
-            # FIXME: do not comment in productive environment
-            #self._cleanup(job.getId())
+                    result = self._manage_checkSemantics(job)
             
-            #logging.debug('Returning result: %s' % repr(result))
-            return result
+                logging.debug('Result from semantic check: %s' % result.getData())
+            # end if
 
         except Exception, e:
-            msg = '%s: %s' % (sys.exc_info()[0], e)
-            logging.warn(msg)
-            return (-1, msg)
+            msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
+            logging.error(msg)
+            logging.error(traceback.format_exc())
+            result = BackendResult(-200, msg)
+                
+
+        # delete all files and folders used in this test
+        # FIXME: uncomment for productive environments
+        self._cleanup(job.getId())
+
+        return result
 
 
     # -- check syntax ---------------------------------------------------------
-    def manage_checkSyntax(self, job):
+    def _manage_checkSyntax(self, job):
         """
         Manages the syntax check for a given job depending on the 
         selected test scenarios.  The syntax check itself will be 
         done in process_checkSyntax.
+        
+        @param job: a BackendJob
+        @return: a BackendResult
         """
-        
-        studentSolution = job['studentSolution']
-        
-        assert studentSolution and type(studentSolution) in (StringType, 
-                                                             UnicodeType), \
-            "Syntax check requires valid 'studentSolution': (%s)" % \
-            repr(studentSolution)
-            
-        # src = TEMPLATE_SYNTAX % (self._job["studentSolution"],)
-            
-        # using test specifications
-        for test in self._getTests(job):
-            result = self._process_checkSyntax(job.getId(), test, studentSolution)
-            
-            if result and result[0] <= 0:
-                return result
-        # end for
+        # test for available test specs
+        testSpecs = self._getTests(job)
 
-        return (1, 'Syntax check succeeded.')
+        # test for available test specs
+        if len(testSpecs) == 0:
+            msg = 'No test specification selected.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-217, msg)
+                        
+        # get the names of all test enrironments selected in this job
+        for testSpec in testSpecs:
+            # process syntax check for each test environment
+            result = self._process_checkSyntax(job.getId(), 
+                                               testSpec, 
+                                               job.getSubmission())
+            
+            # if there is an result probably an error occoured
+            if result != None: return result
+
+        return BackendResult(True, 'Syntax check succeeded.')
 
 
-    def _process_checkSyntax(self, jobId, test, studentSolution):
+    def _process_checkSyntax(self, jobId, testSpec, submission):
         """
-        Tests the syntax of a programm. Override this method if you 
-        need to do some special things during syntax check.
+        Tests the syntax of a programm.  Override this method if you need to 
+        do some special things during syntax check.
         
+        @param jobId: ID for this test job
+        @param test: name of the selected test environment (cf. self.testSchema)  
+        @return: a BackendResult or None if test succeeded
         """
         # get the compiler or if not available the interpreter
-        compiler = test.compiler or test.interpreter
+        compiler = testSpec.compiler or testSpec.interpreter
         
         if compiler:
-            
-            # student's source code
-            src, mName = self._preProcessCheckSyntax(test, studentSolution)
-
             try:
+                # test term (e.g., student's source code)
+                src, mName = self._preProcessCheckSyntax(testSpec, submission)
+
                 logging.info('Running syntax check with test: %s' % 
-                             test.getName())
+                             testSpec.getName())
                               
                 module = self._writeModule(mName, src, 
                                            self.srcFileSuffix, 
                                            jobId,
-                                           test.encoding)
+                                           testSpec.encoding)
                 
                 #logging.debug(repr(module))
                 
@@ -166,30 +158,35 @@ class AbstractProgrammingBackend(AbstractBackend):
                     self._runInterpreter(compiler, 
                                    os.path.dirname(module['file']),
                                    os.path.basename(module['file']))
+                    
+                #logging.debug('exitcode: %s' % repr(exitcode))
+                #logging.debug('result: %s' % repr(result))
                 
             except Exception, e:
-                import traceback
-                traceback.print_exc()
-
+                #traceback.print_exc()
                 msg = 'Internal error during syntax check: %s: %s' % \
-                      (sys.exc_info()[0], e)
+                        (sys.exc_info()[0], e)
                               
                 logging.error(msg)
-                return (-1, msg)
+                return BackendResult(-220, msg)
+            
+            logging.debug('exitcode: %s' % repr(-exitcode))
     
             # consider exit code
             if exitcode != EX_OK:
-                result = self._postProcessCheckSyntax(test, result)
-                return (-exitcode, result)
+                result = self._postProcessCheckSyntax(testSpec, result)
+                #return BackendResult(-exitcode, result or repr(-exitcode))
+                return BackendResult(False, result or repr(-exitcode))
 
         else:
-            msg = 'No compiler/interpreter given for test: %s' % test.getName()
+            msg = 'No compiler/interpreter defined (test spec: %s).' \
+                    % testSpec.getName()
 
             logging.error(msg)
-            return (0, msg)
+            return BackendResult(-221, msg)
 
         # everything seems to be ok
-        return (1, '')
+        return None
 
    
     def _preProcessCheckSyntax(self, test, src, **kwargs):
@@ -224,20 +221,15 @@ class AbstractProgrammingBackend(AbstractBackend):
 
 
     # -- check semantics ------------------------------------------------------
-    def manage_checkSemantics(self, job):
+    def _manage_checkSemantics(self, job):
         """
         """
-        studentSolution = job['studentSolution']
-        
-        assert studentSolution and type(studentSolution) in (StringType, 
-                                                             UnicodeType), \
-            "Semantic check requires a valid 'student solution' (%s)" % \
-            repr(studentSolution)
-
-        return self._process_checkSemantics(job)
+        return self._process_checkSemantics(job)    
 
 
     def _process_checkSemantics(self, job):
+        """
+        """
         # overwrite this method
         raise NotImplementedError("Method _process_checkSemantics must be "
                                   "implemented by a subclass")
@@ -355,11 +347,14 @@ class AbstractProgrammingBackend(AbstractBackend):
             
         buf = handle.fromchild.readlines()
         handle.fromchild.close()
-        
+                
         exitcode = handle.poll()
         response = buf
         
         result = ''.join(response)
+
+        #logging.debug('exitcode: %s' % repr(exitcode))
+        #logging.debug('buffer: %s' % repr(response))
 
         # removing files will be done in _cleanup
         return exitcode, result
@@ -383,7 +378,7 @@ class AbstractProgrammingBackend(AbstractBackend):
             shutil.rmtree(path)
 
         except Exception, e:
-            logging.error('Internal error during _cleanup: %s: %s' % \
+            logging.warn('Internal error during clean up: %s: %s' % \
                           (sys.exc_info()[0], e))
         
 

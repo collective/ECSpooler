@@ -142,10 +142,12 @@ class RepeatField(Field):
         """
         result = []
         
-        for line in value.split('\n'):
-            # we don't want empty lines
-            if line.strip():
-                result.append(line)
+        if value:
+            for line in value.split('\n'):
+                # we don't want empty lines
+                if line.strip():
+                    result.append(line)
+        # end if
 
         return result
         
@@ -569,7 +571,7 @@ if __name__ == "__main__":
         ),
 
         InputField(
-            'modelSolution', 
+            'model', 
             required = False, 
             label = 'Model solution',
             description = 'Enter a model solution.',
@@ -606,6 +608,6 @@ if __name__ == "__main__":
     
     print simpleSchema.fields()
 
-    simpleSchema.delField('modelSolution')
+    simpleSchema.delField('model')
     
     print simpleSchema.fields()

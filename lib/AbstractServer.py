@@ -8,7 +8,7 @@ import os, time, random, md5, thread, threading, signal
 import socket, xmlrpclib
 import logging
 
-from types import IntType, StringType, UnicodeType
+from types import IntType, StringTypes
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 # local imports
@@ -29,7 +29,7 @@ class AbstractServer:
 
         self._className = self.__class__.__name__
 
-        assert host and type(host) in (StringType, UnicodeType), \
+        assert host and type(host) in StringTypes, \
             "%s requires a correct 'host' option" % self._className
 
         assert port and type(port) == IntType, \
@@ -38,6 +38,11 @@ class AbstractServer:
         # set class varia
         self.host = host
         self.port = port
+        
+        logging.info('host: %s' % host)
+        #print >> sys.stdout, 'host:', host
+        logging.info('port: %d' % port)
+        #print >> sys.stdout, 'port:', port
 
         self._serverThread = None
 
@@ -87,7 +92,7 @@ class AbstractServer:
                     time.sleep(0.1)
                 #end while
             except KeyboardInterrupt, ki:
-                logging.debug('Receiving keyboard interrupt.')
+                logging.info('Receiving keyboard interrupt.')
                 self._stop(signal.SIGTERM, None)
 
         else:
@@ -97,7 +102,7 @@ class AbstractServer:
     def _stop(self, signal, stack):
         """
         """
-        logging.debug('Receiving signal %s, shutting down (%s).' % 
+        logging.info('Receiving signal %s, shutting down (%s).' % 
                        (signal, self._className))
 
         self._manageBeforeStop()
