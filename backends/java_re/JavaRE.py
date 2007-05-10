@@ -317,6 +317,9 @@ class JavaRE(AbstractProgrammingBackend):
 
                 # an error occured
                 if exitcode != EX_OK:
+                    
+                    logging.debug('exitcode: %s' % repr(exitcode))
+                    
                     result = "\nYour submission failed. Test " \
                              "case was: '%s' (%s)" \
                              "\n\n Received result: %s"\
