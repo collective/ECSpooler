@@ -64,9 +64,9 @@ Policy: /opt/mzscheme/bin/mzscheme, Emulation: netbsd
 	netbsd-fsread: filename eq "/opt/mzscheme/lib/plt/collects/srfi/40/compiled/stream.zo" then permit
 	netbsd-write: permit
 	netbsd-exit: permit
-	netbsd-fsread: filename match "/opt/ECSpooler/backends/scheme/scheme_libs" then permit
+	netbsd-fsread: filename sub "backends/scheme/scheme_libs/streams.scm" then permit
 	netbsd-fsread: filename match "/tmp/*/wrapper.scm" then permit
 	netbsd-fsread: filename match "/tmp/*/model.scm" then permit
 	netbsd-fsread: filename match "/tmp/*/student.scm" then permit
-	netbsd-fsread: filename match "*/.mzschemerc" then permit
+	netbsd-fsread: filename match ".mzschemerc" then deny[enoent]
 	netbsd-fsread: filename eq "/<non-existent filename>: /.plt-scheme/360/collects/srfi" then permit
