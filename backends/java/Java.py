@@ -289,7 +289,7 @@ class Java(AbstractProgrammingBackend):
                     
                     if isEqual.upper() != 'TRUE':
                         # TODO: i18n
-                        feedback += "\nYour submission failed. Test " \
+                        feedback = "\nYour submission failed. Test " \
                                     "case was: '%s' (%s)" \
                                     % (tStudent, test.getName())
                         feedback += '\n\n  Expected result: %s\n  ' \
