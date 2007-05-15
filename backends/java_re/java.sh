@@ -6,11 +6,12 @@ JVM_HOME=${JAVA_HOME}; export JVM_HOME
 PATH=${JAVA_HOME}/Commands:${PATH}; export PATH
 
 INTERPRETER=${JAVA_HOME}/Commands/java
+OPTIONS=-Dfile.encoding="utf-8"
 
 ulimit -d `ulimit -H -d`
 
 trap 'kill $! && trap - TERM && kill $$' TERM
 
-$INTERPRETER "$@" &
+$INTERPRETER $OPTIONS "$@" &
 
 wait %%
