@@ -5,6 +5,7 @@
 #
 # This file is part of ECSpooler.
 from types import BooleanType
+from types import UnicodeType
 
 import sys, os, re, popen2, tempfile, threading, signal, traceback
 import shutil
@@ -304,11 +305,22 @@ class AbstractProgrammingBackend(AbstractBackend):
         # change dir to current job dir
         os.chdir(dir)
         
+        args_encoded = []
+        options_encoded = []
+        
+        for arg in args:
+            if type(arg) == UnicodeType:
+                args_encoded.append(arg.encode('utf-8'))
+        
+        for option in options:
+            if type(option) == UnicodeType:
+                options_encoded.append(option.encode('utf-8'))
+
         # create a list of alle command line elements
         commandLine = [command]
         commandLine.extend(options)
         commandLine.append(fName)
-        commandLine.extend(args)
+        commandLine.extend(args_encoded)
         
         # Popen4 will provide both stdout and stderr on handle.fromchild
         handle = popen2.Popen4(commandLine)
