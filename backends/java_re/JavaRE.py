@@ -185,8 +185,8 @@ class JavaRE(AbstractProgrammingBackend):
 
 
         # 1. get model solution and student's submission
-        modelSolution    = job['modelSolution']
-        studentSolution  = job['submission']
+        modelSolution    = job['modelSolution'].strip()
+        studentSolution  = job['submission'].strip()
 
         assert non_null_str(modelSolution), \
             "Semantic check requires valid 'model solution' (%s)" % \
