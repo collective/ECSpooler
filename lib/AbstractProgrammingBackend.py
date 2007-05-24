@@ -146,7 +146,7 @@ class AbstractProgrammingBackend(AbstractBackend):
                 try:
                     src, mName = self._preProcessCheckSyntax(testSpec, submission)
                 except AssertionError, ae:
-                    return BackendResult(False, ae)
+                    return BackendResult(False, str(ae))
 
                 logging.info('Running syntax check with test: %s' % 
                              testSpec.getName())
