@@ -20,8 +20,8 @@ class testJavaRE(ProgrammingBackendTestCase):
     # -- individual tests -----------------------------------------------------
 
     jobdata = {'backend': 'java_re', 
-               'submission': '".*Terrorist"',
-               'modelSolution': '".*Terrorist"',
+               'submission': '"\\bheise online\\b"',
+               'modelSolution': '"\\bheise online\\b"',
                'tests': ['findFirstGroup0'],
                'testData': 'http://www.heise.de/newsticker/',
                }
@@ -84,21 +84,71 @@ class testJavaRE(ProgrammingBackendTestCase):
     def testSemanticSuccess(self):
         """_manage_checkSemantic should return True for a correct program"""
         
-        self.jobdata['submission'] = '".*Terrorist"'
+        self.jobdata['submission'] = '"\\bheise online\\b"'
 
         job = BackendJob(data=self.jobdata)
 
         backend = JavaRE(self.params)
         result = backend._manage_checkSemantics(job)
         
-        #print 'jobId', job.getId()
+        if result:
+            self.assertEqual(result.getValue(), True, 
+                             '(job: %s) %s' % (job.getId(), result.getMessage()))
+        else:
+            self.assertFalse('No result: %s' % repr(result))
+
+    # -- ----------------------------------------------------------------------
+
+    def testSpecialRegExFail(self):
+        """_manage_checkSyntax should return False for this special regex"""
+        
+        self.jobdata['submission'] = \
+            '"(?<=(\\\Q|\\\E))(.[^\\\Q|\\\E]*)(?=\\\Q|\\\E(.[^\\\Q|\\\E]*)\\\Q|\\\E)'
+
+        self.jobdata['modelSolution'] = \
+            '"(?<=\|\s{0,5})([\w\s\.&&[^0-9]])*([\w\.&&[^0-9]])+(?=\s*\|)"'
+        
+        self.jobdata['tests'] = ['findFirstGroup0']
+        
+        self.jobdata['testData'] = \
+            'http://wwwai.cs.uni-magdeburg.de/Members/makunze/dokumente-fur-lehre/weinert1.txt'
+
+        job = BackendJob(data=self.jobdata)
+
+        backend = JavaRE(self.params)
+        result = backend._manage_checkSyntax(job)
 
         if result:
-            self.assertEqual(result.getValue(), True, result.getMessage())
+            self.assertEqual(result.getValue(), -220,  
+                             '(job: %s) %s' % (job.getId(), result.getMessage()))
         else:
             self.assertFalse('No result: %s' % repr(result))
 
 
+    def testSpecialRegExSuccess(self):
+        """_manage_checkSyntax should return False for this special regex"""
+        
+        self.jobdata['submission'] = \
+            '"(?<=(\\\Q|\\\E))(.[^\\\Q|\\\E]*)(?=\\\Q|\\\E(.[^\\\Q|\\\E]*)\\\Q|\\\E)"'
+
+        self.jobdata['modelSolution'] = \
+            '"(?<=\|\s{0,5})([\w\s\.&&[^0-9]])*([\w\.&&[^0-9]])+(?=\s*\|)"'
+        
+        self.jobdata['tests'] = ['findFirstGroup0']
+        
+        self.jobdata['testData'] = \
+            'http://wwwai.cs.uni-magdeburg.de/Members/makunze/dokumente-fur-lehre/weinert1.txt'
+
+        job = BackendJob(data=self.jobdata)
+
+        backend = JavaRE(self.params)
+        result = backend._manage_checkSyntax(job)
+
+        if result:
+            self.assertEqual(result.getValue(), True,  
+                             '(job: %s) %s' % (job.getId(), result.getMessage()))
+        else:
+            self.assertFalse('No result: %s' % repr(result))
 
 def test_suite():
     """
