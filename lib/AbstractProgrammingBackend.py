@@ -307,20 +307,29 @@ class AbstractProgrammingBackend(AbstractBackend):
         
         args_encoded = []
         options_encoded = []
+
+        #logging.debug('args: %s' % repr(args))
+        #logging.debug('options: %s' % repr(options))
         
         for arg in args:
             if type(arg) == UnicodeType:
                 args_encoded.append(arg.encode('utf-8'))
+            else:
+                args_encoded.append(arg)
         
         for option in options:
             if type(option) == UnicodeType:
                 options_encoded.append(option.encode('utf-8'))
+            else:
+                options_encoded.append(option)
 
         # create a list of alle command line elements
         commandLine = [command]
-        commandLine.extend(options)
+        commandLine.extend(options_encoded)
         commandLine.append(fName)
         commandLine.extend(args_encoded)
+        
+        #logging.debug('commandLine: %s' % commandLine)
         
         # Popen4 will provide both stdout and stderr on handle.fromchild
         handle = popen2.Popen4(commandLine)
