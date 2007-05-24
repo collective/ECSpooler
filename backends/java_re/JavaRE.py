@@ -21,10 +21,14 @@ from backends.java_re.JavaREConf import JavaREConf
 def non_null_str(s):
     return s and type(s) in (StringType, UnicodeType)
 
-string_re = re.compile(r'"(?:[^"\n\r\\]+|(?:\\.)+)*"')
+#string_re = re.compile(r'"(?:[^"\n\r\\]+|(?:\\.)+)*"')
+string_re = re.compile(r'^\s*"([^"\n\r]|(\\"))+"\s*$')
 
 def string_p(s):
-    return string_re.match(s)
+    #logging.debug('(2): %s' % s)
+    ret = string_re.match(s)
+    #logging.debug('(2a): %s' % repr(ret))
+    return ret
 
 class JavaRE(AbstractProgrammingBackend):
     """
@@ -104,10 +108,15 @@ class JavaRE(AbstractProgrammingBackend):
         @see AbstractProgrammingBackend._preProcessCheckSyntax
         @return modified source code and new module name
         """
+        #logging.debug('xxx: here we are in _preProcessCheckSyntax')
+        #logging.debug('(1): %s ' % src)
+
         # FIXME: It'd be nice to be able to throw a 'SyntaxError' or
         # someething here.  We'd have to modify
         # AbstractProgrammingBackend._preProcessCheckSyntax for that.
         assert string_p(src), "Not a string: %s" % repr(src)[1:-1]
+        
+        #logging.debug('(3): %s ' % src)
 
         # FIXME: Compiling the program is one thing, but to be able to
         # tell whether the pattern can be compiled we'd have to run
