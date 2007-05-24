@@ -143,7 +143,10 @@ class AbstractProgrammingBackend(AbstractBackend):
         if compiler:
             try:
                 # test term (e.g., student's source code)
-                src, mName = self._preProcessCheckSyntax(testSpec, submission)
+                try:
+                    src, mName = self._preProcessCheckSyntax(testSpec, submission)
+                except AssertionError, ae:
+                    return BackendResult(False, ae)
 
                 logging.info('Running syntax check with test: %s' % 
                              testSpec.getName())

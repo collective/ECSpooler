@@ -22,7 +22,7 @@ def non_null_str(s):
     return s and type(s) in (StringType, UnicodeType)
 
 #string_re = re.compile(r'"(?:[^"\n\r\\]+|(?:\\.)+)*"')
-string_re = re.compile(r'^\s*"([^"\n\r]|(\\"))+"\s*$')
+string_re = re.compile(r'^"([^"\n\r]|(\\"))+"$')
 
 def string_p(s):
     #logging.debug('(2): %s' % s)
@@ -108,6 +108,9 @@ class JavaRE(AbstractProgrammingBackend):
         @see AbstractProgrammingBackend._preProcessCheckSyntax
         @return modified source code and new module name
         """
+        
+        src = src.strip()
+        
         #logging.debug('xxx: here we are in _preProcessCheckSyntax')
         #logging.debug('(1): %s ' % src)
 

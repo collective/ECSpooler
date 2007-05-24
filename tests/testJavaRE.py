@@ -119,7 +119,7 @@ class testJavaRE(ProgrammingBackendTestCase):
         result = backend._manage_checkSyntax(job)
 
         if result:
-            self.assertEqual(result.getValue(), -220,  
+            self.assertEqual(result.getValue(), False,  
                              '(job: %s) %s' % (job.getId(), result.getMessage()))
         else:
             self.assertFalse('No result: %s' % repr(result))
