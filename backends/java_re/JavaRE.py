@@ -4,7 +4,7 @@
 # Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
-import sys, os, re, time
+import sys, os, re
 import logging
 import httplib
 import tempfile
@@ -16,7 +16,7 @@ from types import StringType, UnicodeType
 from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend, EX_OK
 
-from JavaREConf import JavaREConf
+from backends.java_re.JavaREConf import JavaREConf
 
 def non_null_str(s):
     return s and type(s) in (StringType, UnicodeType)
