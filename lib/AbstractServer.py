@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
+# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 import os, time, random, md5, thread, threading, signal
@@ -22,6 +22,12 @@ class AbstractServer:
     """
     
     def __init__(self, host, port):
+        """
+        Creates a new XML-RPC server instance at the given host and port.
+        
+        @param host: host name
+        @param port: port number
+        """
 
         # set server identification
         self._srvId = \
@@ -56,14 +62,15 @@ class AbstractServer:
 
     def _XMLRPCThread(self):
         """
-        Run a server.
+        Runs a XML-RPC server.
         """
         self._server.register_introspection_functions()
         self._server.serve_forever()
 
 
     def start(self):
-        """Run a XMLRPCServer, but do so in a different thread.
+        """
+        Runs this XML-RPC server instance, but do so in a different thread.
         The main thread simply sleeps so that it can respond to signals.
         """
         
@@ -77,14 +84,14 @@ class AbstractServer:
             try:
                 signal.signal(signal.SIGTERM, self._stop)
                 #signal.signal(signal.SIGHUP, self._reconfig)
-            except AttributeError, aerr:
+            except AttributeError, err:
                 logging.warn('Maybe signal.SIGTERM is not defined - skipping.')
     
             
             if os.name == 'nt':
                 try:
                     signal.signal(signal.SIGBREAK, signal.default_int_handler)
-                except AttributeError, aerr:
+                except AttributeError, err:
                     logging.warn('Maybe signal.SIGBREAK is not defined - skipping.')
     
             try:
@@ -101,6 +108,10 @@ class AbstractServer:
 
     def _stop(self, signal, stack):
         """
+        Shuts down this XML-RPC server instance.
+        
+        @param signal: the signal (TERM or KILL)
+        @param stack:
         """
         logging.info('Receiving signal %s, shutting down (%s).' % 
                        (signal, self._className))
@@ -117,6 +128,9 @@ class AbstractServer:
     def _reconfig(self, signal, stack):
         """
         Does nothing yet.
+        
+        @param signal: the signal (?)
+        @param stack:
         """
         return
 
@@ -128,9 +142,10 @@ class AbstractServer:
         raise NotImplementedError("Method _registerFunctions must be "
                                   "implemented by subclass")
 
+
     def _manageBeforeStart(self):
         """
-        Do some necessary stuff before starting server thread.
+        Do some necessary stuff before starting the server.
         """
         raise NotImplementedError("Method _manageBeforeStart must be "
                                   "implemented by subclass")
@@ -138,7 +153,7 @@ class AbstractServer:
 
     def _manageBeforeStop(self):
         """
-        Do some necessary stuff before stopping server thread.
+        Do some necessary stuff before stopping the server.
         """
         raise NotImplementedError("Method _manageBeforeStop must be "
                                   "implemented by subclass")
