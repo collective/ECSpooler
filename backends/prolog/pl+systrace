@@ -4,6 +4,15 @@ POLICYDIR=/opt/ECSpooler/systrace-policy
 INTERPRETER=/opt/swiprolog/bin/pl
 OPTIONS="-q -f none -t halt"
 
+# Check that the policy file is readable for the current user
+POLICYFILE=${INTERPRETER//[\/.-]/_}
+POLICYFILE=${POLICYFILE/_}
+
+if [[ ! -r "$POLICYDIR/$POLICYFILE" ]]; then
+   print "Internal error: Policy file not readable.  Please contact the administrator."
+   exit 1
+fi
+
 trap 'kill $! && trap - TERM && kill $$' TERM
 
 # The problem with the SWI Prolog interpreter is that it doesn't exit
