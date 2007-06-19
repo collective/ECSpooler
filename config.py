@@ -4,8 +4,13 @@
 # Copyright (c) 2005 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
-import sys, os, pwd
+import sys, os
 import logging.handlers
+
+try:
+    import pwd
+except ImportError:
+    pwd = None
 
 # -- project properties -------------------------------------------------------
 PROJECTNAME = 'ECSpooler'
@@ -49,8 +54,11 @@ logger.addHandler(fH)
 #logger.addHandler(sLH)
 
 # -- uid and gid for nobody ---------------------------------------------------
-NOBODY_UID, NOBODY_GID = pwd.getpwnam('nobody')[2:4]
-
+if pwd:
+    NOBODY_UID, NOBODY_GID = pwd.getpwnam('nobody')[2:4]
+else:
+    NOBODY_UID, NOBODY_GID = 42, 42
+    
 # defining log settings for (later) usage in a config file
 #[handler_hand02]
 #class=FileHandler
