@@ -56,7 +56,7 @@ ${SOURCE}
 """(module ${MODULE} mzscheme
 (require (file "%s")) ;; import SICP streams
 
-(define (main) ${testData})
+(define (main) (${testData}))
 
 ;; -------------------------------------------------------------------
 ${SOURCE}
