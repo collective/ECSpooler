@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 from types import StringTypes
@@ -41,9 +41,9 @@ class Spooler(AbstractServer):
         """
         Creates a new spooler instance at the given host and port.
         
-        @param host: host name
-        @param port: port number
-        @param pwdFile: absolute path to password file
+        @param: host: host name
+        @param: port: port number
+        @param: pwdFile: absolute path to password file
         """
         AbstractServer.__init__(self, host, port)
 
@@ -130,8 +130,8 @@ class Spooler(AbstractServer):
         shutdown method for this backend. The backend itself then 
         invokes the removeBackend method in the spooler.
         
-        @param authdata: username and password for authentication
-        @param uid: a backend's unique ID
+        @param: authdata: username and password for authentication
+        @param: uid: a backend's unique ID
         @return: (code, msg) with
             code == 1, stopping backend succeeded
             code != 1, stopping backend failed; msg contains further information
@@ -161,11 +161,11 @@ class Spooler(AbstractServer):
         thus authorizes the request. Only the spooler to which the
         backend is attached can perform requests to this backend.
 
-        @param authdata: username and password for authentication
-        @param id: a backend's unique ID
-        @param name: a backend's name
-        @param version: a backend's version
-        @param xmlr_url: a backend's URL
+        @param: authdata: username and password for authentication
+        @param: id: a backend's unique ID
+        @param: name: a backend's name
+        @param: version: a backend's version
+        @param: xmlr_url: a backend's URL
         @return: a tuple of (code, msg) with
             code == 1, succeeded; msg is the server-id
             code != 1, failed; msg contains further information
@@ -192,9 +192,9 @@ class Spooler(AbstractServer):
         """
         Removes a backend from the list of available backends in this spooler.
 
-        @param authdata: username and password for authentication
-        @param id: a backend's ID
-        @param version: a backend's version
+        @param: authdata: username and password for authentication
+        @param: id: a backend's ID
+        @param: version: a backend's version
         @return: (code, msg) with
             code == 1, removing backend succeeded
             code != 1, removing backend failed; msg contains further information
@@ -219,8 +219,8 @@ class Spooler(AbstractServer):
         """
         Adds a new CheckJob to the queue
 
-        @param authdata: username and password for authentication
-        @param jobdata: relevant job data (see also class CheckJob)
+        @param: authdata: username and password for authentication
+        @param: jobdata: relevant job data (see also class CheckJob)
         @return: (code, msg) with
             code == 1, enqueue succeeded and msg contains the job id
             code < 0, enqueue failed and msg contains further information
@@ -257,7 +257,7 @@ class Spooler(AbstractServer):
         Returns a dictionary with the results of all performed jobs. Once the 
         results are polled, they are no longer stored.
 
-        @param authdata: username and password for authentication
+        @param: authdata: username and password for authentication
         @return: a dictionary
         """
 
@@ -266,8 +266,11 @@ class Spooler(AbstractServer):
 
         result = {}
 
-        for item in self._results.dequeue():
-            logging.info("Dequeuing result of job '%s'" % item.getId())
+        logging.debug("Dequeuing results for all jobs (%d)" % self._results.getSize())
+
+        while(not self._results.isEmpty()):
+            item = self._results.dequeue()
+            logging.info("Returning result for job '%s'" % item.getId())
             result[item.getId()] = item.getData()
 
         return result
@@ -279,8 +282,8 @@ class Spooler(AbstractServer):
         the result of the performed check job for the given id. 
         Once the result is polled, it is no longer stored.
         
-        @param authdata: username and password for authentication
-        @param id: a valid job ID
+        @param: authdata: username and password for authentication
+        @param: id: a valid job ID
         @return: a dictionary with 'id' as key and another dictionary with keys 
                 'value', 'message', etc. representing the test results
         """
@@ -311,7 +314,7 @@ class Spooler(AbstractServer):
         "queue":    the number of items in the queue
         "results":  the number of cached result data
 
-        @param authdata: username and password for authentication
+        @param: authdata: username and password for authentication
         """
         
         logging.debug('Returning spooler status information')
@@ -331,7 +334,7 @@ class Spooler(AbstractServer):
         """
         Returns a dict with all currently available backends.
         
-        @param auth: username and password for authentication
+        @param: auth: username and password for authentication
         @return: dict with backend names as keys
         """
         
@@ -347,8 +350,8 @@ class Spooler(AbstractServer):
         """
         Returns a dict with status information of a single backend.
 
-        @param auth: username and password for authentication
-        @param uid: a backend's unique ID
+        @param: auth: username and password for authentication
+        @param: uid: a backend's unique ID
         """
         
         logging.debug("Trying to return status information for backend '%s'" % uid)
@@ -367,8 +370,8 @@ class Spooler(AbstractServer):
         """
         Returns information about additional fields required by this backend.
         
-        @param auth: username and password for authentication
-        @param uid: a backend's unique ID
+        @param: auth: username and password for authentication
+        @param: uid: a backend's unique ID
 
         @see: AbstractBackend.getInputFields
         """
@@ -389,8 +392,8 @@ class Spooler(AbstractServer):
         """
         Returns informationen about test scenarios available by this backend.
         
-        @param auth: username and password for authentication
-        @param uid: a backend's unique ID
+        @param: auth: username and password for authentication
+        @param: uid: a backend's unique ID
 
         @see. AbstractBackend.getTestFields
         """
@@ -484,8 +487,8 @@ class Spooler(AbstractServer):
         """
         Processing the job by dispatching it to the backend.
         
-        @param backend: a dict with backend attributes (such as id, name, url,)
-        @param job: a job instance
+        @param: backend: a dict with backend attributes (such as id, name, url,)
+        @param: job: a job instance
         """
         try:
             logging.info("Dispatching job '%s' to backend '%s'" % 
@@ -523,8 +526,8 @@ class Spooler(AbstractServer):
         """
         Executes an xmlrpc call.
         
-        @param url: backend's URL 
-        @param method: name of method that will be invoked
+        @param: url: backend's URL 
+        @param: method: name of method that will be invoked
         @return: a tuple with code and result or an error message
         """
         #logging.debug('xxx: %s' % repr(kw))
@@ -548,8 +551,8 @@ class Spooler(AbstractServer):
         """
         @deprecated: parameter version is unused; still alive for compatibility
         
-        @param id: a backend's ID 
-        @param version: 
+        @param: id: a backend's ID 
+        @param: version: 
         @return: a backend's ID consisting of id and version
         """
         #return '%s-%s' % (id, version)
