@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 from lib.util import uuid
@@ -16,8 +16,8 @@ class QueueItem:
         Creates a new QueueItem object with the given data. If id is None we
         will create a new unique id using time.
         
-        @param data a dictionary including job data, e.g. backend and students' solution
-        @param id a unique ID; if not set, a unique ID will be created
+        @param: data a dictionary including job data, e.g. backend and students' solution
+        @param: id a unique ID; if not set, a unique ID will be created
         """
         assert type(data) == dict, 'data in QueueItem must be a dictionary.'
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 
@@ -13,8 +13,8 @@ import logging, traceback
 def getUniqueModuleName(prefix=''):
     """ 
     Generates a unique identifier. The prefix can be set or left blank.
-    @param prefix The identifier's prefix (e.g. Student for student's Haskell module).
-    @return A unique identifier with or without a prefix
+    @param: prefix The identifier's prefix (e.g. Student for student's Haskell module).
+    @return: A unique identifier with or without a prefix
     """
     return prefix + uuid()
 
@@ -23,9 +23,9 @@ def getTempFileName(moduleName, suffix=''):
     """ 
     Generates a absolute path string including the path to main temp dir, 
     the name of the Haskel module and a suffix.
-    @param moduleName The content of this file.
-    @param suffix The file's suffix (e.g. extension). Default is .hs
-    @return A string with absolute file path
+    @param: moduleName The content of this file.
+    @param: suffix The file's suffix (e.g. extension). Default is .hs
+    @return: A string with absolute file path
     """
     return os.path.join(tempfile.gettempdir(), moduleName + suffix)
 
@@ -33,9 +33,9 @@ def getTempFileName(moduleName, suffix=''):
 def writeFile(content, filename, encoding='utf-8'):
     """ 
     Writes a file with the given *absolute* filepath and content.
-    @param content The content of this file.
-    @param filename The absolut e file path.
-    @return nothing
+    @param: content The content of this file.
+    @param: filename The absolut e file path.
+    @return: nothing
     """
     
     try:
@@ -64,7 +64,7 @@ def delDir(path):
     Removes entire directory trees. Be careful with it, since it deletes
     a lot of stuff. It is a recursive function.
     
-    @param path absolute path
+    @param: path absolute path
     @deprecated
     """
     try:

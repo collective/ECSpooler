@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
 """
@@ -125,10 +125,10 @@ def _tryGetBackendInstance(moduleName, instanceCreateStmt):
     An exception occures if the port is allready in use. In this case we will
     return None.
 
-    @param moduleName Name of the module containing the backend class definition.
-    @param instanceCreateStmt Statement which will be executed to create a new
+    @param: moduleName Name of the module containing the backend class definition.
+    @param: instanceCreateStmt Statement which will be executed to create a new
                               instance of the backend class.
-    @return The backend instance or None if the instance couldn't be created.
+    @return: The backend instance or None if the instance couldn't be created.
     """
     try:
         logging.debug("Trying to create instance of backend '%s'" % moduleName)

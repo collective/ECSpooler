@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 import md5
@@ -61,8 +61,8 @@ class UserAuth(AuthorizationBackend):
 
     def test(self, args, level=UNDEFINED):
         """
-        @param level unused/ignored
-        @return True if username and password are correct, otherwise False
+        @param: level unused/ignored
+        @return: True if username and password are correct, otherwise False
         """
         try:
             assert type(args) == DictionaryType, \
@@ -85,7 +85,7 @@ class UserAuth(AuthorizationBackend):
 
     def authorize(self, username, password):
         """
-        @return True if username and password are correct, otherwise False
+        @return: True if username and password are correct, otherwise False
         """
         ans = self.db.has_key(username) and \
                self.db[username] == self.crypt(password, password[:2])
@@ -102,13 +102,13 @@ class UserAuth(AuthorizationBackend):
 
     def delUser(self, username):
         """
-        @param username
+        @param: username
         """
         del self.db[username]
 
     def users(self):
         """
-        @return A list of all users
+        @return: A list of all users
         """
         return self.db.keys()
 
@@ -120,16 +120,16 @@ class UserAuthMD5(AuthorizationBackend):
     
     def __init__(self, userFile='passwd'):
         """
-        @param userFile Absolute path to a file containing usernames and
+        @param: userFile Absolute path to a file containing usernames and
                         md5 encrypted passwords
         """
         self.db = self._load(userFile)
 
     def test(self, args, level=UNDEFINED):
         """
-        @param args A dictionary witj keys and values for username and password
-        @param level 
-        @return True if username and password are correct, otherwise False
+        @param: args A dictionary witj keys and values for username and password
+        @param: level 
+        @return: True if username and password are correct, otherwise False
         """
         try:
             assert type(args) == DictionaryType, \
@@ -153,7 +153,7 @@ class UserAuthMD5(AuthorizationBackend):
 
     def authorize(self, username, password):
         """
-        @return True if username and password are correct, otherwise False
+        @return: True if username and password are correct, otherwise False
         """
         ans = self.db.has_key(username) and \
                self.db[username] == md5.md5(password).hexdigest()
@@ -167,13 +167,13 @@ class UserAuthMD5(AuthorizationBackend):
 
     def users(self):
         """
-        @return A list with all usernames
+        @return: A list with all usernames
         """
         return self.db.keys()
 
     def _load(self, userFile):
         """
-        @return A dictionary containing username-password pairs
+        @return: A dictionary containing username-password pairs
         """
         lines = []
         usrdb = {}

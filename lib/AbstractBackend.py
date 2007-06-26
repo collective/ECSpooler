@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 import traceback
@@ -173,8 +173,8 @@ class AbstractBackend(AbstractServer):
         this backend. In case the authentication fails, a 
         AuthorizationFailedException will be raised.
         
-        @param auth authorization information
-        @return a dictionary with id, name, version, host, and port infos
+        @param: auth authorization information
+        @return: a dictionary with id, name, version, host, and port infos
         """
         if not self._authenticate(auth):
             return(-210, self.ERROR_AUTH_FAILED)
@@ -193,7 +193,7 @@ class AbstractBackend(AbstractServer):
         """
         Return the input schema defined for this backend.
         
-        @return the input schema as string
+        @return: the input schema as string
         """
         # FIXME: add authentification
         return (1, str(self.schema))
@@ -203,7 +203,7 @@ class AbstractBackend(AbstractServer):
         """
         Return the test schema defined for this backend.
         
-        @return the test schema as string
+        @return: the test schema as string
         """
         # FIXME: add authentification
         return (1, str(self.testSchema))
@@ -245,8 +245,8 @@ class AbstractBackend(AbstractServer):
         """
         Call _process_execute which executes the job.
 
-        @param authdata: authorization information
-        @param jobdata: all relevant job data
+        @param: authdata: authorization information
+        @param: jobdata: all relevant job data
         @return: a dictionary with at least result value and message
         """
         # check authentication
@@ -277,7 +277,7 @@ class AbstractBackend(AbstractServer):
         Executes a test job with the given test data.  This method must be 
         overridden in subclasses.
 
-        @param job: a BackendJob object with all relevant test data
+        @param: job: a BackendJob object with all relevant test data
         @return: a BackendResult object with at least result value and message
         """
 
@@ -288,7 +288,7 @@ class AbstractBackend(AbstractServer):
     # -- internal or private methodes (used or overwritten in subclasses) -----
     def _getTests(self, job):
         """
-        @return a list of test specifications depending on the ids given
+        @return: a list of test specifications depending on the ids given
                 in the job data
         """
         result = []
@@ -313,7 +313,7 @@ class AbstractBackend(AbstractServer):
         """
         Checks the authorization information. 
         
-        @return True if given authorization data is valid, otherwise False.
+        @return: True if given authorization data is valid, otherwise False.
         """
         #return True
 

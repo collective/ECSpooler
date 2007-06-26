@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 import os, time, random, md5, thread, threading, signal
@@ -25,8 +25,8 @@ class AbstractServer:
         """
         Creates a new XML-RPC server instance at the given host and port.
         
-        @param host: host name
-        @param port: port number
+        @param: host: host name
+        @param: port: port number
         """
 
         # set server identification
@@ -110,8 +110,8 @@ class AbstractServer:
         """
         Shuts down this XML-RPC server instance.
         
-        @param signal: the signal (TERM or KILL)
-        @param stack:
+        @param: signal: the signal (TERM or KILL)
+        @param: stack:
         """
         logging.info('Receiving signal %s, shutting down (%s).' % 
                        (signal, self._className))
@@ -129,8 +129,8 @@ class AbstractServer:
         """
         Does nothing yet.
         
-        @param signal: the signal (?)
-        @param stack:
+        @param: signal: the signal (?)
+        @param: stack:
         """
         return
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 from types import BooleanType
@@ -54,7 +54,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         """
         Executes a check job.
 
-        @param job: a BackendJob with all relevant test data
+        @param: job: a BackendJob with all relevant test data
         @return: a BackendResult
         @see: BackendJob, BackendResult
         @see: AbstractBackend.execute, AbstractBackend._process_execute
@@ -103,7 +103,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         selected test scenarios.  The syntax check itself will be 
         done in process_checkSyntax.
         
-        @param job: a BackendJob
+        @param: job: a BackendJob
         @return: a BackendResult
         """
         # test for available test specs
@@ -133,8 +133,8 @@ class AbstractProgrammingBackend(AbstractBackend):
         Tests the syntax of a programm.  Override this method if you need to 
         do some special things during syntax check.
         
-        @param jobId: ID for this test job
-        @param test: name of the selected test environment (cf. self.testSchema)  
+        @param: jobId: ID for this test job
+        @param: test: name of the selected test environment (cf. self.testSchema)  
         @return: a BackendResult or None if test succeeded
         """
         # get the compiler or if not available the interpreter
@@ -199,9 +199,9 @@ class AbstractProgrammingBackend(AbstractBackend):
         Override this method if you need to reformat the wrapper code or 
         the student's submission. 
         
-        @param test
-        @param src
-        @return source and module name if needed
+        @param: test
+        @param: src
+        @return: source and module name if needed
         """
         result = ''
         
@@ -219,7 +219,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         Post process interpreter messages. Override this method if you need
         to remove or reformat messages.
         
-        @param message
+        @param: message
         """
         return message
 
@@ -245,9 +245,9 @@ class AbstractProgrammingBackend(AbstractBackend):
         Override this method if you need to reformat the wrapper code or 
         the student's submission. 
 
-        @param test
-        @param src
-        @return source and module name if needed
+        @param: test
+        @param: src
+        @return: source and module name if needed
         """                                  
         return src, None
 
@@ -257,7 +257,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         Post process interpreter messages. Override this method if you need
         to remove or reformat messages.
         
-        @param message
+        @param: message
         """
         return message
 
@@ -268,7 +268,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         Creates a new module. Returns the module's name and
         absolute path in a tuple object.
         
-        @return a dictonary with keys module and file
+        @return: a dictonary with keys module and file
         """
         
         if not name:
@@ -298,12 +298,12 @@ class AbstractProgrammingBackend(AbstractBackend):
         Change the current working directory to dir and runs the given 
         interpreter with the given file. Availability: Unix.
 
-        @param command command which will be executed
-        @param options options for command including flags as list
-        @param dir path to which we will change the current working directory 
-        @param fName name of the file which will be called with the interpreter
-        @param args command line arguments that fName will be called with
-        @return exitcode and result message, normally something like os.EX_OK
+        @param: command command which will be executed
+        @param: options options for command including flags as list
+        @param: dir path to which we will change the current working directory 
+        @param: fName name of the file which will be called with the interpreter
+        @param: args command line arguments that fName will be called with
+        @return: exitcode and result message, normally something like os.EX_OK
         """
         # change dir to current job dir
         os.chdir(dir)

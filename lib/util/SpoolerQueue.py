@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 import os
@@ -73,7 +73,7 @@ class SpoolerQueue:
         """
         Adds a single instance of QueueItem to the queue.
         
-        @param obj an object to enqueue
+        @param: obj an object to enqueue
         """
         assert isinstance(item, QueueItem), \
                 "Illegal Argument, item must be an instance of class QueueItem"
@@ -97,9 +97,11 @@ class SpoolerQueue:
         Returns the first item or the item for the given id and removes it 
         from the queue.
         
-        @return a QueueItem
+        @return: a QueueItem
         """
         try:
+            #logging.debug('id: %s' % id)
+            
             if not id:
                 (id, item) = self._queue.popitem()
             else:
@@ -112,8 +114,8 @@ class SpoolerQueue:
             
             return item
 
-        except KeyError:
-            #logging.warn("queue is empty")
+        except KeyError, e :
+            logging.warn(str(e))
             return None
 
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 
@@ -42,8 +42,8 @@ class BackendJob(QueueItem):
         """
         Tests if a backend's name and submission ist given.
         
-        @see QueueItem.validate
-        @return True, if everything is ok, otherwise an assertion is thrown
+        @see: QueueItem.validate
+        @return: True, if everything is ok, otherwise an assertion is thrown
         """
         assert self._data.get('backend', None), \
                 "BackendJob requires a valid 'backend' entry"
@@ -56,7 +56,7 @@ class BackendJob(QueueItem):
     
     def setBackend(self, backend):
         """
-        @param backend:  a backend's name
+        @param: backend:  a backend's name
         """
         if backend:
             self._data['backend'] = backend
@@ -71,7 +71,7 @@ class BackendJob(QueueItem):
     
     def setSubmission(self, submission):
         """
-        @param submission: term which will be tested (e.g., text or sourcecode)
+        @param: submission: term which will be tested (e.g., text or sourcecode)
         """
         if submission:
             self._data['submission'] = submission

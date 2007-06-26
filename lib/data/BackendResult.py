@@ -42,8 +42,8 @@ class BackendResult(QueueItem):
         """
         Tests if all required keys are given.
         
-        @see QueueItem.validate
-        @return True, if everything is ok, otherwise an assertion 
+        @see: QueueItem.validate
+        @return: True, if everything is ok, otherwise an assertion 
         """
 
         assert self._data.has_key('value'), \
@@ -57,28 +57,28 @@ class BackendResult(QueueItem):
 
     def setValue(self, value):
         """
-        @param value: new value string
+        @param: value: new value string
         """
         self._data['value'] = value
 
     
     def getValue(self):
         """
-        @return result value or UNDEFINED if it is not set.
+        @return: result value or UNDEFINED if it is not set.
         """
         return self._data.get('value', self.UNDEFINED)
 
 
     def setMessage(self, msg):
         """
-        @param msg: new message string
+        @param: msg: new message string
         """
         self._data['message'] = msg
 
 
     def getMessage(self):
         """
-        @return esult message or '' if it is not set.
+        @return: esult message or '' if it is not set.
         """
         return self._data.get('message', self.UNKNOWN)
     
