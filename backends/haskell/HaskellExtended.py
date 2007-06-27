@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
 
@@ -41,7 +41,7 @@ class HaskellExtended(Haskell):
         This method checks the semantic of a Haskell program. Ovrrides method
         _process_checkSemantics in class Haskell.
         
-        @return a tuple with result code and value
+        @return: a tuple with result code and value
         """
         # test for available test specs
         testSpecs = self._getTests(job)

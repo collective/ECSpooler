@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
 import sys, os, re
@@ -38,9 +38,9 @@ class Haskell(AbstractProgrammingBackend):
         Override this method if you need to reformat the wrapper code or 
         the student's submission. 
         
-        @param test
-        @param src
-        @return source and module name if needed
+        @param: test: 
+        @param: src:
+        @return: source and module name if needed
         """
         result = ''
         
@@ -55,7 +55,7 @@ class Haskell(AbstractProgrammingBackend):
 
     def _postProcessCheckSyntax(self, test, message):
         """
-        @see AbtractSimpleBackend._postProcessCheckSyntax
+        @see: AbtractSimpleBackend._postProcessCheckSyntax
         """
         # find line number in result
         matches = re.findall('%s":(\d+)' % self.srcFileSuffix, message)
@@ -74,7 +74,7 @@ class Haskell(AbstractProgrammingBackend):
         Post process interpreter messages. Override this method if you need
         to remove or reformat messages.
         
-        @param message
+        @param: message:
         """
         result = re.sub('isEqual=', '', message)
         result = re.sub('/.*/ECSpooler/backends/haskell/', '', result)
@@ -84,8 +84,11 @@ class Haskell(AbstractProgrammingBackend):
     
     def _process_checkSemantics(self, job):
         """
-        Checks semantic of a Haskell programs.
-        @return a BackendResult object with result code and value
+        Test a Haskell programs using balck box tests, e.g., compare results
+        of a model solution with results of a students' solution on same
+        test data.
+        
+        @return: a BackendResult object with result code and value
         """
         # test for available test specs
         testSpecs = self._getTests(job)
