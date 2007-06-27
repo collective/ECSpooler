@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
 
@@ -35,7 +35,7 @@ class Python(AbstractProgrammingBackend):
 
     def _postProcessCheckSyntax(self, test, message):
         """
-        @see AbtractSimpleBackend._postProcessCheckSyntax
+        @see: AbtractSimpleBackend._postProcessCheckSyntax
         """
 
         # replace path and filename
@@ -45,7 +45,7 @@ class Python(AbstractProgrammingBackend):
     def _process_checkSemantics(self, job):
         """
         Checks semantic of a Python programs.
-        @return a BackendResult object with result code and value
+        @return: a BackendResult object with result code and value
         """
         # test for available test specs
         testSpecs = self._getTests(job)

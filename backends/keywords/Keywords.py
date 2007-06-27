@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 
@@ -33,7 +33,7 @@ class Keywords(AbstractBackend):
         """
         Executes a test job using the given test data in job.
 
-        @param job: a BackendJob
+        @param: job: a BackendJob
         @return: a BackendResult
         @see: lib.AbstractBackend._process_execute
         @see: lib.data.BackendJob, lib.data.BackendResult

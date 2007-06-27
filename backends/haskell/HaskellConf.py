@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
 import sys, logging
@@ -17,8 +17,8 @@ class HaskellConf:
     Defines all properties used by backend Haskell.
     """
 
-    interpreter = join(dirname(__file__), 'runhugs+systrace')
-    #interpreter = join(dirname(__file__), 'runhugs.sh')
+    #interpreter = join(dirname(__file__), 'runhugs+systrace')
+    interpreter = join(dirname(__file__), 'runhugs.sh')
 
     # load Haskell function to do a simple test
     try:
@@ -131,7 +131,7 @@ main = putStr(\"\")
             interpreter = interpreter,
         ),
 
-            TestEnvironment(
+        TestEnvironment(
             'tolerance',
             label = 'Tolerance',
             description = 'Tolerance of 1/10^15 in result values allowed.',
@@ -142,7 +142,7 @@ main = putStr(\"\")
             compiler = interpreter,
             interpreter = interpreter,
         ),
-))
+    ))
 
 
 

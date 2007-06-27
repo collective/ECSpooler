@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
 import sys, os, re
@@ -105,8 +105,8 @@ class JavaRE(AbstractProgrammingBackend):
         """
         Replace module name in students' submission.
         
-        @see AbstractProgrammingBackend._preProcessCheckSyntax
-        @return modified source code and new module name
+        @see: AbstractProgrammingBackend._preProcessCheckSyntax
+        @return: modified source code and new module name
         """
         
         src = src.strip()
@@ -130,7 +130,7 @@ class JavaRE(AbstractProgrammingBackend):
 
     def _postProcessCheckSyntax(self, test, message):
         """
-        @see AbtractSimpleBackend._postProcessCheckSyntax
+        @see: AbtractSimpleBackend._postProcessCheckSyntax
         """
         # search for path, filename and line numbers
         #
@@ -154,7 +154,7 @@ class JavaRE(AbstractProgrammingBackend):
         Runs sematic test on a Java program.
         Remember: Before we can run the wrapper code we have to compile it!!
         
-        @return a BackendResult object with result code and value
+        @return: a BackendResult object with result code and value
         """
 
         def unescape(s):

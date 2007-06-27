@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
 
@@ -50,8 +50,8 @@ class Prolog(AbstractProgrammingBackend):
         """
         Replace module name in students' submission.
         
-        @see AbstractProgrammingBackend._preProcessCheckSyntax
-        @return modified source code and new module name
+        @see: AbstractProgrammingBackend._preProcessCheckSyntax
+        @return: modified source code and new module name
         """
 
         #result = (":- module('%s', []).\n\n" % PrologConf.NS_STUDENT) + src
@@ -62,7 +62,7 @@ class Prolog(AbstractProgrammingBackend):
 
     def _postProcessCheckSyntax(self, test, message):
         """
-        @see AbtractSimpleBackend._postProcessCheckSyntax
+        @see: AbtractSimpleBackend._postProcessCheckSyntax
         """
         # search for path, filename and line numbers result is
         # something like [('Tutor1.java:7', '7'), ('Tutor1.java:7',
@@ -121,7 +121,7 @@ class Prolog(AbstractProgrammingBackend):
         Runs sematic test on a Prolog program.
         Remember: Before we can run the wrapper code we have to compile it!!
         
-        @return a BackendResult object with result code and value
+        @return: a BackendResult object with result code and value
         """
         # test for available test specs
         testSpecs = self._getTests(job)
