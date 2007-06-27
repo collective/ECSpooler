@@ -126,10 +126,10 @@ class testJavaRE(ProgrammingBackendTestCase):
 
 
     def testSpecialRegExSuccess(self):
-        """_manage_checkSyntax should return False for this special regex"""
+        """_manage_checkSyntax should return True for this special regex with leading and trailing white space"""
         
         self.jobdata['submission'] = \
-            '"(?<=(\\\Q|\\\E))(.[^\\\Q|\\\E]*)(?=\\\Q|\\\E(.[^\\\Q|\\\E]*)\\\Q|\\\E)"'
+            '   "(?<=(\\\Q|\\\E))(.[^\\\Q|\\\E]*)(?=\\\Q|\\\E(.[^\\\Q|\\\E]*)\\\Q|\\\E)"  '
 
         self.jobdata['modelSolution'] = \
             '"(?<=\|\s{0,5})([\w\s\.&&[^0-9]])*([\w\.&&[^0-9]])+(?=\s*\|)"'
