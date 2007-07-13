@@ -1,0 +1,7 @@
+include *.txt
+include etc/passwd
+recursive-include backends *
+recursive-include lib      *.txt *.py
+recursive-include log      *.txt *.py
+recursive-include tests    *.txt *.py
+recursive-include var      *.txt *.py
