@@ -15,15 +15,17 @@ except ImportError, ierr:
     crypt = None
     
 # authorization levels
-SHUTDOWN = 'le1'
-ADD_BACKEND = 'le2'
-STOP_BACKEND = 'le3'
-REMOVE_BACKEND = 'le4'
-APPEND_JOB = 'le5'
-GET_RESULT = 'le6'
-GET_STATUS = 'le7'
-GET_BACKEND_INFO = 'le8'
-UNDEFINED = 'le9'
+SHUTDOWN         = 9
+ADD_BACKEND      = 9
+STOP_BACKEND     = 9
+REMOVE_BACKEND   = 9
+APPEND_JOB       = 1
+GET_RESULT       = 1
+GET_STATUS       = 1
+GET_BACKEND_INFO = 1
+
+ROOT_USER        = 'root'
+REQUIRES_ROOT    = 5 # Operations with a higher level require root privilege
 
 class AuthorizationBackend:
     """
@@ -36,7 +38,7 @@ class AuthorizationBackend:
         """
         pass
 
-    def test(self, args, level=UNDEFINED):
+    def test(self, args, level):
         """
         """
         raise NotImplementedError("Method 'test' must be "
@@ -59,7 +61,7 @@ class UserAuth(AuthorizationBackend):
             self.crypt = lambda x, y: x
             logging.warn('Module crypt not found - using cleartext passwords!')
 
-    def test(self, args, level=UNDEFINED):
+    def test(self, args, level):
         """
         @param: level unused/ignored
         @return: True if username and password are correct, otherwise False
@@ -70,6 +72,11 @@ class UserAuth(AuthorizationBackend):
 
             username = args.get("username")
             password = args.get("password")
+
+            if level > REQUIRES_ROOT and username != ROOT_USER:
+                logging.warn("Authorization failed: Root privileges " +
+                             "required for level %d operation" % level)
+                return False
         
             # do some parameter testing
             assert username and type(username) in (StringType, UnicodeType), \
@@ -125,7 +132,7 @@ class UserAuthMD5(AuthorizationBackend):
         """
         self.db = self._load(userFile)
 
-    def test(self, args, level=UNDEFINED):
+    def test(self, args, level):
         """
         @param: args A dictionary witj keys and values for username and password
         @param: level 
@@ -137,6 +144,11 @@ class UserAuthMD5(AuthorizationBackend):
 
             username = args.get("username")
             password = args.get("password")
+
+            if level > REQUIRES_ROOT and username != ROOT_USER:
+                logging.warn("Authorization failed: Root privileges " +
+                             "required for level %d operation" % level)
+                return False
         
             # do some parameter testing
             assert username and type(username) in (StringType, UnicodeType), \

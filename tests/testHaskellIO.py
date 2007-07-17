@@ -7,7 +7,7 @@
 import sys
 import unittest
 
-from backends import HaskellIO
+from backends.haskell import Haskell
 from lib.data.BackendJob import BackendJob
 
 from ProgrammingBackendTestCase import ProgrammingBackendTestCase
@@ -16,7 +16,7 @@ class testHaskellIO(ProgrammingBackendTestCase):
     """
     """
     
-    backendClassName = 'HaskellIO'
+    backendClassName = 'haskell.Haskell.HaskellIO'
 
     # -- individual tests -----------------------------------------------------
     jobdata = {'backend':'haskell-io', 
@@ -34,7 +34,7 @@ class testHaskellIO(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = HaskellIO(self.params)
+        backend = Haskell.HaskellIO(self.params)
         result = backend._manage_checkSyntax(job)
         
         #print 'jobId', job.getId()
@@ -52,7 +52,7 @@ class testHaskellIO(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = HaskellIO(self.params)
+        backend = Haskell.HaskellIO(self.params)
         result = backend._manage_checkSyntax(job)
         
         #print 'jobId', job.getId()
@@ -70,7 +70,7 @@ class testHaskellIO(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
         
-        backend = HaskellIO(self.params)
+        backend = Haskell.HaskellIO(self.params)
         result = backend._manage_checkSemantics(job)
         
         #print 'jobId', job.getId()
@@ -88,7 +88,7 @@ class testHaskellIO(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = HaskellIO(self.params)
+        backend = Haskell.HaskellIO(self.params)
         result = backend._manage_checkSemantics(job)
         
         #print 'jobId', job.getId()

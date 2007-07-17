@@ -6,7 +6,7 @@
 # This file is part of ECSpooler.
 import unittest
 
-from backends import HaskellExtended
+from backends.haskell import HaskellExtended
 from lib.data.BackendJob import BackendJob
 
 from ProgrammingBackendTestCase import ProgrammingBackendTestCase
@@ -15,13 +15,13 @@ class testHaskellExtended(ProgrammingBackendTestCase):
     """
     """
     
-    backendClassName = 'HaskellExtended'
+    backendClassName = 'haskell.HaskellExtended.HaskellExtended'
 
     # -- individual tests -----------------------------------------------------
     def testNoTestSpec(self):
         """_process_checkSemantics should return an instance of 'BackendResult' with error code -217 if no test spec is given"""
         
-        result = HaskellExtended(self.params)._process_checkSemantics(self.job)
+        result = HaskellExtended.HaskellExtended(self.params)._process_checkSemantics(self.job)
         
         if result:
             self.assertEqual(result.getValue(), -217, result.getMessage())
@@ -34,7 +34,7 @@ class testHaskellExtended(ProgrammingBackendTestCase):
         
         self.job['tests'] = ['simple',]
         
-        result = HaskellExtended(self.params)._process_checkSemantics(self.job)
+        result = HaskellExtended.HaskellExtended(self.params)._process_checkSemantics(self.job)
         
         if result:
             self.assertEqual(result.getValue(), -216, result.getMessage())
@@ -57,7 +57,7 @@ class testHaskellExtended(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = HaskellExtended(self.params)
+        backend = HaskellExtended.HaskellExtended(self.params)
         result = backend._manage_checkSyntax(job)
         
         if result:
@@ -73,7 +73,7 @@ class testHaskellExtended(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = HaskellExtended(self.params)
+        backend = HaskellExtended.HaskellExtended(self.params)
         result = backend._manage_checkSyntax(job)
         
         #print 'jobId', job.getId()
@@ -91,7 +91,7 @@ class testHaskellExtended(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = HaskellExtended(self.params)
+        backend = HaskellExtended.HaskellExtended(self.params)
         result = backend._manage_checkSemantics(job)
         
         if result:
@@ -107,7 +107,7 @@ class testHaskellExtended(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = HaskellExtended(self.params)
+        backend = HaskellExtended.HaskellExtended(self.params)
         result = backend._manage_checkSemantics(job)
         
         #print 'jobId', job.getId()

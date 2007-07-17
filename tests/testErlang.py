@@ -7,7 +7,7 @@
 import os, sys
 import unittest
 
-from backends import Erlang
+from backends.erlang import Erlang
 from lib.data.BackendJob import BackendJob
 from ProgrammingBackendTestCase import ProgrammingBackendTestCase
 
@@ -15,13 +15,13 @@ class testErlang(ProgrammingBackendTestCase):
     """
     """
     
-    backendClassName = 'Erlang'
+    backendClassName = 'erlang.Erlang.Erlang'
 
     # -- individual tests -----------------------------------------------------
     def testNoTestSpec(self):
         """_process_checkSemantics should return an instance of 'BackendResult' with error code -217 if no test spec is given"""
         
-        result = Erlang(self.params)._process_checkSemantics(self.job)
+        result = Erlang.Erlang(self.params)._process_checkSemantics(self.job)
         
         if result:
             self.assertEqual(result.getValue(), -217)
@@ -34,7 +34,7 @@ class testErlang(ProgrammingBackendTestCase):
         
         self.job['tests'] = ['simple',]
         
-        result = Erlang(self.params)._process_checkSemantics(self.job)
+        result = Erlang.Erlang(self.params)._process_checkSemantics(self.job)
         
         if result:
             self.assertEqual(result.getValue(), -216, result.getMessage())
@@ -57,7 +57,7 @@ class testErlang(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Erlang(self.params)
+        backend = Erlang.Erlang(self.params)
         result = backend._manage_checkSyntax(job)
         
         #print 'jobId', job.getId()
@@ -75,7 +75,7 @@ class testErlang(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Erlang(self.params)
+        backend = Erlang.Erlang(self.params)
         result = backend._manage_checkSyntax(job)
         
         #print 'jobId', job.getId()
@@ -93,7 +93,7 @@ class testErlang(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Erlang(self.params)
+        backend = Erlang.Erlang(self.params)
         result = backend._manage_checkSemantics(job)
         
         #print 'jobId', job.getId()
@@ -111,7 +111,7 @@ class testErlang(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Erlang(self.params)
+        backend = Erlang.Erlang(self.params)
         result = backend._manage_checkSemantics(job)
         
         #print 'jobId', job.getId()

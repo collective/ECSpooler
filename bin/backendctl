@@ -40,7 +40,8 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
     backendHost = BACKEND_HOST
 
     try:
-        exec 'id = %s.id' % (backendId,)
+        exec 'from backends.%s import %s' % (backendId.lower(), backendId)
+        exec 'id = %s.%s.id' % (backendId, backendId,)
     except NameError, ne:
         print >> sys.stderr, "No such backend: '%s'" % (backendId,)
         raise ne
@@ -49,7 +50,7 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
               % (backendId, backendId.capitalize(),)
         raise ae
     
-    exec 'version = %s.version' % (backendId,)
+    exec 'version = %s.%s.version' % (backendId, backendId,)
 
     print "Starting backend '%s %s (%s)' on %s ..." % (backendId, version, id, backendHost)
 
@@ -90,8 +91,8 @@ def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost,
     moduleName = '%s' % \
         backendId
         #(backendId.lower()[0].upper() + backendId.lower()[1:])
+    moduleName = '%s.%s' % (backendId, backendId,)
     
-
     for i in range(backendPort, backendPort + MAX_TRIALS, 1):
     
         # get a instance, e.g., PythonBackend
@@ -107,7 +108,7 @@ def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost,
                 
         #print instanceCreateStmt
                    
-        retval = _tryGetBackendInstance(moduleName, instanceCreateStmt)
+        retval = _tryGetBackendInstance(backendId, instanceCreateStmt)
         
         if retval: 
             return (retval, i)
@@ -117,30 +118,30 @@ def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost,
     return None
     
 
-def _tryGetBackendInstance(moduleName, instanceCreateStmt):
+def _tryGetBackendInstance(backendId, instanceCreateStmt):
     """
     Executes the import statement for the backend class, creates an instance 
     and returns this instance.
     
-    An exception occures if the port is allready in use. In this case we will
+    An exception is thrown if the port is already in use. In this case we will
     return None.
 
-    @param: moduleName Name of the module containing the backend class definition.
+    @param: backendId ID of the backend
     @param: instanceCreateStmt Statement which will be executed to create a new
-                              instance of the backend class.
+                               instance of the backend class.
     @return: The backend instance or None if the instance couldn't be created.
     """
     try:
-        logging.debug("Trying to create instance of backend '%s'" % moduleName)
+        logging.debug("Trying to create instance of backend '%s'" % backendId)
         #logging.debug(instanceCreateStmt)
-        # e.g. import PythonBackend.PythonBackend
-        #exec('import %s' % (moduleName,))
+
+        exec 'from backends.%s import %s' % (backendId.lower(), backendId)
         exec(instanceCreateStmt)
 
         return backend
 
-    # FIXME: This doesn't work on windows os -> no socket.error is thrown if
-    #        port is allready in use!
+    # FIXME: This doesn't work on Windows -> no socket.error is thrown if
+    #        port is already in use!
     except socket.error, msg:
         return None
         
@@ -149,15 +150,19 @@ def _stopBackend(backendId, spoolerHost, spoolerPort, spoolerAuth):
     """
     Stops the backend.
     """
+    exec 'from backends.%s import %s' % (backendId.lower(), backendId)
+
     backendHost = BACKEND_HOST
-    
-    exec 'id = %s.id' % (backendId,)
-    exec 'version = %s.version' % (backendId,)
 
-    print "Stopping backend '%s %s (%s)' on %s ..." % (backendId, version, id, backendHost)
-
+    exec 'from backends.%s import %s' % (backendId.lower(), backendId)
+    exec 'id = %s.%s.id' % (backendId, backendId,)
+    exec 'version = %s.%s.version' % (backendId, backendId,)
     
-    spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost, spoolerPort))
+    print "Stopping backend '%s %s (%s)' on %s ..." % (backendId, version, id,
+                                                       backendHost)
+
+    spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost,
+                                                      spoolerPort))
     retval = spooler.stopBackend(spoolerAuth, id)
     
     if retval:
@@ -172,7 +177,7 @@ def _getStatus(backendId, spoolerHost, spoolerPort, spoolerAuth):
     Returns some status information of the backend.
     """
     spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost, spoolerPort))
-    result = spooler.getBackendStatus(spoolerAuth, backendId)
+    result = spooler.getBackendStatus(spoolerAuth, backendId.lower())
     
     if result and result[0]:
         return result[1]
@@ -181,7 +186,7 @@ def _getStatus(backendId, spoolerHost, spoolerPort, spoolerAuth):
 
 
 def usage():
-    print "Usage: python backendctl.py [-H SPOOLER_HOSTNAME] " \
+    print "Usage: backendctl [-H SPOOLER_HOSTNAME] " \
           "[-P SPOOLER_PORT] -u USERNAME -p PASSWORD " \
           "[-B BACKEND_PORT] BACKEND start|stop|restart|status"
 

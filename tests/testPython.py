@@ -6,7 +6,7 @@
 # This file is part of ECSpooler.
 import unittest
 
-from backends import Python
+from backends.python import Python
 from lib.data.BackendJob import BackendJob
 from ProgrammingBackendTestCase import ProgrammingBackendTestCase
 
@@ -14,7 +14,7 @@ class testPython(ProgrammingBackendTestCase):
     """
     """
     
-    backendClassName = 'Python'
+    backendClassName = 'python.Python.Python'
 
     # -- individual tests -----------------------------------------------------
     jobdata = {'backend':'python', 
@@ -32,7 +32,7 @@ class testPython(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Python(self.params)
+        backend = Python.Python(self.params)
         result = backend._manage_checkSyntax(job)
         
         if result:
@@ -48,7 +48,7 @@ class testPython(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Python(self.params)
+        backend = Python.Python(self.params)
         result = backend._manage_checkSyntax(job)
         
         if result:
@@ -64,7 +64,7 @@ class testPython(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Python(self.params)
+        backend = Python.Python(self.params)
         result = backend._manage_checkSemantics(job)
         
         if result:
@@ -80,7 +80,7 @@ class testPython(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Python(self.params)
+        backend = Python.Python(self.params)
         result = backend._manage_checkSemantics(job)
 
         if result:

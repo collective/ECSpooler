@@ -150,7 +150,7 @@ class Spooler(AbstractServer):
             return (-120, "Backend '%s' is not registered" % uid)
 
 
-    def addBackend(self, authdata, id, name, version, xmlrpc_url):
+    def addBackend(self, authdata, backendId, name, version, xmlrpc_url):
         """
         Adds a backend to the spooler's list of available backends.
 
@@ -162,7 +162,7 @@ class Spooler(AbstractServer):
         backend is attached can perform requests to this backend.
 
         @param: authdata: username and password for authentication
-        @param: id: a backend's unique ID
+        @param: backendId: a backend's unique ID
         @param: name: a backend's name
         @param: version: a backend's version
         @param: xmlr_url: a backend's URL
@@ -173,28 +173,29 @@ class Spooler(AbstractServer):
         if not self._auth.test(authdata, ADD_BACKEND):
             return (-110, self.ERROR_AUTH_FAILED)
 
-        # construct the ID for this backend using of id and version information
-        backendId = self._getBackendId(id, version)
-        
         if backendId in self._backends:
             return (-121, "Backend '%s (%s)' is already registered" % 
                         (name, backendId))
 
-        self._backends[backendId] = {'id': id, 'name': name, 'version': version,
-                               'url': xmlrpc_url, 'isBusy': False}
+        self._backends[backendId] = {'id': backendId,
+                                     'name': name,
+                                     'version': version,
+                                     'url': xmlrpc_url,
+                                     'isBusy': False}
 
-        logging.info("Backend '%s %s (%s) (%s)' added" % (name, version, id, xmlrpc_url))
+        logging.info("Backend '%s %s (%s) (%s)' added" % (name, version,
+                                                          backendId,
+                                                          xmlrpc_url))
 
         return (1, self._srvId)
 
 
-    def removeBackend(self, authdata, id, version):
+    def removeBackend(self, authdata, backendId):
         """
         Removes a backend from the list of available backends in this spooler.
 
         @param: authdata: username and password for authentication
-        @param: id: a backend's ID
-        @param: version: a backend's version
+        @param: backendId: a backend's ID
         @return: (code, msg) with
             code == 1, removing backend succeeded
             code != 1, removing backend failed; msg contains further information
@@ -202,17 +203,15 @@ class Spooler(AbstractServer):
         if not self._auth.test(authdata, REMOVE_BACKEND):
             return (-110, self.ERROR_AUTH_FAILED)
 
-        uid = self._getBackendId(id, version)
+        if backendId in self._backends:
+            backend = self._backends[backendId]
 
-        if uid in self._backends:
-            backend = self._backends[uid]
+            logging.info("Removing backend '%s (%s)'" % (backendId, backend['url']))
+            del self._backends[backendId]
 
-            logging.info("Removing backend '%s (%s)'" % (uid, backend['url']))
-            del self._backends[uid]
-
-            return (1, "Backend '%s' removed" % uid)
+            return (1, "Backend '%s' removed" % backendId)
         else:
-            return (-122, "Backend '%s' not found" % uid)
+            return (-122, "Backend '%s' not found" % backendId)
 
 
     def appendJob(self, authdata, jobdata):
@@ -340,85 +339,85 @@ class Spooler(AbstractServer):
         
         logging.debug('Returning all available backends')
 
-        if not self._auth.test(auth):
+        if not self._auth.test(auth, GET_STATUS):
             return (-110, self.ERROR_AUTH_FAILED)
 
         return self._backends
 
 
-    def getBackendStatus(self, auth, uid):
+    def getBackendStatus(self, auth, backendId):
         """
         Returns a dict with status information of a single backend.
 
         @param: auth: username and password for authentication
-        @param: uid: a backend's unique ID
+        @param: backendId: a backend's unique ID
         """
         
-        logging.debug("Trying to return status information for backend '%s'" % uid)
+        logging.debug("Trying to return status information for backend '%s'" % backendId)
 
-        if not self._auth.test(auth):
+        if not self._auth.test(auth, GET_BACKEND_INFO):
             return (-110, self.ERROR_AUTH_FAILED)
 
-        if not self._hasBackend(uid):
-            return (-112, "No such backend: %s" % uid)
+        if not self._hasBackend(backendId):
+            return (-112, "No such backend: %s" % backendId)
 
-        backend = self._backends.get(uid)
+        backend = self._backends.get(backendId)
         return self._callBackend(backend['url'], 'getStatus')
 
     
-    def getBackendInputFields(self, auth, uid):
+    def getBackendInputFields(self, auth, backendId):
         """
         Returns information about additional fields required by this backend.
         
         @param: auth: username and password for authentication
-        @param: uid: a backend's unique ID
+        @param: backendId: a backend's unique ID
 
         @see: AbstractBackend.getInputFields
         """
         
-        logging.debug("Trying to return input fields for backend '%s'" % uid)
+        logging.debug("Trying to return input fields for backend '%s'" % backendId)
 
-        if not self._auth.test(auth):
+        if not self._auth.test(auth, GET_BACKEND_INFO):
             return (-110, self.ERROR_AUTH_FAILED)
 
-        if not self._hasBackend(uid):
-            return (-112, "No such backend: %s" % uid)
+        if not self._hasBackend(backendId):
+            return (-112, "No such backend: %s" % backendId)
 
-        backend = self._backends.get(uid)
+        backend = self._backends.get(backendId)
         return self._callBackend(backend['url'], 'getInputFields')
 
 
-    def getBackendTestFields(self, auth, uid):
+    def getBackendTestFields(self, auth, backendId):
         """
         Returns informationen about test scenarios available by this backend.
         
         @param: auth: username and password for authentication
-        @param: uid: a backend's unique ID
+        @param: backendId: a backend's unique ID
 
         @see. AbstractBackend.getTestFields
         """
         
-        logging.debug("Trying to return test specs for backend '%s'" % uid)
+        logging.debug("Trying to return test specs for backend '%s'" % backendId)
 
-        if not self._auth.test(auth):
+        if not self._auth.test(auth, GET_BACKEND_INFO):
             return (-110, self.ERROR_AUTH_FAILED)
 
-        if not self._hasBackend(uid):
-            return (-112, "No such backend: %s" % uid)
+        if not self._hasBackend(backendId):
+            return (-112, "No such backend: %s" % backendId)
 
-        backend = self._backends.get(uid)
+        backend = self._backends.get(backendId)
         return self._callBackend(backend['url'], 'getTestFields')
 
 
-    def _hasBackend(self, uid):
+    def _hasBackend(self, backendId):
         """
-        @return: True if a backend with the given uid is registered, 
+        @return: True if a backend with the given backendId is registered, 
                  otherwise False
         """
-        if self._backends.has_key(uid):
+        if self._backends.has_key(backendId):
             return True
         else:
-            msg = "No such backend: %s" % uid
+            msg = "No such backend: %s" % backendId
             logging.warn(msg)
             return False
         
@@ -545,16 +544,4 @@ class Spooler(AbstractServer):
 
             logging.error(''.join(traceback.format_exception(*sys.exc_info())))
             return msg
-
-
-    def _getBackendId(self, id, version):
-        """
-        @deprecated: parameter version is unused; still alive for compatibility
-        
-        @param: id: a backend's ID 
-        @param: version: 
-        @return: a backend's ID consisting of id and version
-        """
-        #return '%s-%s' % (id, version)
-        return id
 

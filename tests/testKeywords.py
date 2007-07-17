@@ -6,7 +6,7 @@
 # This file is part of ECSpooler.
 import unittest
 
-from backends import Keywords
+from backends.keywords import Keywords
 from lib.data.BackendJob import BackendJob
 
 from BackendTestCase import BackendTestCase
@@ -15,7 +15,7 @@ class testKeywords(BackendTestCase):
     """
     """
     
-    backendClassName = 'Keywords'
+    backendClassName = 'keywords.Keywords.Keywords'
 
     # -- individual tests -----------------------------------------------------
     jobdata = {'backend':'keywords', 
@@ -32,7 +32,7 @@ class testKeywords(BackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Keywords(self.params)
+        backend = Keywords.Keywords(self.params)
         result = backend._process_execute(job)
         
         if result:
@@ -48,7 +48,7 @@ class testKeywords(BackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Keywords(self.params)
+        backend = Keywords.Keywords(self.params)
         result = backend._process_execute(job)
         
         if result:
@@ -66,7 +66,7 @@ class testKeywords(BackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Keywords(self.params)
+        backend = Keywords.Keywords(self.params)
         result = backend._process_execute(job)
         
         if result:
@@ -84,7 +84,7 @@ class testKeywords(BackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Keywords(self.params)
+        backend = Keywords.Keywords(self.params)
         result = backend._process_execute(job)
         
         if result:

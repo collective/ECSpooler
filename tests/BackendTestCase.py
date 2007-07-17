@@ -4,6 +4,7 @@
 # Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
+import sys
 import unittest
 import socket
 
@@ -54,7 +55,7 @@ class BackendTestCase(unittest.TestCase):
 
 
     def testInvalidInput(self):
-        """Backend instance should fail with inproperly input"""
+        """Backend instance should fail with improper input"""
         try:
             params = self.params
             params.pop('spooler')
@@ -79,7 +80,7 @@ class BackendTestCase(unittest.TestCase):
 
 
     def testProcessExcecuteResultType(self):
-        """_process_exectue should always return an instance of 'BackendResult'"""
+        """_process_execute should always return an instance of 'BackendResult'"""
         result = None
         #exec 'backend = %s(self.params)' % self.backendClassName
         #backend = Scheme(self.params)
@@ -95,7 +96,7 @@ class BackendTestCase(unittest.TestCase):
 
 
     def testInvalidTestSpec(self):
-        """_process_exectue should return an instance of 'BackendResult' with error code -217 if no test spec was selected"""
+        """_process_execute should return an instance of 'BackendResult' with error code -217 if no test spec was selected"""
         result = None
         
         exec 'result = %s(self.params)._process_execute(self.job)' % self.backendClassName

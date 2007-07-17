@@ -7,7 +7,7 @@
 import sys
 import unittest
 
-from backends import JavaRE
+from backends.java_re import JavaRE
 from lib.data.BackendJob import BackendJob
 from ProgrammingBackendTestCase import ProgrammingBackendTestCase
 
@@ -15,7 +15,7 @@ class testJavaRE(ProgrammingBackendTestCase):
     """
     """
     
-    backendClassName = 'JavaRE'
+    backendClassName = 'java_re.JavaRE.JavaRE'
 
     # -- individual tests -----------------------------------------------------
 
@@ -34,7 +34,7 @@ class testJavaRE(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = JavaRE(self.params)
+        backend = JavaRE.JavaRE(self.params)
         result = backend._manage_checkSyntax(job)
 
         #print 'jobId', job.getId()
@@ -52,7 +52,7 @@ class testJavaRE(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = JavaRE(self.params)
+        backend = JavaRE.JavaRE(self.params)
         result = backend._manage_checkSyntax(job)
         
         #print 'jobId', job.getId()
@@ -70,7 +70,7 @@ class testJavaRE(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = JavaRE(self.params)
+        backend = JavaRE.JavaRE(self.params)
         result = backend._manage_checkSemantics(job)
         
         #print 'jobId', job.getId()
@@ -88,7 +88,7 @@ class testJavaRE(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = JavaRE(self.params)
+        backend = JavaRE.JavaRE(self.params)
         result = backend._manage_checkSemantics(job)
         
         if result:
@@ -115,7 +115,7 @@ class testJavaRE(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = JavaRE(self.params)
+        backend = JavaRE.JavaRE(self.params)
         result = backend._manage_checkSyntax(job)
 
         if result:
@@ -141,7 +141,7 @@ class testJavaRE(ProgrammingBackendTestCase):
 
         job = BackendJob(data=self.jobdata)
 
-        backend = JavaRE(self.params)
+        backend = JavaRE.JavaRE(self.params)
         result = backend._manage_checkSyntax(job)
 
         if result:

@@ -20,9 +20,13 @@ backends = ['backends/__init__.py']
 
 backend_keywords = glob.glob('backends/keywords/*')
 backend_keywords.remove('backends/keywords/CVS')
+backend_python = glob.glob('backends/python/*')
+backend_python.remove('backends/python/CVS')
 
 policies = glob.glob('systrace-policy/*')
 policies.remove('systrace-policy/CVS')
+
+docs = glob.glob('*.txt')
 
 etc = glob.glob('etc/*')
 etc.remove('etc/CVS')
@@ -48,7 +52,9 @@ setup (name="ECSpooler",
        data_files = [('tests', tests),
                      ('backends', backends),
                      ('backends/keywords', backend_keywords),
+                     ('backends/python', backend_python),
                      ('systrace-policy', policies),
+                     ('doc', docs),
                      ('etc', etc),
                      ('log', log),
                      ('var', var)]

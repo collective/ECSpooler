@@ -7,7 +7,7 @@
 import sys
 import unittest
 
-from backends import Java
+from backends.java import Java
 from lib.data.BackendJob import BackendJob
 from ProgrammingBackendTestCase import ProgrammingBackendTestCase
 
@@ -15,7 +15,7 @@ class testJava(ProgrammingBackendTestCase):
     """
     """
     
-    backendClassName = 'Java'
+    backendClassName = 'java.Java.Java'
 
     # -- individual tests -----------------------------------------------------
     modelSolution = \
@@ -55,7 +55,7 @@ public class Test
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Java(self.params)
+        backend = Java.Java(self.params)
         result = backend._manage_checkSyntax(job)
         
         if result:
@@ -71,7 +71,7 @@ public class Test
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Java(self.params)
+        backend = Java.Java(self.params)
         result = backend._manage_checkSyntax(job)
         
         #print 'jobId', job.getId()
@@ -98,7 +98,7 @@ public class Test
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Java(self.params)
+        backend = Java.Java(self.params)
         result = backend._manage_checkSemantics(job)
         
         if result:
@@ -114,7 +114,7 @@ public class Test
 
         job = BackendJob(data=self.jobdata)
 
-        backend = Java(self.params)
+        backend = Java.Java(self.params)
         result = backend._manage_checkSemantics(job)
         
         #print 'jobId', job.getId()

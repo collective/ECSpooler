@@ -6,13 +6,14 @@
 # This file is part of ECSpooler.
 import unittest
 
+from backends.prolog import Prolog
 from ProgrammingBackendTestCase import ProgrammingBackendTestCase
 
 class testProlog(ProgrammingBackendTestCase):
     """
     """
     
-    backendClassName = 'Prolog'
+    backendClassName = 'prolog.Prolog.Prolog'
 
     # -- individual tests -----------------------------------------------------
 

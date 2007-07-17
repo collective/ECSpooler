@@ -10,7 +10,7 @@ import unittest
 # add parent directory to the system path
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
-from backends.scheme.Scheme import Scheme
+from backends.scheme import Scheme
 from lib.data.BackendJob import BackendJob
 #from lib.data.BackendResult import BackendResult
 
@@ -20,13 +20,13 @@ class testScheme(ProgrammingBackendTestCase):
     """
     """
     
-    backendClassName = 'Scheme'
+    backendClassName = 'scheme.Scheme.Scheme'
 
     # -- individual tests -----------------------------------------------------
     def testNoTestSpec(self):
         """_process_checkSemantics should return an instance of 'BackendResult' with error code -217 if no test spec is given"""
         
-        result = Scheme(self.params)._process_checkSemantics(self.job)
+        result = Scheme.Scheme(self.params)._process_checkSemantics(self.job)
         
         if result:
             self.assertEqual(result.getValue(), -217, result.getMessage())
@@ -39,7 +39,7 @@ class testScheme(ProgrammingBackendTestCase):
         
         self.job['tests'] = ['simple',]
         
-        result = Scheme(self.params)._process_checkSemantics(self.job)
+        result = Scheme.Scheme(self.params)._process_checkSemantics(self.job)
         
         if result:
             self.assertEqual(result.getValue(), -216, result.getMessage())
@@ -57,7 +57,7 @@ class testScheme(ProgrammingBackendTestCase):
 
         job = BackendJob(data=jobdata)
 
-        backend = Scheme(self.params)
+        backend = Scheme.Scheme(self.params)
         result = backend._manage_checkSyntax(job)
         
         if result:
@@ -76,7 +76,7 @@ class testScheme(ProgrammingBackendTestCase):
 
         job = BackendJob(data=jobdata)
 
-        backend = Scheme(self.params)
+        backend = Scheme.Scheme(self.params)
         result = backend._manage_checkSyntax(job)
         
         if result:
@@ -97,7 +97,7 @@ class testScheme(ProgrammingBackendTestCase):
 
         job = BackendJob(data=jobdata)
 
-        backend = Scheme(self.params)
+        backend = Scheme.Scheme(self.params)
         result = backend._manage_checkSemantics(job)
         
         if result:
@@ -118,7 +118,7 @@ class testScheme(ProgrammingBackendTestCase):
 
         job = BackendJob(data=jobdata)
 
-        backend = Scheme(self.params)
+        backend = Scheme.Scheme(self.params)
         result = backend._manage_checkSemantics(job)
         
         if result:

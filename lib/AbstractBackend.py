@@ -139,7 +139,7 @@ class AbstractBackend(AbstractServer):
                            self.spooler,))
 
             spooler = xmlrpclib.Server(self.spooler)
-            spooler.removeBackend(self.auth, self.id, self.version)
+            spooler.removeBackend(self.auth, self.id)
 
         except socket.error, serr:
             logging.error("Socket error: %s (%s)" % (serr, self.spooler))

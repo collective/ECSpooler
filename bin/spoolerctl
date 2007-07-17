@@ -76,9 +76,20 @@ def _getSpoolerStatus(host, port, auth):
     return spooler.getStatus(auth)[1]
 
 
+def _removeBackend(host, port, auth, backendId):
+    """
+    Remove a backend from the list of registered backends.  Does *not* stop
+    the backend.  This is only intended for situations where the backend is
+    unreachable (e.g., it crashed).
+    """
+    spooler = xmlrpclib.Server("http://%s:%s" % (host, port))
+    return spooler.removeBackend(auth, backendId.lower())
+    
+
 def usage():
-    print "Usage: python spoolerctl.py [-H HOSTNAME] [-P PORT] [-u USERNAME] " \
-          "[-p PASSWORD] start|stop|restart|status"
+    print "Usage: spoolerctl [-H HOSTNAME] [-P PORT] start\n" \
+    "       spoolerctl [-H HOSTNAME] [-P PORT] -u USERNAME -p PASSWORD " \
+    "stop|restart|status"
 
 
 def authError(cmd):
@@ -90,7 +101,8 @@ def main():
     """
     try:
         opts, args = getopt.getopt(sys.argv[1:], "H:P:u:p:h", 
-                               ["host=", "port=", "user=", "password=", "help"])
+                                   ["host=", "port=", "user=", "password=",
+                                    "help"])
     except getopt.GetoptError:
         # print help information and exit:
         usage()
@@ -123,7 +135,7 @@ def main():
             password = a
 
     
-    if len(args) != 1:
+    if len(args) == 0:
         usage()
         sys.exit(2)
 
@@ -133,8 +145,8 @@ def main():
         if not host: host = socket.getfqdn()
         if not port: port = 5050
         
-        pwdFile = os.path.join(os.path.dirname(__file__), '..', 'etc', 'passwd')
-        
+        pwdFile = os.path.join(os.path.dirname(__file__),
+                               '..', 'etc', 'passwd')
         
         try:
             if command == 'start':
@@ -158,6 +170,12 @@ def main():
     
                     elif command == 'status':
                         print _getSpoolerStatus(host, port, auth)
+
+                    elif command == 'rmbackend':
+                        if len(args) < 2:
+                            print 'rmbackend needs a backend ID'
+                            sys.exit(2)
+                        print _removeBackend(host, port, auth, args[1])
     
                     else:
                         print 'Unknown command %s' % command

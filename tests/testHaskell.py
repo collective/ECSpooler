@@ -6,7 +6,7 @@
 # This file is part of ECSpooler.
 import unittest
 
-from backends import Haskell
+from backends.haskell.Haskell import Haskell
 from lib.data.BackendJob import BackendJob
 
 from ProgrammingBackendTestCase import ProgrammingBackendTestCase
@@ -15,7 +15,7 @@ class testHaskell(ProgrammingBackendTestCase):
     """
     """
     
-    backendClassName = 'Haskell'
+    backendClassName = 'haskell.Haskell.Haskell'
 
     # -- individual tests -----------------------------------------------------
     def testNoTestSpec(self):
