@@ -3,5 +3,13 @@ include etc/passwd
 recursive-include backends *
 recursive-include lib      *.txt *.py
 recursive-include log      *.txt *.py
-recursive-include tests    *.txt *.py
+#recursive-include tests    *.txt *.py
+include tests/readme.txt
+include tests/testSpooler.py
+include tests/testKeywords.py
+include tests/__init__.py
+include tests/BackendTestCase.py
+include tests/ProgrammingBackendTestCase.py
+include tests/testTestJob.py
+include tests/testTestResult.py
 recursive-include var      *.txt *.py
