@@ -13,18 +13,18 @@ version = open('version.txt').readline()
 
 ###############################################################################
 
-tests = glob.glob('tests/*')
-tests.remove('tests/CVS')
+#tests = glob.glob('tests/*')
+#tests.remove('tests/CVS')
 
 backends = ['backends/__init__.py']
 
 backend_keywords = glob.glob('backends/keywords/*')
 backend_keywords.remove('backends/keywords/CVS')
-backend_python = glob.glob('backends/python/*')
-backend_python.remove('backends/python/CVS')
+#backend_python = glob.glob('backends/python/*')
+#backend_python.remove('backends/python/CVS')
 
-policies = glob.glob('systrace-policy/*')
-policies.remove('systrace-policy/CVS')
+#policies = glob.glob('systrace-policy/*')
+#policies.remove('systrace-policy/CVS')
 
 docs = glob.glob('*.txt')
 
@@ -49,11 +49,11 @@ setup (name="ECSpooler",
        long_description = DESCRIPTION,
        packages = ['', 'lib', 'lib/data', 'lib/util'],
        scripts = ['bin/spoolerctl', 'bin/backendctl'],
-       data_files = [('tests', tests),
+       data_files = [#('tests', tests),
                      ('backends', backends),
                      ('backends/keywords', backend_keywords),
-                     ('backends/python', backend_python),
-                     ('systrace-policy', policies),
+                     #('backends/python', backend_python),
+                     #('systrace-policy', policies),
                      ('doc', docs),
                      ('etc', etc),
                      ('log', log),
