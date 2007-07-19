@@ -25,7 +25,7 @@ RESULT_QUEUE_STORAGE = os.path.join(os.path.dirname(__file__), 'var', 'result.fs
 # -- log properties -----------------------------------------------------------
 LOGLEVEL = logging.DEBUG
 
-logger = logging.getLogger('')  #root logger
+logger = logging.getLogger('')  # root logger
 logger.setLevel(LOGLEVEL)
 
 # set directory for log file and create it if necessary
@@ -58,33 +58,7 @@ if pwd:
     NOBODY_UID, NOBODY_GID = pwd.getpwnam('nobody')[2:4]
 else:
     NOBODY_UID, NOBODY_GID = 42, 42
-    
-# defining log settings for (later) usage in a config file
-#[handler_hand02]
-#class=FileHandler
-#level=DEBUG
-#formatter=form02
-#args=('status.log', 'a')
-#filename=status.log
-#mode=a
-#
-#[handler_hand05]
-#class=handlers.SysLogHandler
-#level=ERROR
-#formatter=form05
-#args=(('localhost', handlers.SYSLOG_UDP_PORT), handlers.SysLogHandler.LOG_USER)
-#host=localhost
-#port=SYSLOG_UDP_PORT
-#facility=LOG_USER
-#
-#
-#[formatter_form02]
-#format=F2 %(asctime)s %(pathname)s(%(lineno)d): %(levelname)s %(message)s
-#datefmt=
-#
-#[formatter_form05]
-#format=F5 %(asctime)s %(levelname)s %(message)s
-#datefmt=
 
 # -- additional properties ----------------------------------------------------
+CLEANUP = True # Remove the temporary directories created by some backends
 

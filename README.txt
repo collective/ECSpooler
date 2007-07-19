@@ -37,7 +37,8 @@ Installation
 Quick Start
 
   After installation, you should then be able to start the spooler (on
-  the default port 5050) using the command (you may have to specify )::
+  the default port 5050) using the command (you may have to specify
+  the path)::
 
       spoolerctl start
 
@@ -83,6 +84,8 @@ Description
   corresponding compiler and/or interpreter.  The results of the tests
   performed by the backend are immediately returned and are displayed
   by ECAutoAssessmentBox.
+
+  BACKENDS
 
   We have implemented backends for Haskell (using Hugs), Scheme (using
   MzScheme), Erlang, Prolog (using SWI-Prolog), Python, and Java.
@@ -132,3 +135,38 @@ Description
   command, you can use the following command line to create the hash::
 
     python -c 'import md5; print md5.new("password").hexdigest()'
+
+Support
+
+  For questions and discussions about ECSpooler, please join the
+  "eduComponents mailing
+  list":https://listserv.uni-magdeburg.de/mailman/listinfo/educomponents.
+
+Credits
+
+  ECSpooler was written by "Mario
+  Amelung":http://wwwai.cs.uni-magdeburg.de/Members/amelung and
+  "Michael Piotrowski":http://wwwai.cs.uni-magdeburg.de/Members/mxp.
+  
+  Additional programming by Wolfram Fenske.
+
+License
+
+ ECSpooler is licensed under the
+ "GPL":http://opensource.org/licenses/gpl-license.
+
+ Copyright © 2007 Otto-von-Guericke-Universität Magdeburg
+
+ ECSpooler is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the
+ Free Software Foundation; either version 2 of the License, or (at
+ your option) any later version.
+
+ ECSpooler is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with ECSpooler; if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA

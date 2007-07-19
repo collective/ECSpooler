@@ -4,6 +4,7 @@
 # Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
+
 from types import BooleanType
 from types import UnicodeType
 
@@ -16,6 +17,8 @@ import logging
 from lib.AbstractBackend import AbstractBackend
 from lib.util import utils
 from lib.data.BackendResult import BackendResult
+
+from config import CLEANUP
 
 try:
     EX_OK = os.EX_OK
@@ -90,7 +93,6 @@ class AbstractProgrammingBackend(AbstractBackend):
                 
 
         # delete all files and folders used in this test
-        # FIXME: uncomment for productive environments
         self._cleanup(job.getId())
 
         return result
@@ -390,6 +392,10 @@ class AbstractProgrammingBackend(AbstractBackend):
         
         @dir a directory in temporary path
         """
+
+        if not CLEANUP:
+            return
+        
         try:
             # change dir
             os.chdir(tempfile.gettempdir())
