@@ -40,36 +40,36 @@ Quick Start
   the default port 5050) using the command (you may have to specify
   the path)::
 
-      spoolerctl start
+    spoolerctl start
 
-    and the Keywords backend using::
+  and the Keywords backend using::
 
-      backendctl -u root -p bazquux Keywords start
+    backendctl -u root -p bazquux Keywords start
 
-    If you check the status using::
+  If you check the status using::
 
-      spoolerctl -u root -p bazquux status        
+    spoolerctl -u root -p bazquux status        
 
-    and get a response similar to::
+  and get a response similar to::
 
-      {'queue': 0, 'backends': ['keywords'], 'pid': 26946, 'results': 0}
+    {'queue': 0, 'backends': ['keywords'], 'pid': 26946, 'results': 0}
 
-    If you run these commands as root, the processes will be started
-    as user "nobody".
+  If you run these commands as root, the processes will be started
+  as user "nobody".
 
-    Once ECSpooler and the backend are running, go to your Plone site,
-    log in as Manager, and go to the "Site Setup", where you should
-    find "Auto Assessment Settings".  Make the spooler connection
-    settings.  You should the see the available backends; select the
-    Keywords backend.
+  Once ECSpooler and the backend are running, go to your Plone site,
+  log in as Manager, and go to the "Site Setup", where you should
+  find "Auto Assessment Settings".  Make the spooler connection
+  settings.  You should the see the available backends; select the
+  Keywords backend.
 
-    You can then start to create Auto Assessment Boxes.  See the
-    ECAutoAssessmentBox documentation for details.
+  You can then start to create Auto Assessment Boxes.  See the
+  ECAutoAssessmentBox documentation for details.
 
 Description
 
   ECSpooler provides automatic testing of submissions for
-  "ECAutoAssessmentBox":http://plone.org/products/ecautoassessmentbox:
+  "ECAutoAssessmentBox":http://plone.org/products/ecautoassessmentbox.
   ECAutoAssessmentBox allows students to submit their assignments via
   the Web at any time during the submission period.  A typical case
   are programming assignments, where students have to submit programs.
@@ -85,17 +85,17 @@ Description
   performed by the backend are immediately returned and are displayed
   by ECAutoAssessmentBox.
 
-  BACKENDS
+  Backends
 
-  We have implemented backends for Haskell (using Hugs), Scheme (using
-  MzScheme), Erlang, Prolog (using SWI-Prolog), Python, and Java.
-  Backends can also be used to implement different approaches for
-  testing: For example, we have implemented one backend for Haskell
-  which compares the output of the student solution with the output of
-  a model solution for a set of test data, and, as an alternative, we
-  have implemented another backend for Haskell which uses QuickCheck
-  for testing based on formal specifications of properties required
-  for a correct solution.
+    We have implemented backends for Haskell (using Hugs), Scheme
+  (using MzScheme), Erlang, Prolog (using SWI-Prolog), Python, and
+  Java.  Backends can also be used to implement different approaches
+  for testing: For example, we have implemented one backend for
+  Haskell which compares the output of the student solution with the
+  output of a model solution for a set of test data, and, as an
+  alternative, we have implemented another backend for Haskell which
+  uses QuickCheck for testing based on formal specifications of
+  properties required for a correct solution.
 
   However, ECSpooler only ships with a demo backend, Keywords, which
   checks whether a submission contains certain keywords specified by
@@ -109,9 +109,9 @@ Description
   configuration issues, we are happy provide you with our backends on
   request.
 
-  USERS
+  Users
 
-  For job submissions and for administrative tasks authentication is
+    For job submissions and for administrative tasks authentication is
   required.  ECSpooler uses a simple user/password authentication
   scheme.  Note that a user normally corresponds to a Plone site, not
   to an individual person.
@@ -152,21 +152,21 @@ Credits
 
 License
 
- ECSpooler is licensed under the
- "GPL":http://opensource.org/licenses/gpl-license.
+  ECSpooler is licensed under the
+  "GPL":http://opensource.org/licenses/gpl-license.
 
- Copyright © 2007 Otto-von-Guericke-Universität Magdeburg
+  Copyright © 2007 Otto-von-Guericke-Universität Magdeburg
 
- ECSpooler is free software; you can redistribute it and/or modify it
- under the terms of the GNU General Public License as published by the
- Free Software Foundation; either version 2 of the License, or (at
- your option) any later version.
+  ECSpooler is free software; you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by the
+  Free Software Foundation; either version 2 of the License, or (at
+  your option) any later version.
 
- ECSpooler is distributed in the hope that it will be useful, but
- WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- General Public License for more details.
+  ECSpooler is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details.
 
- You should have received a copy of the GNU General Public License
- along with ECSpooler; if not, write to the Free Software Foundation,
- Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+  You should have received a copy of the GNU General Public License
+  along with ECSpooler; if not, write to the Free Software Foundation,
+  Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
