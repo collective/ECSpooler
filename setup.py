@@ -20,11 +20,6 @@ backends = ['backends/__init__.py']
 
 backend_keywords = glob.glob('backends/keywords/*')
 backend_keywords.remove('backends/keywords/CVS')
-#backend_python = glob.glob('backends/python/*')
-#backend_python.remove('backends/python/CVS')
-
-#policies = glob.glob('systrace-policy/*')
-#policies.remove('systrace-policy/CVS')
 
 docs = glob.glob('*.txt')
 
@@ -42,18 +37,15 @@ var.remove('var/CVS')
 setup (name="ECSpooler",
        version = version,
        license = "GPL",
-       author = "XXX",
-       author_email = "XXX",
+       author = "Mario Amelung and Michael Piotrowski",
+       author_email = "https://listserv.uni-magdeburg.de/mailman/listinfo/educomponents",
        url = "http://wdok.cs.uni-magdeburg.de/software/ecspooler",
        description = "A service for checking student submissions",
        long_description = DESCRIPTION,
        packages = ['', 'lib', 'lib/data', 'lib/util'],
        scripts = ['bin/spoolerctl', 'bin/backendctl'],
-       data_files = [#('tests', tests),
-                     ('backends', backends),
+       data_files = [('backends', backends),
                      ('backends/keywords', backend_keywords),
-                     #('backends/python', backend_python),
-                     #('systrace-policy', policies),
                      ('doc', docs),
                      ('etc', etc),
                      ('log', log),
