@@ -144,9 +144,9 @@ Support
 
 Credits
 
-  ECSpooler was written by "Mario
-  Amelung":http://wwwai.cs.uni-magdeburg.de/Members/amelung and
-  "Michael Piotrowski":http://wwwai.cs.uni-magdeburg.de/Members/mxp.
+  ECSpooler was written by
+  "Mario Amelung":http://wdok.cs.uni-magdeburg.de/Members/amelung and
+  "Michael Piotrowski":http://wdok.cs.uni-magdeburg.de/Members/mxp.
   
   Additional programming by Wolfram Fenske.
 
