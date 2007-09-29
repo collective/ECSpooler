@@ -115,7 +115,6 @@ public class %s {
             'JUnitTest',
             label = 'JUnitTests',
             description = 'Run JUnit tests',
-            test = methodTemplate,
             semantic = wrapperTemplate,
             compiler = compiler,
             interpreter = interpreter,
