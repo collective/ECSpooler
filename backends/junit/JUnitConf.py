@@ -1,7 +1,7 @@
 import os, re
 from os.path import join, dirname
 
-from lib.util.BackendSchema import InputField, RepeatField
+from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
@@ -27,6 +27,7 @@ class JUnitConf:
     CLASS_NAME_RE = re.compile('public\s+class\s+(?P<className>[A-Z]\w*)(\<\w*\>)?\s*\{')
     CONSTRUCTOR_ATTRIBUTES_RE = re.compile('public\s+(?P<consName>[A-Z]\w*)\s*\((?P<attr>.*)\)')
     PACKAGE_NAME_RE = re.compile('package\s+(?P<packageName>[a-z]+\w*);')
+    METHOD_NOT_FOUND_RE = re.compile('location:.*\n.*;\n')
     
     #library directory:
     JUNIT_LIBS = 'junit_libs'
@@ -36,56 +37,7 @@ class JUnitConf:
     
     AUTO_COMMENT = '//auto//'
 
-    methodTemplate = \
-r'''
-import java.lang.reflect.*;
 
-import %s.*;
-//Einreichung importieren!
-
-public class %s {
-    public static void main(String[] args) {
-        //retrieve method signatures and store them
-        Method[] methods = ${CLASS}.class.getDeclaredMethods();
-        String[] signatures = new String[methods.length];
-        
-        for(int i = 0; i < methods.length; i++){
-            signatures[i] = methods[i].getName();
-            Class[] classes = methods[i].getParameterTypes();
-            for(int j = 0; j < classes.length; j++){
-                signatures[i] += " " + classes[j].getSimpleName();
-            }
-        }
-        
-        //compare to specified methods:
-        boolean found = false;
-        
-        for(String incomming_method: args){
-            for(String signature: signatures){
-                if(incomming_method.equals(signature)){
-                    //found method signature!
-                    found = true;
-                }
-            }
-            if(!found){
-                String[] splitter = incomming_method.split(" ");
-                String name = splitter[0];
-                String parameters = "";
-                if(splitter.length != 1){
-                    parameters = incomming_method.replace(name+" ", "");
-                }
-                System.out.println("Could not find method signature \""+name+"("+parameters+")\".");
-                System.exit(1);
-                return;
-            }else{
-                //search next signature
-                found = false;
-            }
-        }
-    }
-}
-''' % (NS_STUDENT, CLASS_METHOD_CHECK)
-    
     wrapperTemplate = \
 r'''
 //imports for Unit testing
@@ -141,15 +93,6 @@ public class %s {
             'helpFunctions', 
             label = 'Help functions',
             description = 'Enter help functions if needed.',
-            i18n_domain = 'EC',
-        ),
-        
-        RepeatField(
-            'methods',
-            required = True,
-            label = 'Methods',
-            description = "Enter the method names followed by parameters you are going to test. "\
-            'Write each method name in a single line.',
             i18n_domain = 'EC',
         ),
 

@@ -130,7 +130,7 @@ class JUnit(AbstractProgrammingBackend):
     def grantValidPackage(self,source):
         """
         Determines whether source already has a package declaration.
-        If yes, it will be overwritten by a new declaration.
+        If yes, it will be overwritten with a new declaration.
         If not, a new package declaration will be written.
         
         @param source: Java source code.
@@ -153,7 +153,7 @@ class JUnit(AbstractProgrammingBackend):
         """
         Student's imports could be located in a package that will not be found on server-side.
         This method scans a given java source and searches for imports that are located in a package which is not "java".
-        If import packages are found they will be renamed to the JUnitConf.JUNIT_LIBS package.
+        If import packages are found they will be renamed into the JUnitConf.JUNIT_LIBS package.
         
         @param source: Java source code.
         @return: source with valid import declarations.
@@ -298,54 +298,9 @@ class JUnit(AbstractProgrammingBackend):
         
         #get interpreter
         interpreter = test.interpreter
-        
+
         #get templates
         wrapper_code = test.semantic
-        method_template = test.test
-        
-        #-----------  compile and run Method Template  ------------------------        
-        #test if defined methods exist in student's class:
-        try:
-            field = self.schema.filterFields(label='Methods')[0]
-            methodField = field.getAccessor()(job[field.getName()])
-            
-            interpreter_args = tuple(methodField)
-            
-            method_testing_code = method_template.replace('${CLASS}',submissionClassName)
-            
-            methodModule = self._writeModule(
-                JUnitConf.CLASS_METHOD_CHECK,
-                method_testing_code,
-                suffix=self.srcFileSuffix,
-                dir=job.getId(),
-                encoding=test.encoding)
-                
-            exitcode, result = self._runInterpreter(
-                compiler,
-                os.path.dirname(methodModule['file']),
-                os.path.basename(methodModule['file']))
-                
-            #compile:
-            exitcode, result = self._runInterpreter(
-                interpreter,
-                os.path.dirname(methodModule['file']),
-                JUnitConf.CLASS_METHOD_CHECK,
-                args = interpreter_args)
-                
-        except Exception, e:
-            message = 'Internal error during semantic check: %s: %s' % \
-                (sys.exc_info()[0], e)
-                
-            logging.error(message)
-            
-            return BackendResult(-230,message)
-        
-        #if exitcode is not EX_OK an error occured, which means that a defined method was not found
-        #in student's source code
-        if exitcode != EX_OK:
-            result = "\nYour submission failed:\n%s" % result
-            return BackendResult(False, result)    
-            
             
         #-----------  compile and run Wrapper Template  ------------------------        
         #replace all variables in wrapper template
@@ -370,14 +325,17 @@ class JUnit(AbstractProgrammingBackend):
                 dir=job.getId(),
                 encoding=test.encoding)
                 
+            print "compiler"
             exitcode, result = self._runInterpreter(
                 compiler,
                 os.path.dirname(wrapperModule['file']),
                 os.path.basename(wrapperModule['file']))
                 
+            print "assert"
             assert exitcode == EX_OK,\
                 'Error in wrapper code during semantic check:\n\n%s' % result
                 
+            print "interpreter"
             exitcode, result = self._runInterpreter(
                 interpreter,
                 os.path.dirname(wrapperModule['file']),
@@ -389,7 +347,19 @@ class JUnit(AbstractProgrammingBackend):
                 
             logging.error(message)
             
-            return BackendResult(-230,message)
+            print "---------------<<<-"
+            print message
+            print "-------------->>>---"
+            print ""
+            
+            msg = re.sub(JUnitConf.METHOD_NOT_FOUND_RE,"",message)
+            
+            print "---------<<<------"
+            print msg
+            print "------------->>>-----"
+            print ""
+            
+            return BackendResult(-230,msg)
         
         if exitcode != EX_OK:
             result = "\nYour submission failed. Test " \
