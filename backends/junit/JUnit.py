@@ -19,7 +19,7 @@ class JUnit(AbstractProgrammingBackend):
     
     id = 'junit'
     name = 'JUnit'
-    version = '0.9alpha'
+    version = '1.0'
     schema = JUnitConf.inputSchema
     testSchema = JUnitConf.tests
     srcFileSuffix = '.java'
