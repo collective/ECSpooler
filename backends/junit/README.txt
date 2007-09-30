@@ -14,14 +14,14 @@ Prerequisites
   * A UNIX or UNIX-like operating system, e.g., NetBSD, Solaris, Mac
     OS X, or Linux.
 
-    Java backend does run on Windows (with some restrictions), but
+    JUnit backend does run on Windows (with some restrictions), but
     this is neither supported nor recommended.
 
   * "Python":http://python.org/
   
   * "Java":http://java.sun.com/
   
-  * "JUnit (at least Version 4.0)":http://www.junit.org/
+  * "JUnit (at least Version 4)":http://www.junit.org/
     
   * "ECSpooler":http://wdok.cs.uni-magdeburg.de/software/ecspooler
   
@@ -74,7 +74,7 @@ Quick Start
 
   and get a response similar to::
 
-    {'queue': 0, 'backends': ['junit'], 'pid': 16531, 'results': 20}
+    {'queue': 0, 'backends': ['junit'], 'pid': 16531, 'results': 0}
 
   For administrative tasks such as starting/stopping backends 
   authentication is required.  Therefore ECSpooler ships with a 
@@ -107,7 +107,6 @@ Quick Start
 		assertEquals(str, submission.code(submission.code(str,4),-4));
 	}
  
-  
 Support
 
   For questions and discussions about backends, please join the
