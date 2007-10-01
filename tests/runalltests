@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# $Id$
+#
+# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
+#
+# This file is part of ECSpooler.
+
+"""
+Runs all tests in the current directory.
+"""
+
+import os
+import sys
+
+import unittest
+
+# add parent directory to the system path
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir))
+
+# change dir to test dir
+os.chdir(os.path.join(os.path.abspath(os.path.dirname(__file__))))
+
+TestRunner = unittest.TextTestRunner
+suite = unittest.TestSuite()
+
+tests = os.listdir(os.curdir)
+tests = [n[:-3] for n in tests if n.startswith('test') and n.endswith('.py')]
+
+for test in tests:
+    m = __import__(test)
+        
+    if hasattr(m, 'test_suite'):
+        print >> sys.stdout, m.__name__
+        suite.addTest(m.test_suite())
+
+
+if __name__ == '__main__':
+    TestRunner().run(suite)
+
