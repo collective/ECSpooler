@@ -5,7 +5,7 @@
 #
 # This file is part of ECSpooler.
 import sys, logging
-from os.path import join, dirname
+from os.path import join, dirname, abspath
 
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -17,8 +17,8 @@ class PythonConf:
     Defines all properties used by backend Python.
     """
 
-    interpreter = join(dirname(__file__), 'python+systrace')
-    #interpreter = join(dirname(__file__), 'python.sh')
+    interpreter = join(abspath(dirname(__file__)), 'python+systrace')
+    #interpreter = join(abspath(dirname(__file__)), 'python.sh')
 
     # load Haskell function to do a simple test
     try:

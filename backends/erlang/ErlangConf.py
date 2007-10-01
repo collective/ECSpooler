@@ -4,8 +4,8 @@
 # Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
-import sys, logging
-from os.path import join, dirname
+import os, sys, logging
+from os.path import join, dirname, abspath
 
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -19,11 +19,11 @@ class ErlangConf:
     Defines all properties used by backend Erlang.
     """
 
-    compiler = join(dirname(__file__), 'erlc')
-    #compiler = join(dirname(__file__), 'erlc.sh')
+    compiler = join(abspath(dirname(__file__)), 'erlc')
+    #compiler = join(abspath(dirname(__file__)), 'erlc.sh')
     
-    interpreter = join(dirname(__file__), 'erl+systrace')
-    #interpreter = join(dirname(__file__), 'erl.sh')
+    interpreter = join(abspath(dirname(__file__)), 'erl+systrace')
+    #interpreter = join(abspath(dirname(__file__)), 'erl.sh')
 
     # load source for simple testing
     try:

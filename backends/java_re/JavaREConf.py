@@ -5,7 +5,7 @@
 #
 # This file is part of ECSpooler.
 import os, re
-from os.path import join, dirname
+from os.path import join, dirname, abspath
 
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -18,11 +18,11 @@ class JavaREConf:
     Properties used by backend Java.
     """
 
-    compiler = join(dirname(__file__), 'javac')
-    #compiler = join(dirname(__file__), 'javac.sh')
+    compiler = join(abspath(dirname(__file__)), 'javac')
+    #compiler = join(abspath(dirname(__file__)), 'javac.sh')
 
-    interpreter = join(dirname(__file__), 'java+systrace')
-    #interpreter = join(dirname(__file__), 'java.sh')
+    interpreter = join(abspath(dirname(__file__)), 'java+systrace')
+    #interpreter = join(abspath(dirname(__file__)), 'java.sh')
 
 
     # The name of the wrapper class that performs the syntactic check

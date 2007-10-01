@@ -5,7 +5,8 @@
 #
 # This file is part of ECSpooler.
 import sys, logging
-from os.path import join, dirname
+
+from os.path import join, dirname, abspath
 
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -17,9 +18,10 @@ class HaskellConf:
     Defines all properties used by backend Haskell.
     """
 
-    #interpreter = join(dirname(__file__), 'runhugs+systrace')
-    interpreter = join(dirname(__file__), 'runhugs.sh')
-
+    interpreter = join(abspath(dirname(__file__)), 'runhugs+systrace')
+    #interpreter = join(abspath(dirname(__file__)), 'runhugs.sh')
+    
+    
     # load Haskell function to do a simple test
     try:
         simpleTest = file(join(dirname(__file__), 'simpleTest.hs'), 'r').read()
@@ -134,7 +136,7 @@ main = putStr(\"\")
         TestEnvironment(
             'tolerance',
             label = 'Tolerance',
-            description = 'Tolerance of 1/10^15 in result values allowed.',
+            description = 'Tolerance of 1/10^15 in result values is allowed.',
             test = toleranceTest,
             syntax = syntaxCheckTemplate,
             semantic = wrapperTemplate,

@@ -5,7 +5,7 @@
 #
 # This file is part of ECSpooler.
 import os, re
-from os.path import join, dirname
+from os.path import join, dirname, abspath
 
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -18,8 +18,8 @@ class PrologConf:
     Properties used by backend Prolog.
     """
 
-    interpreter = join(dirname(__file__), 'pl+systrace')
-    #interpreter = join(dirname(__file__), 'pl.sh')
+    interpreter = join(abspath(dirname(__file__)), 'pl+systrace')
+    #interpreter = join(abspath(dirname(__file__)), 'pl.sh')
     
     compiler = interpreter
 

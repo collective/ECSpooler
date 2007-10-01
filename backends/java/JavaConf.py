@@ -5,7 +5,7 @@
 #
 # This file is part of ECSpooler.
 import os, re
-from os.path import join, dirname
+from os.path import join, dirname, abspath
 
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -18,11 +18,11 @@ class JavaConf:
     Properties used by backend Java.
     """
 
-    compiler = join(dirname(__file__), 'javac')
-    #compiler = join(dirname(__file__), 'javac.sh')
+    compiler = join(abspath(dirname(__file__)), 'javac')
+    #compiler = join(abspath(dirname(__file__)), 'javac.sh')
 
-    interpreter = join(dirname(__file__), 'java+systrace')
-    #interpreter = join(dirname(__file__), 'java.sh')
+    interpreter = join(abspath(dirname(__file__)), 'java+systrace')
+    #interpreter = join(abspath(dirname(__file__)), 'java.sh')
 
     # The packages that the model and student solution will be put in
     NS_MODEL = 'ModelPackage'
@@ -114,14 +114,18 @@ public class %s
             'modelSolution', 
             required = True, 
             label = 'Model solution',
-            description = 'Enter a model solution.',
+            description = 'Enter model solution.  A model solution ' + 
+                          'is a Java class which implements methods ' +
+                          'to resolve the given assignment.',
             i18n_domain = 'EC',
         ),
         
         InputField(
             'helpFunctions', 
             label = 'Help functions',
-            description = 'Enter help functions if needed.',
+            description = 'Enter help functions if needed.  A help function ' + 
+                          'can be used, e.g., to calculate values for testing ' +
+                          'or as a parameter in a test call.',
             i18n_domain = 'EC',
         ),
 
@@ -130,11 +134,12 @@ public class %s
             #accessor = # must return a list; default is one element per line
             required = True, 
             label = 'Test data',
-            description = 'Enter one or more function calls. '+ 
-                        'A function call consists of the ' + 
-                        'function name (given in the exercise directives) ' + 
-                        'and test data as parameters of this funtion. '+
-                        'Each function call must be written in a single line.',
+            description = 'Enter one or more test calls.  A test call is ' + 
+                        'just a Java method call with appropriate parameters, ' +
+                        'e.g., new MyTest().(3, 2, 5).' +
+                        'The Java class name and metod names are normally ' +
+                        'given in the assignment directives.' +
+                        'Each test call must be written in a single line.',
             i18n_domain = 'EC',
         ),
 ))

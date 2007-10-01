@@ -5,7 +5,7 @@
 #
 # This file is part of ECSpooler.
 
-import sys, logging 
+import os, sys, logging 
 from os.path import join, dirname, abspath
 
 from lib.util.BackendSchema import InputField
@@ -18,8 +18,8 @@ class SchemeConf:
     Defines all properties used by backend Scheme.
     """
 
-    interpreter = join(dirname(__file__), 'mzscheme+systrace')
-    #interpreter = join(dirname(__file__), 'mzscheme.sh')
+    interpreter = join(abspath(dirname(__file__)), 'mzscheme+systrace')
+    #interpreter = join(abspath(dirname(__file__)), 'mzscheme.sh')
     
     streamLib = 'streams.scm'
 
