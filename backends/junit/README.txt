@@ -74,7 +74,7 @@ Quick Start
 
   and get a response similar to::
 
-    {'queue': 0, 'backends': ['junit'], 'pid': 16531, 'results': 0}
+    {'queue': 0, 'backends': ['junit'], 'pid': 6427, 'results': 0}
 
   For administrative tasks such as starting/stopping backends 
   authentication is required.  Therefore ECSpooler ships with a 

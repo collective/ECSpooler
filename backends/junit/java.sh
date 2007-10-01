@@ -6,4 +6,4 @@ PATH=${JAVA_HOME}/bin:${PATH};		export PATH
 INTERPRETER=${JAVA_HOME}/bin/java
 
 ulimit -d `ulimit -H -d`
-$INTERPRETER -classpath ".:/home/christian/Desktop/ECSpooler/backends/junit/:/home/christian/Desktop/ECSpooler/backends/junit/junit_libs/algds.jar:/home/christian/Desktop/junit-4.3.1.jar" "$@"
+$INTERPRETER -classpath ".:./junit_libs/algds.jar:./junit_libs/junit-4.3.1.jar" "$@"

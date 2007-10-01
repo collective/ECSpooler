@@ -102,7 +102,7 @@ public class %s {
             label = 'Unit tests',
             description = 'Enter one or more JUnit tests. '\
             'If you have to reference the class of the submission '\
-            'use variable ${CLASS}. [e.g. ${CLASS} myClass = new ${CLASS}(); or '\
+            'use variable "${CLASS}". [e.g. ${CLASS} myClass = new ${CLASS}(); or '\
             '${CLASS}.method()]',
             i18n_domain = 'EC',
         ),
