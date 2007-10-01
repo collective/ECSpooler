@@ -1,5 +1,5 @@
 import os, re
-from os.path import join, dirname
+from os.path import join, dirname, abspath
 
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import Schema
@@ -11,9 +11,9 @@ class JUnitConf:
     Properties used by backend JUnit.
     """
 
-    compiler = join(dirname(__file__), 'javac')
-    interpreter = join(dirname(__file__), 'java')
-    #interpreter = join(dirname(__file__), 'java+systrace')
+    compiler = join(abspath(dirname(__file__)), 'javac')
+    interpreter = join(abspath(dirname(__file__)), 'java')
+    #interpreter = join(abspath(dirname(__file__)), 'java+systrace')
 
     # The packages that the model and student solution will be put in
     NS_STUDENT = 'studentPackage'
