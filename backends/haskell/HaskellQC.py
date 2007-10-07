@@ -1,76 +1,58 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2005 Otto-von-Guericke-University, Magdeburg
+# Copyright (c) 2007 Otto-von-Guericke-University, Magdeburg
 #
 # This file is part of ECSpooler.
+import sys, os, re
+import logging
 
-import os, re, popen2, tempfile
-import threading
+from types import StringTypes
 
-from Haskell import Haskell
-from HaskellConf.HaskellConf import runhugsRegEx as REGEX_RUNHUGS_SPECIALS
+# local imports
+from backends.haskell.Haskell import Haskell
+from backends.haskell.HaskellQCConf import HaskellQCConf
+from backends.haskell.HaskellQCConf import HaskellQCConf
 
-from lib.util.utils import *
-from lib.util.BackendSchema import TestEnvironment, InputField, Schema
+from lib.data.BackendResult import BackendResult
+from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
+from lib.AbstractProgrammingBackend import EX_OK
 
-
-REGEX_FAILED = '(?m)Falsifiable, after \d+ tests?:'
-REGEX_FAILED_TESTDATA = '\n(-?.+)'
-REGEX_PASSED_TESTNUMBER = 'passed (\d+)'
-REGEX_LINENUMBER = ':\d+'
-DEFAULT_MODEL_MODULE_NAME = '#Model#'
-DEFAULT_STUDENT_MODULE_NAME =  '#Student#'
-
-
-localSchema = Schema((
-        InputField(
-            'modelSolution', 
-            required = False, 
-            label = 'Model solution',
-            description = 'Enter a model solution.',
-            i18n_domain = 'EC',
-        ),
-        
-        InputField(
-            'properties', 
-            required = True, 
-            label = 'QuickCheck properties',
-            description = 'Enter one or more QuickCheck properties. '+ 
-                        'Use #model# as place marker for the module in which '+ 
-                        'the model solution will be defined and #student# as '+
-                        'place marker for the students\' solution module.',
-            i18n_domain = 'EC',
-        ),
-    ))
 
 class HaskellQuickCheck(Haskell):
     """
-    Simple checker class for checking Haskell programs using QuickCheck.
-    This class is inherited from Checker (see checker.py):
+    Backend for testing Haskell programs using QuickCheck.
     """
-    
-    """
-    TODO: Backend is still under refactoring!!
-    """
-    
+        
     id = 'haskellqc'
     name = 'Haskell QuickCheck'
-    schema = localSchema
-    version = '0.8'
+    version = '1.0'
     
+    schema = HaskellQCConf.inputSchema
+    testSchema = HaskellQCConf.tests
+
     def _process_checkSemantics(self, job):
         """
-        Checks syntax and semantic of Haskell programs.
-        @return A CheckResult object with error code and message text
+        Test a Haskell programs using QuickCheck.
+        
+        @return: a BackendResult object with result code and value
         """
-        assert self._job
+        # test for available test specs
+        testSpecs = self._getTests(job)
+
+        if len(testSpecs) == 0:
+            msg = 'No test specification selected.'
+            logging.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-217, msg)
+
+        # get model solution (maybe unused later) 
+        modelSource = job.get('modelSolution', '')
+        # get student's submission
+        studentSource = job.getSubmission()
+        # get QuickCheck properties
+        propertySource = job.get('properties', '')
         
         resultStr = ''
-        
-        modelSource = self._job["model"]
-        studentSource = self._job["submission"]
-        propertySource = self._job["testdata"]
 
         # write model solution, students' solution and wrapper files
         # 1. model solution file

@@ -22,13 +22,23 @@ REGEX_LINENUMBER = ':\d+'
 DEFAULT_MODEL_MODULE_NAME = '#Model#'
 DEFAULT_STUDENT_MODULE_NAME =  '#Student#'
 
+class HaskellQCConf(HaskellConf):
+    """
+    This class will be used to define all necessary propertis for 
+    Haskell QuickCheck backend.
+    
+    It inherits from HaskellConf, so we can use variables already 
+    defined.
+    """
 
-localSchema = Schema((
+
+    # input schema
+    inputSchema = Schema((
         InputField(
             'modelSolution', 
             required = False, 
             label = 'Model solution',
-            description = 'Enter a model solution.',
+            description = 'Enter a model solution if needed.',
             i18n_domain = 'EC',
         ),
         
@@ -43,6 +53,23 @@ localSchema = Schema((
             i18n_domain = 'EC',
         ),
     ))
+
+    # testSchema
+    tests = Schema((
+        TestEnvironment(
+            'default',
+            label = 'Default',
+            description = 'Default using QuickCheck.',
+            test = permTest,
+            syntax = syntaxCheckTemplate,
+            semantic = wrapperTemplate,
+            lineNumberOffset = 2,
+            compiler = interpreter,
+            interpreter = interpreter,
+        ),
+    ))
+
+
 
 class HaskellQuickCheck(Haskell):
     """
@@ -62,7 +89,7 @@ class HaskellQuickCheck(Haskell):
     def _process_checkSemantics(self, job):
         """
         Checks syntax and semantic of Haskell programs.
-        @return A CheckResult object with error code and message text
+        @return: A CheckResult object with error code and message text
         """
         assert self._job
         
