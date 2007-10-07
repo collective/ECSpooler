@@ -14,7 +14,7 @@ if [[ -r "$POLICYDIR/$POLICYFILE" ]]; then
 
    trap 'kill $! && trap - TERM && kill $$' TERM
 
-   systrace -a -d $POLICYDIR $INTERPRETER -classpath ".:./junit_libs/algds.jar:./junit_libs/junit-4.3.1.jar" "$@" &
+   systrace -a -d $POLICYDIR $INTERPRETER "$@" &
    wait %%
 else
    print "Internal error: Policy file not readable.  Please contact your tutor."

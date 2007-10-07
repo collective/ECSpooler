@@ -29,13 +29,26 @@ class JUnitConf:
     PACKAGE_NAME_RE = re.compile('package\s+(?P<packageName>[a-z]+\w*);')
     METHOD_NOT_FOUND_RE = re.compile('location:.*\n.*;\n')
     
-    #library directory:
+    #library directory name:
     JUNIT_LIBS = 'junit_libs'
     
-    #Library content
-    LIBRARIES = os.listdir(join(dirname(__file__),JUNIT_LIBS))
+    # absolute path to junit archive
+    CURRENT_PATH = abspath(dirname(__file__))
     
-    AUTO_COMMENT = '//auto//'
+    #Library content
+    LIBRARIES = os.listdir(join(CURRENT_PATH,JUNIT_LIBS))
+    
+    # Define classpath settings:
+    # Scans JUNIT_LIBS directory and adds all archives to CLASSPATH_SETTINGS
+    # CLASSPATH_SETTINGS will be passed to _runInterpreter as options
+    paths = CURRENT_PATH
+    for lib in LIBRARIES:
+        if lib.rfind('.class') == -1:
+            paths += ':'+join(CURRENT_PATH,JUNIT_LIBS,lib)
+    CLASSPATH_SETTINGS = ['-classpath','.:'+paths]
+    
+    print "cp::"
+    print paths
 
 
     wrapperTemplate = \

@@ -24,80 +24,14 @@ class JUnit(AbstractProgrammingBackend):
     testSchema = JUnitConf.tests
     srcFileSuffix = '.java'
     
+    # While preprocessing student's submission it may occur that some lines
+    # have to be added (like package declarations). In case of failures during
+    # checks the feedbacks have to be scanned for line numbers and to be
+    # updated (minus line_offset).
+    line_offset = 0
     
     
 #--------  Methods for modifying incomming source code  ------------------------
-    def grantEmptyConstructor(self,source):
-        """
-        Guarantees that source has an empty constructor.
-        
-        @param source: Java source code.
-        """
-        matcher = JUnitConf.CONSTRUCTOR_ATTRIBUTES_RE.search(source)
-        
-        if matcher is not None:
-            attr = matcher.group('attr')
-            if attr is not None:
-                #add empty constructor
-                pos = source.rfind('}')
-                className = self.getClassName(source)
-                source = source[:pos] + '\n\tpublic %s(){}\n}' % className
-                
-        return source
-        
-        
-        
-    def removeStaticDeclarations(self,source):
-        """
-        Removes all "static" declarations by surrounding it with comments.
-        
-        @param source: Java source code.
-        @return: source without static methods.
-        """
-        return re.sub('[^a-z,A-Z,0-9]\s?static\s+',' /*static*/ ',source);
-        
-        
-        
-    def commentMainMethod(self,source):
-        """
-        Places a java comment around the main method.
-        
-        @param source: Java source code.
-        @return: source with commented main method.
-        """
-        mainMethod_RE = re.compile('(?P<mainMethod>public\s+static\s+void\s+main\s*\(\w*\s*\[\]\s*\w*\))')
-        lines=source.split('\n')
-        comment = JUnitConf.AUTO_COMMENT
-        count = 0
-        main = False
-        find = True
-        return_value = ""
-    
-        for line in lines:
-            if find:
-                search = mainMethod_RE.search(line)
-                if search is not None or main:
-                    #found main method
-                    line = comment+line
-                    main=True
-            
-                    obracket = re.findall('{',line)
-                    cbracket = re.findall('}',line)
-            
-                    count = count + len(obracket)
-                    count = count - len(cbracket)
-    
-                    if count == 0:
-                        main = False
-                        find = False
-        
-            return_value = return_value + "\n" + line
-        
-        return return_value
-        
-        
-        
-        
     def getClassName(self,source):
         """
         Returns the class name of a given java source.
@@ -145,6 +79,7 @@ class JUnit(AbstractProgrammingBackend):
                 source)
         else:
             tmp_result = 'package %s;\n\n' % JUnitConf.NS_STUDENT
+            self.line_offset = 2
             return tmp_result + source
             
             
@@ -158,17 +93,17 @@ class JUnit(AbstractProgrammingBackend):
         @param source: Java source code.
         @return: source with valid import declarations.
         """
+        folder = JUnitConf.JUNIT_LIBS
         importsArray = re.findall('import\s+(?!java\.)(?P<name>.*);', source)
         libraries = JUnitConf.LIBRARIES
-        
+            
         for imports in importsArray:
             for libs in libraries:
-                lib_name = libs.split('.')[0]
-                if lib_name in imports:
-                    start = imports.find(lib_name)
-                    source = source.replace(imports, imports[start:], 1)
-                    #if there are more files with the same filename:
-                    break
+                lib = libs.split('.')[0]
+                start = imports.find(lib)
+                if start > 0:
+                    #found library
+                    source = source.replace('import '+imports,'import '+folder+'.'+imports[start:],1)
                     
         return source
             
@@ -176,19 +111,25 @@ class JUnit(AbstractProgrammingBackend):
             
 #--------  Syntax methods that have to be overwritten  -------------------------
     def _preProcessCheckSyntax(self,test,src,**kwargs):
-        noMainMethod = self.commentMainMethod(src)
-        #logging.debug(noMainMethod)
-        noStaticDeclaration = self.removeStaticDeclarations(noMainMethod)
-        #logging.debug(noStaticDeclaration)
-        validPackages = self.grantValidPackage(noStaticDeclaration)
+        validPackages = self.grantValidPackage(src)
         #logging.debug(validPackages)
-        emptyConstructor = self.grantEmptyConstructor(validPackages)
-        #logging.debug(emptyConstructor)
-        preProcessedSource = self.handleStudentsImports(emptyConstructor)
+        preProcessedSource = self.handleStudentsImports(validPackages)
         #logging.debug(preProcessedSource)
         className = self.getClassName(src)
-        
         return preProcessedSource,className
+        
+        
+    def _postProcessCheckSyntax(self,test,message):
+        matches = re.findall('\w+\.\w+:(?P<numbers>\d+):',message)
+        
+        for match in matches:
+            new_line_number = int(match) - self.line_offset
+            message = message.replace(match,str(new_line_number),1)
+            
+        self.line_offset = 0
+        return message
+        
+        
         
         
         
@@ -230,7 +171,8 @@ class JUnit(AbstractProgrammingBackend):
                     self._runInterpreter(
                         compiler,
                         os.path.dirname(module['file']),
-                        os.path.basename(module['file']))
+                        os.path.basename(module['file']),
+                        JUnitConf.CLASSPATH_SETTINGS)
                     
                 logging.debug('exitcode: %s' % repr(exitcode))
                 logging.debug('result: %s' % repr(result))
@@ -325,21 +267,21 @@ class JUnit(AbstractProgrammingBackend):
                 dir=job.getId(),
                 encoding=test.encoding)
                 
-            print "compiler"
             exitcode, result = self._runInterpreter(
                 compiler,
                 os.path.dirname(wrapperModule['file']),
-                os.path.basename(wrapperModule['file']))
+                os.path.basename(wrapperModule['file']),
+                JUnitConf.CLASSPATH_SETTINGS)
                 
-            print "assert"
             assert exitcode == EX_OK,\
                 'Error in wrapper code during semantic check:\n\n%s' % result
                 
-            print "interpreter"
+
             exitcode, result = self._runInterpreter(
                 interpreter,
                 os.path.dirname(wrapperModule['file']),
-                JUnitConf.CLASS_SEMANTIC_CHECK)
+                JUnitConf.CLASS_SEMANTIC_CHECK,
+                JUnitConf.CLASSPATH_SETTINGS)
                 
         except Exception, e:
             message = 'Internal error during semantic check: %s: %s' % \
@@ -347,17 +289,7 @@ class JUnit(AbstractProgrammingBackend):
                 
             logging.error(message)
             
-            print "---------------<<<-"
-            print message
-            print "-------------->>>---"
-            print ""
-            
             msg = re.sub(JUnitConf.METHOD_NOT_FOUND_RE,"",message)
-            
-            print "---------<<<------"
-            print msg
-            print "------------->>>-----"
-            print ""
             
             return BackendResult(-230,msg)
         
@@ -372,6 +304,11 @@ class JUnit(AbstractProgrammingBackend):
         
         else:
             return BackendResult(True,'\nYour submission passed all tests.')
+            
+            
+            
+            
+
             
         
         
