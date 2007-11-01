@@ -1,8 +1,15 @@
 #! /bin/sh
 
-JAVA_HOME=/usr/lib/jvm/java-6-sun;	export JAVA_HOME
-JVM_HOME=${JAVA_HOME};			export JVM_HOME
-PATH=${JAVA_HOME}/bin:${PATH};		export PATH
+JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home; export JAVA_HOME
+
+JAVA_BIN=${JAVA_HOME}/bin
+COMPILER=${JAVA_BIN}/javac
+
+JVM_HOME=${JAVA_HOME}; export JVM_HOME
+PATH=${JAVA_BIN}:${PATH}; export PATH
+
+#CLASSPATH=".:/Users/amelung/wdok/projekte/edu-components/impl/ECSpooler/backends/junit/junit_libs/junit-4.3.1.jar"
 
 ulimit -d `ulimit -H -d`
-${JAVA_HOME}/bin/javac -encoding utf-8 "$@"
+
+${COMPILER} -encoding utf-8 "$@"

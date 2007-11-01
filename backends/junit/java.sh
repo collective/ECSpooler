@@ -1,9 +1,17 @@
 #! /bin/sh
 
-JAVA_HOME=/usr/lib/jvm/java-6-sun;	export JAVA_HOME
-JVM_HOME=${JAVA_HOME};			export JVM_HOME
-PATH=${JAVA_HOME}/bin:${PATH};		export PATH
-INTERPRETER=${JAVA_HOME}/bin/java
+JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home; export JAVA_HOME
+
+JAVA_BIN=${JAVA_HOME}/bin
+INTERPRETER=${JAVA_BIN}/java
+
+JVM_HOME=${JAVA_HOME}; export JVM_HOME
+PATH=${JAVA_BIN}:${PATH}; export PATH
 
 ulimit -d `ulimit -H -d`
-$INTERPRETER "$@"
+
+trap 'kill $! && trap - TERM && kill $$' TERM
+
+$INTERPRETER "$@" &
+
+wait %%
