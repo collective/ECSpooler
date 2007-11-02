@@ -181,7 +181,7 @@ public class Caesar
         job = BackendJob(data=self.jobdata)
 
         backend = JUnit.JUnit(self.params)
-
+        
         # 1. we check syntax first to have a compiled class files
         result = backend._manage_checkSyntax(job)
         
