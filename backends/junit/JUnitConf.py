@@ -11,8 +11,10 @@ class JUnitConf:
     Properties used by backend JUnit.
     """
 
-    compiler = join(abspath(dirname(__file__)), 'javac')
-    interpreter = join(abspath(dirname(__file__)), 'java')
+    #compiler = join(abspath(dirname(__file__)), 'javac')
+    compiler = join(abspath(dirname(__file__)), 'javac.sh')
+    #interpreter = join(abspath(dirname(__file__)), 'java+systrace)
+    interpreter = join(abspath(dirname(__file__)), 'java.sh')
     #interpreter = join(abspath(dirname(__file__)), 'java+systrace')
 
     # The packages that the model and student solution will be put in
@@ -47,8 +49,8 @@ class JUnitConf:
             paths += ':'+join(CURRENT_PATH,JUNIT_LIBS,lib)
     CLASSPATH_SETTINGS = ['-classpath','.:'+paths]
     
-    print "cp::"
-    print paths
+    #print "cp::"
+    #print paths
 
 
     wrapperTemplate = \
