@@ -73,7 +73,7 @@ class JUnit(AbstractProgrammingBackend):
         matcher = JUnitConf.PACKAGE_NAME_RE.search(source)
         
         if matcher is not None:
-            #source has a package declaration -> replace it!
+            # source has a package declaration -> replace it!
             return re.sub('package\s+.*;',
                 'package %s;' % JUnitConf.NS_STUDENT,
                 source)
@@ -102,7 +102,7 @@ class JUnit(AbstractProgrammingBackend):
                 lib = libs.split('.')[0]
                 start = imports.find(lib)
                 if start > 0:
-                    #found library
+                    # found library
                     source = source.replace('import '+imports,'import '+folder+'.'+imports[start:],1)
                     
         return source
@@ -155,7 +155,7 @@ class JUnit(AbstractProgrammingBackend):
                 logging.info('Running syntax check with test: %s' % 
                     testSpec.getName())
                     
-                #guarantee that the submission will be put in folder NS_STUDENT
+                # guarantee that the submission will be put in folder NS_STUDENT
                 folder = jobId+"/"+JUnitConf.NS_STUDENT
                 
                 module = self._writeModule(
@@ -214,13 +214,13 @@ class JUnit(AbstractProgrammingBackend):
         """
         inputFields = self.schema.filterFields(type='InputField')
         
-        #variable declaration
-        exitcode=-999
+        # variable declaration
+        exitcode=-42
         
-        #Test if an InputField exists
+        # Test if an InputField exists
         assert inputFields, 'No InputFields found!'
         
-        #get submission
+        # get submission
         submission = job['submission']
         
         assert submission is not None,\
@@ -235,21 +235,21 @@ class JUnit(AbstractProgrammingBackend):
             return BackendResult(-217,message)
         test = tests[0]
         
-        #get compiler
+        # get compiler
         compiler = test.compiler
         
-        #get interpreter
+        # get interpreter
         interpreter = test.interpreter
 
-        #get templates
+        # get template
         wrapper_code = test.semantic
             
         #-----------  compile and run Wrapper Template  ------------------------        
-        #replace all variables in wrapper template
+        # replace all variables in wrapper template
         for field in self.schema.filterFields(type='InputField'):
             field_text = job[field.getName()]
             
-            #empty fields should cause that no text is written
+            # empty fields should cause that no text is written
             if field_text is None:
                 field_text = ""
                 

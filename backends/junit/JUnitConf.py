@@ -22,22 +22,20 @@ class JUnitConf:
     
     # The name of the wrapper class that performs the semantic check
     CLASS_SEMANTIC_CHECK = 'JUnitTester'
-    CLASS_METHOD_CHECK = 'MethodExistingTester'
-
     
-    #Regular expressions to extract certain information
+    # Regular expressions to extract certain information
     CLASS_NAME_RE = re.compile('public\s+class\s+(?P<className>[A-Z]\w*)(\<\w*\>)?\s*\{')
     CONSTRUCTOR_ATTRIBUTES_RE = re.compile('public\s+(?P<consName>[A-Z]\w*)\s*\((?P<attr>.*)\)')
     PACKAGE_NAME_RE = re.compile('package\s+(?P<packageName>[a-z]+\w*);')
     METHOD_NOT_FOUND_RE = re.compile('location:.*\n.*;\n')
     
-    #library directory name:
+    # Library directory name:
     JUNIT_LIBS = 'junit_libs'
     
     # absolute path to junit archive
     CURRENT_PATH = abspath(dirname(__file__))
     
-    #Library content
+    # Library content
     LIBRARIES = os.listdir(join(CURRENT_PATH,JUNIT_LIBS))
     
     # Define classpath settings:
@@ -48,11 +46,8 @@ class JUnitConf:
         if lib.rfind('.class') == -1:
             paths += ':'+join(CURRENT_PATH,JUNIT_LIBS,lib)
     CLASSPATH_SETTINGS = ['-classpath','.:'+paths]
-    
-    #print "cp::"
-    #print paths
 
-
+    # Wrapper Template used to test the submission
     wrapperTemplate = \
 r'''
 //imports for Unit testing
@@ -93,7 +88,7 @@ public class %s {
 }
 ''' % (NS_STUDENT, CLASS_SEMANTIC_CHECK, CLASS_SEMANTIC_CHECK)
 
-    # input schema
+    # Input Schema
     inputSchema = Schema((
 
         InputField(
@@ -123,7 +118,7 @@ public class %s {
         ),
 ))
 
-    # testSchema
+    # Test Schema
     tests = Schema((
 
         TestEnvironment(
