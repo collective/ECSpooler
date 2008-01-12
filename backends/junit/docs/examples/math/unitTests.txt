@@ -1,0 +1,93 @@
+private ${CLASS} c;
+
+@Before public void setUp(){
+	c = new ${CLASS}();
+}
+
+@After public void tearDown(){
+	c = null;
+}
+
+@Test public void longAbs(){
+	assertEquals("abs(long) did not return the correct result.", 10l, c.abs(10l));
+	assertEquals("abs(long) did not return the correct result.", 10l, c.abs(-10l));
+}
+
+@Test public void intAbs(){
+	assertEquals("abs(int) did not return the correct result.", 99, c.abs(99));
+	assertEquals("abs(int) did not return the correct result.", 99, c.abs(-99));
+}
+
+@Test public void doubleAbs(){
+	assertEquals("abs(double) did not return the correct result.", 0.99d, c.abs(0.99d));
+	assertEquals("abs(double) did not return the correct result.", 0.99d, c.abs(-0.99d));
+}
+
+@Test public void floatAbs(){
+	assertEquals("abs(float) did not return the correct result.", 0.099f, c.abs(0.099f));
+	assertEquals("abs(float) did not return the correct result.", 0.099f, c.abs(-0.099f));
+}
+
+@Test public void longMax(){
+	long l1 = 9999l;
+	long l2 = 1111l;
+	
+	assertEquals("max(long) did not return the correct result.", l1, c.max(l1, l2));
+	assertEquals("max(long) did not return the correct result.", l2, c.max(-l1, l2));
+}
+
+@Test public void intMax(){
+	int i1 = 234;
+	int i2 = 123;
+	
+	assertEquals("max(int) did not return the correct result.", i1, c.max(i1, i2));
+	assertEquals("max(int) did not return the correct result.", i2, c.max(-i1, i2));
+}
+
+@Test public void doubleMax(){
+	double d1 = 0.234d;
+	double d2 = 0.000023d;
+	
+	assertEquals("max(double) did not return the correct result.", d1, c.max(d1, d2));
+	assertEquals("max(double) did not return the correct result.", d2, c.max(-d1, d2));
+}
+
+@Test public void floatMax(){
+	float f1 = 0.34f;
+	float f2 = 0.11f;
+	
+	assertEquals("max(float) did not return the correct result.", f1, c.max(f1, f2));
+	assertEquals("max(float) did not return the correct result.", f2, c.max(-f1, f2));
+}
+
+@Test public void longMin(){
+	long l1 = 9999l;
+	long l2 = 1111l;
+	
+	assertEquals("min(long) did not return the correct result.", l2, c.min(l1, l2));
+	assertEquals("min(long) did not return the correct result.", -l1, c.min(-l1, l2));
+}
+
+@Test public void intMin(){
+	int i1 = 234;
+	int i2 = 123;
+	
+	assertEquals("min(int) did not return the correct result.", i2, c.min(i1, i2));
+	assertEquals("min(int) did not return the correct result.", -i1, c.min(-i1, i2));
+}
+
+@Test public void doubleMin(){
+	double d1 = 0.234d;
+	double d2 = 0.000023d;
+	
+	assertEquals("min(double) did not return the correct result.", d2, c.min(d1, d2));
+	assertEquals("min(double) did not return the correct result.", -d1, c.min(-d1, d2));
+}
+
+@Test public void floatMin(){
+	float f1 = 0.34f;
+	float f2 = 0.11f;
+	
+	assertEquals("min(float) did not return the correct result.", f2, c.min(f1, f2));
+	assertEquals("min(float) did not return the correct result.", -f1, c.min(-f1, f2));
+}

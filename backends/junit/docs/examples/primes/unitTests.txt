@@ -1,0 +1,42 @@
+@Test public void testHowManyPrimes(){
+        ${CLASS} c = new ${CLASS}();
+        assertEquals("The number of counted primes is wrong.", c.countPrimesUpTo(541), 100);
+}
+
+@Test public void testSeveralKnownPrimes(){
+        int[] primes = {2,3,5,7,541,191,193,197,199};
+        
+        ${CLASS} c = new ${CLASS}();
+        
+        for(int i = 0; i < primes.length; i++){
+                assertTrue(c.isPrime(primes[i]));
+        }
+}
+
+@Test public void testSeveralNumbersKnownAsNonPrimes(){
+        int[] nonprimes = {1,4,6,9,99,540,1024};
+        
+        ${CLASS} c = new ${CLASS}();
+        
+        for(int i = 0; i < nonprimes.length; i++){
+                assertFalse(c.isPrime(nonprimes[i]));
+        }       
+}
+
+@Test public void testReturnedString(){
+        String string = "";
+        ${CLASS} c = new ${CLASS}();
+        
+        //Does it return a string?
+        try{
+                string = c.getStringOfPrimesUpTo(541);
+        }catch (Exception e){
+                fail("Method 'getStringOfPrimesUpTo' does not return a String");
+        }
+        
+        //Does it have the desired format?
+        //e.g. '[]' or '[2, 3, 5, 7]'
+        //Testing if the string starts with [ and ends with ]:
+        assertEquals("The returned string of primes does not start with '['.", string.charAt(0), '[');
+        assertEquals("The returned string of primes does not end with ']'.", string.charAt(string.length()-1), ']');
+}

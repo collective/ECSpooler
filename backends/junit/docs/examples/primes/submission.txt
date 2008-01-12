@@ -1,0 +1,61 @@
+/**
+ * This class is used to compute prime numbers.
+ * @author christian
+ *
+ */
+public class Prime {    
+        /**
+         * Counts prime numbers up to a specified bound.
+         * @param bound Count up to this number.
+         * @return Number of primes.
+         */
+        public int countPrimesUpTo(int bound){
+                int count = 0;
+                
+                for(int i = 2; i <= bound; i++){
+                        if (isPrime(i)) count++;
+                }
+                
+                return count;
+        }
+        
+        /**
+         * Checks whether an integer is a prime number or not.
+         * @param number Number to be checked.
+         * @return true if number is prime, false otherwise.
+         */
+        public boolean isPrime(int number){
+                if(number == 1){
+                        return false;
+                }else if(number == 2){
+                        return true;
+                }else if(number % 2 == 0){
+                        return false;
+                }else{
+                        for(int i = 2; i < Math.sqrt(number)+1; i += 1){
+                                if (number % i == 0) return false;
+                        }
+                }
+                return true;
+        }
+        
+        /**
+         * Returns a formatted string of the first prime numbers up to bound. (e.g. '[2, 3, 5, 7]')
+         * @param bound Highest number that should be tested.
+         * @return String containing prime numbers up to bound.
+         */
+        public String getStringOfPrimesUpTo(int bound){
+                boolean format = false;
+                String string = "[";
+                
+                for(int i = 2; i <= bound; i++){
+                        if (this.isPrime(i)){
+                                if (format) string += ", ";
+                                string += i;
+                                format = true;
+                        }
+                }
+                
+                return string += "]";
+        }
+}

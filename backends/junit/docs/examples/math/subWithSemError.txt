@@ -1,0 +1,123 @@
+public class LittleMath {
+	/**
+	 * Returns absolute value of type long.
+	 * @param l Long input
+	 * @return Absolute value of l.
+	 */
+	public long abs(long l){
+		if(l < 0) return l;			//Semantically wrong
+		return l;
+	}
+	
+	/**
+	 * Returns absolute value of type double.
+	 * @param d Double input
+	 * @return Absolute Value of d.
+	 */
+	public double abs(double d){
+		if(d < 0) return -d;
+		return d;
+	}
+	
+	/**
+	 * Returns absolute value of type float.
+	 * @param f Float input
+	 * @return Absolute Value of f.
+	 */
+	public float abs(float f){
+		return (float)abs((double)f);
+	}
+	
+	/**
+	 * Returns absolute value of type int.
+	 * @param i Int input
+	 * @return Absolute Value of i.
+	 */
+	public int abs(int i){
+		return (int)abs((long)i);
+	}
+	
+	/**
+	 * Returns the maximum of two given long values.
+	 * @param l1 Long input.
+	 * @param l2 Long input.
+	 * @return Maximum of l1 and l2.
+	 */
+	public long max(long l1, long l2){
+		if (l1 < l2) return l2;
+		return l1;
+	}
+
+	/**
+	 * Returns the maximum of two given int values.
+	 * @param i1 Int input.
+	 * @param i2 Int input.
+	 * @return Maximum of i1 and i2.
+	 */
+	public int max(int i1, int i2){
+		return (int)max((long)i1, (long)i2);
+	}
+
+	/**
+	 * Returns the maximum of two given double values.
+	 * @param d1 Double input.
+	 * @param d2 Double input.
+	 * @return Maximum of d1 and d2.
+	 */
+	public double max(double d1, double d2){
+		if (d1 < d2) return d2;
+		return d1;
+	}
+
+	/**
+	 * Returns the maximum of two given float values.
+	 * @param f1 Float input.
+	 * @param f2 Float input.
+	 * @return Maximum of f1 and f2.
+	 */
+	public double max(float f1, float f2){
+		return (float)max((double)f1, (double)f2);
+	}
+	
+	/**
+	 * Returns the minimum of two given long values.
+	 * @param l1 Long input.
+	 * @param l2 Long input.
+	 * @return Minimum of l1 and l2.
+	 */
+	public long min(long l1, long l2){
+		if (l1 < l2) return l1;
+		return l2;
+	}
+
+	/**
+	 * Returns the minimum of two given int values.
+	 * @param i1 Int input.
+	 * @param i2 Int input.
+	 * @return Minimum of i1 and i2.
+	 */
+	public int min(int i1, int i2){
+		return (int)min((long)i1, (long)i2);
+	}
+
+	/**
+	 * Returns the minimum of two given double values.
+	 * @param d1 Double input.
+	 * @param d2 Double input.
+	 * @return Minimum of d1 and d2.
+	 */
+	public double min(double d1, double d2){
+		if (d1 < d2) return d1;
+		return d2;
+	}
+
+	/**
+	 * Returns the minimum of two given float values.
+	 * @param f1 Float input.
+	 * @param f2 Float input.
+	 * @return Minimum of f1 and f2.
+	 */
+	public float min(float f1, float f2){
+		return (float)min((double)f1, (double)f2);
+	}
+}
