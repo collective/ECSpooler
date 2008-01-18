@@ -19,13 +19,13 @@ private ${CLASS} c;
 }
 
 @Test public void doubleAbs(){
-	assertEquals("abs(double) did not return the correct result.", 0.99d, c.abs(0.99d));
-	assertEquals("abs(double) did not return the correct result.", 0.99d, c.abs(-0.99d));
+	assertEquals("abs(double) did not return the correct result.", 0.99d, c.abs(0.99d), 0d);
+	assertEquals("abs(double) did not return the correct result.", 0.99d, c.abs(-0.99d), 0d);
 }
 
 @Test public void floatAbs(){
-	assertEquals("abs(float) did not return the correct result.", 0.099f, c.abs(0.099f));
-	assertEquals("abs(float) did not return the correct result.", 0.099f, c.abs(-0.099f));
+	assertEquals("abs(float) did not return the correct result.", 0.099f, c.abs(0.099f), 0f);
+	assertEquals("abs(float) did not return the correct result.", 0.099f, c.abs(-0.099f), 0f);
 }
 
 @Test public void longMax(){
