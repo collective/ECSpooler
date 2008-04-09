@@ -24,7 +24,7 @@ class BackendResult(QueueItem):
     """
     
     UNDEFINED = -42
-    UNKNOWN = '?'
+    UNKNOWN = ''
 
     def __init__(self, value=None, message=None,  data=None, id=None):
         """
