@@ -4,7 +4,7 @@
 # Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
-import sys, logging
+import sys, logging, re
 
 from os.path import join, dirname, abspath
 
@@ -20,7 +20,6 @@ class HaskellConf:
 
     interpreter = join(abspath(dirname(__file__)), 'runhugs+systrace')
     #interpreter = join(abspath(dirname(__file__)), 'runhugs.sh')
-    
     
     # load Haskell function to do a simple test
     try:
@@ -72,7 +71,8 @@ main = putStr(\"\")
 %s
 """
 
-    runhugsRegEx = 'Type checking\n?|Parsing\n?|[Parsing]*[Dependency analysis]*[Type checking]*[Compiling]*\x08 *'
+    #runhugsRegEx = 'Type checking\n?|Parsing\n?|[Parsing]*[Dependency analysis]*[Type checking]*[Compiling]*\x08 *'
+    RUNHUGS_RE = re.compile(r'Type checking\n?|Parsing\n?|[Parsing]*[Dependency analysis]*[Type checking]*[Compiling]*\x08 *')
 
     # input schema
     inputSchema = Schema((
@@ -145,37 +145,4 @@ main = putStr(\"\")
             interpreter = interpreter,
         ),
     ))
-
-
-
-class HaskellIOConf(HaskellConf):
-    """
-    This class will be used to define all neccessary propertis for the Haskell
-    backend.
-    """
-    
-    # set a modified wrapper code for the semantic check
-    wrapperTemplate = \
-"""module Main where
-import Model
-import Student
-
-${helpFunctions}
-
-${testFunction}
-
-o1 = Model.${testData}
-o2 = Student.${testData}
-
-main = do v1 <- o1
-          v2 <- o2
-          putStr("isEqual=" ++ show(test (v1) (v2)) ++ ";;expected=" ++ show(v1) ++ ";;received=" ++ show(v2))
-"""
-
-    # modify schema for testing
-    tests = HaskellConf.tests.copy()
-
-    tests['simple'].semantic = wrapperTemplate
-    tests['permutation'].semantic = wrapperTemplate
-    tests['tolerance'].semantic = wrapperTemplate
 

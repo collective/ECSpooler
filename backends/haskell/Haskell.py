@@ -11,7 +11,6 @@ from types import StringTypes
 
 # local imports
 from backends.haskell.HaskellConf import HaskellConf
-from backends.haskell.HaskellConf import HaskellIOConf
 
 from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
@@ -182,8 +181,9 @@ class Haskell(AbstractProgrammingBackend):
                                     os.path.dirname(wrapperModule['file']),
                                     os.path.basename(wrapperModule['file']))
 
-                    # remove all special characters written by runhugs/haskell 
-                    result = re.sub(HaskellConf.runhugsRegEx, '', result)
+                    # remove all special characters written by runhugs
+                    #result = re.sub(HaskellConf.runhugsRegEx, '', result)
+                    result = HaskellConf.RUNHUGS_RE.sub('', result)  
         
                 except Exception, e:
                     msg = 'Internal error during semantic check: %s: %s' % \
@@ -203,7 +203,7 @@ class Haskell(AbstractProgrammingBackend):
 
                     return BackendResult(False, result)
                         
-                # has the students' solution passed this tests?
+                # has the students' solution passed this test?
                 else:
                     #logging.debug(result)
                     
@@ -234,15 +234,3 @@ class Haskell(AbstractProgrammingBackend):
 
         return BackendResult(solved, feedback)
 
-
-
-class HaskellIO(Haskell):
-    """
-    Tests functions which return values of type Haskell I/O.
-    """
-    
-    id = 'haskell-io'
-    name = 'Haskell I/O'
-    version = '1.0'
-
-    testSchema = HaskellIOConf.tests
