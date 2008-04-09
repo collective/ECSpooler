@@ -19,7 +19,7 @@ Prerequisites
 
   * "Python":http://python.org/
   
-  * "Java":http://java.sun.com/
+  * "Java":http://java.sun.com/ version 1.5 or higher
     
   * "ECSpooler":http://wdok.cs.uni-magdeburg.de/software/ecspooler
   
