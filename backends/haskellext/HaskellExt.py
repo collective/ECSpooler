@@ -155,8 +155,9 @@ class HaskellExt(Haskell):
                             os.path.basename(wrapperModule['file']))
 
     
-                    # remove all special characters written by runhugs/haskell 
-                    result = re.sub(HaskellExtConf.runhugsRegEx, '', result)
+                    # remove all special characters written by runhugs/haskell
+                    #result = re.sub(HaskellExtConf.runhugsRegEx, '', result)
+                    result = HaskellExtConf.RUNHUGS_RE.sub('', result) 
         
                 except Exception, e:
                     msg = 'Internal error during semantic check: %s: %s' % \

@@ -9,17 +9,12 @@ from backends.haskell.HaskellConf import HaskellConf
 
 class HaskellExtConf(HaskellConf):
     """
-    This class will be used to define all necessary propertis for the Haskell
-    backend.
+    This class will be used to define all necessary propertis for the 
+    extended Haskell backend.
+
+    It inherits from HaskellConf, so we can use variables already 
+    defined there.
     """
-    
-    syntaxTemplate = \
-"""module Main where
-    
-${SOURCE}
-       
-main = putStr(\"\")
-"""
     
     semanticCheckTemplate = \
 """module ${MODULE} where
@@ -51,10 +46,10 @@ main = putStr(\"isEqual=\" ++ show(test (o1) (o2)) ++ \";;expected=\" ++ show(o1
 
     testSchema['simple'].compiler = HaskellConf.interpreter
     testSchema['simple'].interpreter = HaskellConf.interpreter
-    testSchema['simple'].syntax = syntaxTemplate
+    testSchema['simple'].syntax = HaskellConf.syntaxCheckTemplate
     testSchema['simple'].semantic = wrapperTemplate
     
     testSchema['permutation'].compiler = HaskellConf.interpreter
     testSchema['permutation'].interpreter = HaskellConf.interpreter
-    testSchema['permutation'].syntax = syntaxTemplate,
+    testSchema['permutation'].syntax = HaskellConf.syntaxCheckTemplate
     testSchema['permutation'].semantic = wrapperTemplate
