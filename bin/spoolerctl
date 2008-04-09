@@ -22,16 +22,21 @@ sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pard
 from config import LOGLEVEL, NOBODY_UID, NOBODY_GID
 from lib.Spooler import Spooler
 
+# get logger
+log = logging.getLogger('lib.Spooler')
+
 # Run process as nobody
 try:
     os.setuid(NOBODY_UID)
 except os.error, e:
+    log.warn("Cannot change uid: %s" % e)
     print >> sys.stderr, "Cannot change uid:", e
 
 def _startSpooler(host, port, pwdFile):
     """
     """
-    print "Starting ECSpooler on %s port %d ..." % (host, port)
+    log.info("Starting spooler on %s port %d..." % (host, port))
+    print "Starting spooler on %s port %d..." % (host, port)
 
     try:
         if sys.platform in ['unixware7']:
@@ -39,7 +44,7 @@ def _startSpooler(host, port, pwdFile):
         else:
             cpid = os.fork()
     except AttributeError, aerr:
-        logging.warn('os.fork not defined - skipping.')
+        log.warn('os.fork not defined - skipping.')
         cpid = 0
 
     if cpid == 0:
@@ -58,7 +63,9 @@ def _stopSpooler(host, port, auth):
     """
     """
     try:
-        print "Stopping ECSpooler on %s port %d ..." % (host, port)
+        log.info("Stopping ECSpooler on %s port %d..." % (host, port))
+        print "Stopping ECSpooler on %s port %d..." % (host, port)
+
         spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
         pid = spooler.getStatus(auth)[1]['pid']
         
@@ -66,12 +73,14 @@ def _stopSpooler(host, port, auth):
             # stops the spooler sending kill -15 process-id
             os.kill(pid, signal.SIGTERM)         
         except AttributeError:
-            logging.warn('os.kill and/or signal.SIGTERM not defined. '
+            log.warn('os.kill and/or signal.SIGTERM not defined. '
                           'Trying to stop spooler elsewhere.')
             # FIXME:
             #spooler.shutdown(auth)
     except Exception, e: 
-        #print "Unable to stop ECSpooler on %s port %d" % (host, port)
+        print "%s: %s" % (sys.exc_info()[0], e)
+        log.error("Unable to stop ECSpooler on %s port %d" % (host, port))
+        print "Unable to stop ECSpooler on %s port %d" % (host, port)
         pass
 
 
@@ -148,7 +157,7 @@ def main():
     else:
         command = args[0]
         
-        if not host: host = socket.getfqdn()
+        if not host: host = 'localhost' #socket.getfqdn()
         if not port: port = 5050
         
         pwdFile = os.path.join(os.path.dirname(__file__),
@@ -190,20 +199,21 @@ def main():
         except (socket.error, xmlrpclib.Fault), exc:
             if LOGLEVEL == logging.DEBUG:
                 traceback.print_exc()
-                print type(exc)     # the exception instance
-                print exc.args      # arguments stored in .args
-                print exc           # __str__ allows args to printed directly
-                print sys.exc_info()[0]
+                #print type(exc)     # the exception instance
+                #print exc.args      # arguments stored in .args
+                #print exc           # __str__ allows args to printed directly
+                #print sys.exc_info()[0]
 
             print "Server error: %s: %s" % (sys.exc_info()[0], exc)
 
         except Exception, e:
             if LOGLEVEL == logging.DEBUG:
                 traceback.print_exc()
-                print type(e)     # the exception instance
-                print e.args      # arguments stored in .args
-                print e           # __str__ allows args to printed directly
-                print sys.exc_info()[0]
+                #print type(e)     # the exception instance
+                #print e.args      # arguments stored in .args
+                #print e           # __str__ allows args to printed directly
+                #print sys.exc_info()[0]
+
             print "Error (%s): %s" % (sys.exc_info()[0], e)
 
 

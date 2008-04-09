@@ -25,14 +25,19 @@ sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pard
 from config import LOGLEVEL, NOBODY_UID, NOBODY_GID
 from backends import *
 
+# get logger
+log = logging.getLogger('lib.AbstractBackend')
+
 # Run process as nobody
 try:
     os.setuid(NOBODY_UID)
 except os.error, e:
+    log.warn("Cannot change uid: %s" % e)
     print >> sys.stderr, "Cannot change uid:", e
 
 MAX_TRIALS = 15
-BACKEND_HOST = socket.getfqdn()
+#BACKEND_HOST = socket.getfqdn()
+BACKEND_HOST = 'localhost'
 
 def _startBackend(backendId, backendPort, spoolerHost, spoolerPort, 
                    spoolerAuth):
@@ -54,7 +59,8 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
     
     exec 'version = %s.%s.version' % (backendId, backendId,)
 
-    print "Starting backend '%s %s (%s)' on %s ..." % (backendId, version, id, backendHost)
+    log.info("Starting backend '%s %s (%s)' on %s..." % (backendId, version, id, backendHost))
+    print "Starting backend '%s %s (%s)' on %s..." % (backendId, version, id, backendHost)
 
     try:
         if sys.platform in ['unixware7']:
@@ -62,7 +68,7 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
         else:
             cpid = os.fork()
     except AttributeError, aerr:
-        logging.warn('os.fork not defined - skipping.')
+        log.warn('os.fork not defined - skipping.')
         cpid = 0
 
     if cpid == 0:
@@ -71,7 +77,7 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
                                      spoolerHost, spoolerPort, spoolerAuth)
         
         if backend:
-            #print 'name=%s-%s' % (backend.id, backend.version)
+            log.info('port=%d' % p)
             print 'port=%d' % p
             print backend.start()
         else:
@@ -108,8 +114,6 @@ def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost,
                 % (moduleName, backendHost, i, \
                    spoolerHost, spoolerPort, repr(spoolerAuth),)
                 
-        #print instanceCreateStmt
-                   
         retval = _tryGetBackendInstance(backendId, instanceCreateStmt)
         
         if retval: 
@@ -134,8 +138,8 @@ def _tryGetBackendInstance(backendId, instanceCreateStmt):
     @return: The backend instance or None if the instance couldn't be created.
     """
     try:
-        logging.debug("Trying to create instance of backend '%s'" % backendId)
-        #logging.debug(instanceCreateStmt)
+        log.debug("Trying to create instance of backend '%s'" % backendId)
+        #log.debug(instanceCreateStmt)
 
         exec 'from backends.%s import %s' % (backendId.lower(), backendId)
         exec(instanceCreateStmt)
@@ -160,7 +164,9 @@ def _stopBackend(backendId, spoolerHost, spoolerPort, spoolerAuth):
     exec 'id = %s.%s.id' % (backendId, backendId,)
     exec 'version = %s.%s.version' % (backendId, backendId,)
     
-    print "Stopping backend '%s %s (%s)' on %s ..." % (backendId, version, id,
+    log.info("Stopping backend '%s %s (%s)' on %s..." % (backendId, version, 
+                                                          id, backendHost))
+    print "Stopping backend '%s %s (%s)' on %s..." % (backendId, version, id,
                                                        backendHost)
 
     spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost,
@@ -254,7 +260,7 @@ def main():
         backendId, cmd = args
         auth = {"username":user, "password":password}
 
-        if not spoolerHost: spoolerHost = socket.getfqdn()
+        if not spoolerHost: spoolerHost = 'localhost' #socket.getfqdn()
         if not spoolerPort: spoolerPort = 5050
         if not backendPort: backendPort = 5060
 
