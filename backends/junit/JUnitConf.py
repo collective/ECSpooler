@@ -49,7 +49,7 @@ class JUnitConf:
 
     # Wrapper Template used to test the submission
     wrapperTemplate = \
-r'''
+'''
 //imports for Unit testing
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -122,7 +122,7 @@ public class %s {
     tests = Schema((
 
         TestEnvironment(
-            'JUnitTest',
+            'default',
             label = 'JUnitTests',
             description = 'Run JUnit tests',
             semantic = wrapperTemplate,
