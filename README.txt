@@ -34,6 +34,10 @@ Installation
     appropriate privileges for writing to the specified installation
     directory)
 
+  * Be sure that 'ECSpooler/var' and 'ECSpooler/log' are writeable by
+    the user who is starting the spooler (cf. below if you run the spooler
+    as root).
+
 Quick Start
 
   After installation, you should then be able to start the spooler (on
