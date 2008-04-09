@@ -32,6 +32,10 @@ except os.error, e:
 MAX_TRIALS = 15
 BACKEND_HOST = socket.getfqdn()
 
+# get logger
+log = logging.getLogger('lib.backend')
+
+
 def _startBackend(backendId, backendPort, spoolerHost, spoolerPort, 
                    spoolerAuth):
     """
@@ -59,7 +63,7 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
         else:
             cpid = os.fork()
     except AttributeError, aerr:
-        logging.warn('os.fork not defined - skipping.')
+        log.warn('os.fork not defined - skipping.')
         cpid = 0
 
     if cpid == 0:
@@ -131,8 +135,8 @@ def _tryGetBackendInstance(moduleName, instanceCreateStmt):
     @return: The backend instance or None if the instance couldn't be created.
     """
     try:
-        logging.debug("Trying to create instance of backend '%s'" % moduleName)
-        #logging.debug(instanceCreateStmt)
+        log.debug("Trying to create instance of backend '%s'" % moduleName)
+        #log.debug(instanceCreateStmt)
         # e.g. import PythonBackend.PythonBackend
         #exec('import %s' % (moduleName,))
         exec(instanceCreateStmt)
@@ -282,7 +286,7 @@ def main():
                     usage()
                     
             except Exception, e:
-                if LOGLEVEL == logging.DEBUG:
+                if LOGLEVEL == log.DEBUG:
                     traceback.print_exc()
                     #print type(e)     # the exception instance
                     #print e.args      # arguments stored in .args
