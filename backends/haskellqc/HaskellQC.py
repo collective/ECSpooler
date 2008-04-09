@@ -5,21 +5,19 @@
 #
 # This file is part of ECSpooler.
 import sys, os, re
-import logging
 
 from types import StringTypes
 
 # local imports
 from backends.haskell.Haskell import Haskell
-from backends.haskell.HaskellQCConf import HaskellQCConf
-from backends.haskell.HaskellQCConf import HaskellQCConf
+from backends.haskellqc.HaskellQCConf import HaskellQCConf
 
+from lib.data.BackendJob import BackendJob
 from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
 from lib.AbstractProgrammingBackend import EX_OK
 
-
-class HaskellQuickCheck(Haskell):
+class HaskellQC(Haskell):
     """
     Backend for testing Haskell programs using QuickCheck.
     """
@@ -31,10 +29,24 @@ class HaskellQuickCheck(Haskell):
     schema = HaskellQCConf.inputSchema
     testSchema = HaskellQCConf.tests
 
+
+    def _postProcessCheckSemantic(self, test, message):
+        """
+        Post process QuickCheck result messages.
+        
+        @param: test:
+        @param: message:
+        """
+        result = message
+        
+        #result = re.sub('isEqual=', '', message)
+        result = re.sub('/.*/ECSpooler/backends/haskellqc/', '', message)
+
+        return result
+    
+
     def _process_checkSemantics(self, job):
         """
-        Test a Haskell programs using QuickCheck.
-        
         @return: a BackendResult object with result code and value
         """
         # test for available test specs
@@ -42,149 +54,150 @@ class HaskellQuickCheck(Haskell):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            self.log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
+        
+        # get student's submission and QuickCheck properties
+        submission = job['submission']
+        properties = job['properties']
 
-        # get model solution (maybe unused later) 
-        modelSource = job.get('modelSolution', '')
-        # get student's submission
-        studentSource = job.getSubmission()
-        # get QuickCheck properties
-        propertySource = job.get('properties', '')
-        
-        resultStr = ''
+        #assert properties and type(properties) in StringTypes, \
+        #    "Semantic check requires valid 'properties' (%s)" % properties
 
-        # write model solution, students' solution and wrapper files
-        # 1. model solution file
-        mSModuleName = getUniqueModuleName('Model')
-        mSFileName = getTempFileName(mSModuleName, '.hs')
-        mSSource = 'module ' + mSModuleName + ' where\n\n' + modelSource
-        writeFile(mSSource, mSFileName)
-                    
-        # 2. students' solution
-        sSModuleName = getUniqueModuleName('Student')
-        sSFileName = getTempFileName(sSModuleName, '.hs')
-        sSSource = 'module ' + sSModuleName + ' where\n\n' + studentSource
-        writeFile(sSSource, sSFileName)
-        
-        # 3. write wrapper and execute it
-        # get all property names first
-        propertyNames = re.findall('prop_\S*', propertySource)
-        propertyNames = unique(propertyNames)
-        
-        # remember all properties which are passed without error
-        solvedProperties = [];
-        
-        # for each property write a wrapper 
-        for propertyName in propertyNames:
-            # 3.1 module definition and imports
-            wSource = 'module Main where\n\n' + \
-                      'import QuickCheck\n' + \
-                      'import ' + mSModuleName + '\n' + \
-                      'import ' + sSModuleName + '\n\n'
-                   
-            # 3.2 QC properties
-            propertySource = propertySource.replace(DEFAULT_STUDENT_MODULE_NAME, sSModuleName)
-            propertySource = propertySource.replace(DEFAULT_MODEL_MODULE_NAME, mSModuleName)
-            wSource += propertySource + '\n\n'
-            # main function
-            wSource += 'main = quickCheck ' + propertyName
-            #self.writeFile(wSource, wFileName)
-        
-            # TODO: use sand-box environment
-            # 4. copy files to jail using ssh
-            #executeOsCmd(sCommandCopy % (mSFilename + '.hs'))
-            #executeOsCmd(sCommandCopy % (sSFilename + '.hs'))
-            #executeOsCmd(sCommandCopy % (wFilename + '.hs'))
-        
-            # 5. execute wrapper file
-            #print "TEST PROGRAM:\n%s"%test_code
-            data = self._runHaskell(wSource)
+        assert submission and type(submission) in StringTypes, \
+            "Semantic check requires valid 'student solution' (%s)" % submission
 
-            try:
-                (exitcode, response) = data
-                assert type(response) == list
+        testdata = None
+        
+        if properties:
+            testdata = HaskellQCConf.PROPERTIES_RE.findall(properties)
+
+        if (not testdata) or (len(testdata) == 0):
+            msg = 'No QuickCheck propeties defined.'
+            self.log.warn('%s, %s' % (msg, job.getId()))
+            return BackendResult(-216, msg)
+
+        submission = HaskellQCConf.genericModulTemplate % ('Student', submission)
+        properties = HaskellQCConf.propsTemplate % (properties)
+
+        # define return values
+        feedback = BackendResult.UNKNOWN
+        solved = True
+
+        # run selected test specifications
+        for test in testSpecs:
+
+            if not solved: break
+
+            self.log.debug('Running semantic check with test: %s' % 
+                          test.getName())
+
+            # get the interpreter
+            interpreter = test.interpreter
+           
+            # write submission and propeties to files
+            self._writeModule('Student', submission, '.hs', job.getId(), test.encoding)
+            self._writeModule('Properties', properties, '.hs', job.getId(), test.encoding)
+
+            # run with all test data
+            for t in testdata:
+                # add property name
+                wrapper = HaskellQCConf.PROP_RE.sub(t, test.semantic)
                 
-                #print repr(''.join(response))
-                # remove all special characters wirtten by runhugs/haskell 
-                message = re.sub(REGEX_RUNHUGS_SPECIALS, '', ''.join(response))
-                assert type(message) == type('')
-                #print "EXIT CODE: %d" % exitcode
-                #print "RESULT TEXT:\n%s" % output
-
-            except:
-                print "Internal error during Haskell execution: %s" % repr(data)
-                return (-1, 'Internal error: Haskell execution failed.')
-
-            # an error occured
-            if exitcode != os.EX_OK:
-                # delete temp files because we leave this method right now
-                os.remove(mSFileName)
-                os.remove(sSFileName)
-
-                # find line number in message
-                m = re.findall('.hs":(\d+)', message)
-                # set line number minus two lines and return
-                return (exitcode,
-                    re.sub('.hs":(\d+)', '.hs":%s' % (int(m[0])-2), message))
+                # execute wrapper code in haskell interpreter
+                try:
+                    # write module for wrapper
+                    wrapperModule = self._writeModule('wrapper', wrapper, 
+                                                      self.srcFileSuffix, 
+                                                      job.getId(),
+                                                      test.encoding)
                     
-            # check wether or not a students' solution passed all tests
-            else:
-                failed = re.search(REGEX_FAILED, message)
-                passed = re.findall(REGEX_PASSED_TESTNUMBER, message)
-                
-                if failed != None:
-                    failed_data = re.findall(REGEX_FAILED_TESTDATA, message)
-                    failed_data_str = ''
-                    
-                    for d in failed_data:
-                        failed_data_str += d + ' ';
-                    
-                    resultStr += '\nYour submission failed. Test case was: %s (%s)' \
-                            % (failed_data_str, propertyName)
-                            
-                    # get expected result for this test case
-                    #expectedResult = self._getResultFor(sMModuleName, failed_data_str)
-                    #studentResult = self._getResultFor(sSModuleName, failed_data_str)
+                    # execute
+                    exitcode, result = \
+                        self._runInterpreter(interpreter, 
+                                    os.path.dirname(wrapperModule['file']),
+                                    os.path.basename(wrapperModule['file']))
 
-                elif len(passed) != 0:
-                    resultStr += '\nYour submission passed all %s tests. (%s)' \
-                            % (passed[0], propertyName)
-                    
-                    solvedProperties.append(propertyName)
-
-            #os.remove(wFileName)
-
-        # 6. delete temp files
-        os.remove(mSFileName)
-        os.remove(sSFileName)
-
-        # solved or not?
-        if (len(solvedProperties) == len(propertyNames)):
-            solved = 0
-        else:
-            solved = 1
-
-        return (solved, resultStr)
-
-
-    def _getResultFor(self, moduleName, test):
-        """
-        Returns the result of a haskell program for the given test data
-        """
+                    # remove all special characters written by runhugs 
+                    result = HaskellQCConf.RUNHUGS_RE.sub('', result)
         
-        wrapper = 'module Main where\n\nimport %s\n\nmain = putStr(show(%s))' \
-                    % (moduleName, test)
-        
-        try:
-            (exitcode, response) = self._runHaskell(wrapper)
-            assert type(response) == list
-                
-            # remove all special characters wirtten by runhugs/haskell 
-            result = re.sub(REGEX_RUNHUGS_SPECIALS, '', ''.join(response))
-            assert type(result) == type('')
+                except Exception, e:
+                    msg = 'Internal error during semantic check: %s: %s' % \
+                          (sys.exc_info()[0], e)
+                                  
+                    self.log.error(msg)
+                    return BackendResult(-230, msg)
 
-        except:
-            return 'Internal error: %s' % result
+                # an error occured
+                # FIXME: os.EX_OK is available only for Macintosh and Unix!
+                if exitcode != EX_OK:
+                    result = "\nYour submission failed. Test " \
+                             "case was: '%s' (%s)" \
+                             "\n\n Received result: %s"\
+                             % (t, test.getName(), 
+                                self._postProcessCheckSemantic(test, result))
 
-        return result
+                    return BackendResult(False, result)
+                        
+                # has the students' solution passed this test?
+                else:
+                    #self.log.debug(result)
+                    failed = HaskellQCConf.FAILED_RE.findall(result)
+                    passed = HaskellQCConf.PASSED_RE.findall(result)
+                    
+                    #if len(passed) != 0:
+                    if passed:
+                        feedback += "\nYour submission %s (%s)." \
+                            % (''.join(passed), t)
+                        # go to next property
+                        
+                    #elif failed != None:
+                    elif failed:
+                        #failed_data_str = ''
+                        
+                        #for d in failed_data:
+                        #    failed_data_str += d + ' ';
+                    
+                        feedback = '\nYour submission failed. Test case was: %s (%s)' \
+                            % (''.join(failed), t)
+                        
+                        solved = False                    
+                        break # means: end testing right now
+                    # end elif
+                #end else                    
+            # end inner for loop
+        #end out for loop 
+
+        # TODO: i18n
+        feedback = feedback
+
+        return BackendResult(solved, feedback)
+
+
+# -- do some testing ----------------------------------------------------------
+
+if __name__ == "__main__":
+    """
+    """
+    import socket
+
+    host = socket.getfqdn()
+    port = 15060
+    spooler = 'http://%s:%d' % (socket.getfqdn(), 15050)
+    auth = {"username":"demo", "password":"foobar"}
+    
+    params = {'host': host, 'port': port, 'spooler': spooler, 'auth': auth, }
+
+    jobdata = {
+        'backend':'haskellqc', 
+        'submission':'square x = x * x',
+        'properties': 'prop_square x = (square x) == (x * x)\n  where types= x::Int',
+        'tests': ['default'],
+    }
+
+    job = BackendJob(data=jobdata)
+
+    result = HaskellQC(params)._process_checkSemantics(job)
+    
+    print result.getValue()
+    print result.getMessage()
