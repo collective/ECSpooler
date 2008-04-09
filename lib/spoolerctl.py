@@ -21,6 +21,10 @@ try:
     os.setuid(NOBODY_UID)
 except os.error, e:
     print >> sys.stderr, "Cannot change uid:", e
+    
+# get logger
+log = logging.getLogger('lib.spooler')
+
 
 def _startSpooler(host, port, pwdFile):
     """
@@ -33,7 +37,7 @@ def _startSpooler(host, port, pwdFile):
         else:
             cpid = os.fork()
     except AttributeError, aerr:
-        logging.warn('os.fork not defined - skipping.')
+        log.warn('os.fork not defined - skipping.')
         cpid = 0
 
     if cpid == 0:
@@ -60,7 +64,7 @@ def _stopSpooler(host, port, auth):
             # stops the spooler sending kill -15 process-id
             os.kill(pid, signal.SIGTERM)         
         except AttributeError:
-            logging.warn('os.kill and/or signal.SIGTERM not defined. '
+            log.warn('os.kill and/or signal.SIGTERM not defined. '
                           'Trying to stop spooler elsewhere.')
             # FIXME:
             #spooler.shutdown(auth)
@@ -164,7 +168,7 @@ def main():
                         usage()
 
         except (socket.error, xmlrpclib.Fault), exc:
-            if LOGLEVEL == logging.DEBUG:
+            if LOGLEVEL == log.DEBUG:
                 traceback.print_exc()
                 print type(exc)     # the exception instance
                 print exc.args      # arguments stored in .args
@@ -174,7 +178,7 @@ def main():
             print "Server error: %s: %s" % (sys.exc_info()[0], exc)
 
         except Exception, e:
-            if LOGLEVEL == logging.DEBUG:
+            if LOGLEVEL == log.DEBUG:
                 traceback.print_exc()
                 print type(e)     # the exception instance
                 print e.args      # arguments stored in .args
