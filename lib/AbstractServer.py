@@ -20,7 +20,7 @@ class AbstractServer:
     This is the abstract server class which will be used for spooler and 
     backend implementation.
     """
-    
+
     def __init__(self, host, port):
         """
         Creates a new XML-RPC server instance at the given host and port.
@@ -28,13 +28,15 @@ class AbstractServer:
         @param: host: host name
         @param: port: port number
         """
-
+        
+        self.log = logging.getLogger('')
+        
         # set server identification
         self._srvId = \
             md5.md5(repr(random.Random().random())).hexdigest()
 
         self._className = self.__class__.__name__
-
+        
         assert host and type(host) in StringTypes, \
             "%s requires a correct 'host' option" % self._className
 
@@ -45,10 +47,8 @@ class AbstractServer:
         self.host = host
         self.port = port
         
-        logging.info('host: %s' % host)
-        #print >> sys.stdout, 'host:', host
-        logging.info('port: %d' % port)
-        #print >> sys.stdout, 'port:', port
+        #self.log.info('host: %s' % host)
+        #self.log.info('port: %d' % port)
 
         self._serverThread = None
 
@@ -76,7 +76,8 @@ class AbstractServer:
         
         if self._manageBeforeStart():
 
-            logging.info('Starting server thread (%s)...' % self._className)
+            self.log.info('Starting server thread (%s)...' % (self._className, ))
+
             self._serverThread = threading.Thread(target=self._XMLRPCThread)
             self._serverThread.setDaemon(1)
             self._serverThread.start()
@@ -85,21 +86,21 @@ class AbstractServer:
                 signal.signal(signal.SIGTERM, self._stop)
                 #signal.signal(signal.SIGHUP, self._reconfig)
             except AttributeError, err:
-                logging.warn('Maybe signal.SIGTERM is not defined - skipping.')
+                self.log.warn("signal.SIGTERM is not defined - skipping it.")
     
             
             if os.name == 'nt':
                 try:
                     signal.signal(signal.SIGBREAK, signal.default_int_handler)
                 except AttributeError, err:
-                    logging.warn('Maybe signal.SIGBREAK is not defined - skipping.')
+                    self.log.warn('signal.SIGBREAK is not defined - skipping it.')
     
             try:
                 while 1:
                     time.sleep(0.1)
                 #end while
             except KeyboardInterrupt, ki:
-                logging.info('Receiving keyboard interrupt.')
+                self.log.info('Receiving keyboard interrupt.')
                 self._stop(signal.SIGTERM, None)
 
         else:
@@ -113,13 +114,13 @@ class AbstractServer:
         @param: signal: the signal (TERM or KILL)
         @param: stack:
         """
-        logging.info('Receiving signal %s, shutting down (%s).' % 
+        self.log.info('Receiving signal %s, shutting down (%s).' % 
                        (signal, self._className))
 
         self._manageBeforeStop()
 
         # stop server thread
-        logging.info('Stopping server thread (%s)...' % self._className)
+        self.log.info('Stopping server thread (%s)...' % self._className)
         self._server.server_close()
         
         os._exit(0)

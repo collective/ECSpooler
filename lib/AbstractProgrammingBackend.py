@@ -10,9 +10,7 @@ from types import UnicodeType
 
 import sys, os, re, popen2, tempfile, threading, signal, traceback
 import shutil
-import logging
-
-#from types import StringType, UnicodeType
+#import logging
 
 from lib.AbstractBackend import AbstractBackend
 from lib.util import utils
@@ -65,30 +63,30 @@ class AbstractProgrammingBackend(AbstractBackend):
 
         try:
             # invoke syntax check
-            logging.info('Invoking syntax check (%s)' % job.getId())
+            self.log.info('Invoking syntax check (%s)' % job.getId())
             result = self._manage_checkSyntax(job) # returns a BackendResult
         
             # FIXME: If the returned value is always of typ
             #        BackendResult we could use isFailure!
             #if not result.hasFailed: 
             
-            logging.debug('Result from syntax check: %s' % result.getData())
+            self.log.debug('Result from syntax check: %s' % result.getData())
             
             if result:
                 rValue = result.getValue()
                 
                 if (type(rValue) == BooleanType and rValue == True):
                     # invoke semantic check
-                    logging.info('Invoking semantic check (%s)' % job.getId())
+                    self.log.info('Invoking semantic check (%s)' % job.getId())
                     result = self._manage_checkSemantics(job)
             
-                logging.debug('Result from semantic check: %s' % result.getData())
+                self.log.debug('Result from semantic check: %s' % result.getData())
             # end if
 
         except Exception, e:
             msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
-            logging.error(msg)
-            logging.error(traceback.format_exc())
+            self.log.error(msg)
+            self.log.error(traceback.format_exc())
             result = BackendResult(-200, msg)
                 
 
@@ -114,7 +112,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         # test for available test specs
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            self.log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
                         
         # get the names of all test enrironments selected in this job
@@ -150,7 +148,7 @@ class AbstractProgrammingBackend(AbstractBackend):
                 except AssertionError, ae:
                     return BackendResult(False, str(ae))
 
-                logging.info('Running syntax check with test: %s' % 
+                self.log.info('Running syntax check with test: %s' % 
                              testSpec.getName())
                               
                 module = self._writeModule(mName, src, 
@@ -158,25 +156,25 @@ class AbstractProgrammingBackend(AbstractBackend):
                                            jobId,
                                            testSpec.encoding)
                 
-                #logging.debug(repr(module))
+                #self.log.debug(repr(module))
                 
                 exitcode, result = \
                     self._runInterpreter(compiler, 
                                    os.path.dirname(module['file']),
                                    os.path.basename(module['file']))
                     
-                #logging.debug('exitcode: %s' % repr(exitcode))
-                #logging.debug('result: %s' % repr(result))
+                #self.log.debug('exitcode: %s' % repr(exitcode))
+                #self.log.debug('result: %s' % repr(result))
                 
             except Exception, e:
                 #traceback.print_exc()
                 msg = 'Internal error during syntax check: %s: %s' % \
                         (sys.exc_info()[0], e)
                               
-                logging.error(msg)
+                self.log.error(msg)
                 return BackendResult(-220, msg)
             
-            logging.debug('exitcode: %s' % repr(-exitcode))
+            self.log.debug('exitcode: %s' % repr(-exitcode))
     
             # consider exit code
             if exitcode != EX_OK:
@@ -188,7 +186,7 @@ class AbstractProgrammingBackend(AbstractBackend):
             msg = 'No compiler/interpreter defined (test spec: %s).' \
                     % testSpec.getName()
 
-            logging.error(msg)
+            self.log.error(msg)
             return BackendResult(-221, msg)
 
         # everything seems to be ok
@@ -276,10 +274,10 @@ class AbstractProgrammingBackend(AbstractBackend):
         if not name:
             name = utils.getUniqueModuleName()
             
-#        logging.debug('%s' % tempfile.gettempdir())
-#        logging.debug('%s' % dir)
-#        logging.debug('%s' % name)
-#        logging.debug('%s' % suffix)
+#        self.log.debug('%s' % tempfile.gettempdir())
+#        self.log.debug('%s' % dir)
+#        self.log.debug('%s' % name)
+#        self.log.debug('%s' % suffix)
         
         # get file name
         fName = os.path.join(tempfile.gettempdir(), dir, name + suffix)
@@ -313,8 +311,8 @@ class AbstractProgrammingBackend(AbstractBackend):
         args_encoded = []
         options_encoded = []
 
-        #logging.debug('args: %s' % repr(args))
-        #logging.debug('options: %s' % repr(options))
+        #self.log.debug('args: %s' % repr(args))
+        #self.log.debug('options: %s' % repr(options))
         
         for arg in args:
             if type(arg) == UnicodeType:
@@ -328,17 +326,20 @@ class AbstractProgrammingBackend(AbstractBackend):
             else:
                 options_encoded.append(option)
 
+        #self.log.debug('args_encoded: %s' % repr(args_encoded))
+        #self.log.debug('options_encoded: %s' % repr(options_encoded))
+
         # create a list of alle command line elements
         commandLine = [command]
         commandLine.extend(options_encoded)
         commandLine.append(fName)
         commandLine.extend(args_encoded)
         
-        #logging.debug('commandLine: %s' % commandLine)
+        #self.log.debug('commandLine: %s' % commandLine)
         
         # Popen4 will provide both stdout and stderr on handle.fromchild
         handle = popen2.Popen4(commandLine)
-        logging.info('Started %s %s in %s with PID %d' % (command,
+        self.log.info('Started %s %s in %s with PID %d' % (command,
                                                           fName,
                                                           dir,
                                                           handle.pid))
@@ -347,7 +348,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         # process to end, or kill it.
 
         def interruptProcess():
-            logging.debug('Killing %s %s: %d -> %i' %
+            self.log.debug('Killing %s %s: %d -> %i' %
                           (command, fName, SIGTERM, handle.pid))
 
             try:
@@ -379,8 +380,8 @@ class AbstractProgrammingBackend(AbstractBackend):
         
         result = ''.join(response)
 
-        #logging.debug('exitcode: %s' % repr(exitcode))
-        #logging.debug('buffer: %s' % repr(response))
+        #self.log.debug('exitcode: %s' % repr(exitcode))
+        #self.log.debug('buffer: %s' % repr(response))
 
         # removing files will be done in _cleanup
         return exitcode, result
@@ -402,13 +403,13 @@ class AbstractProgrammingBackend(AbstractBackend):
 
             path = os.path.join(tempfile.gettempdir(), dir)
 
-            logging.debug('Deleting directory: %s' % path)
+            self.log.debug('Deleting directory: %s' % path)
 
             # delete the entire directory tree
             shutil.rmtree(path)
 
         except Exception, e:
-            logging.warn('Internal error during clean up: %s: %s' % \
+            self.log.warn('Internal error during clean up: %s: %s' % \
                           (sys.exc_info()[0], e))
         
 

@@ -16,6 +16,8 @@ class SpoolerQueue:
     A thread safe simple queue which stores queue items using pickle.
     """
     
+    log = logging.getLogger('lib.spooler')
+    
     def __init__(self, filename):
         """
         Sets the name of the file for saving the entries and initializes the 
@@ -37,11 +39,11 @@ class SpoolerQueue:
         Reads the whole queue from a file.
         """
         try:
-            #logging.debug("loading queue from '%s'" % (self._filename,))
+            #log.debug("loading queue from '%s'" % (self._filename,))
             self._queue = pickle.load(open(self._filename, 'r'))
         except Exception, e:
             msg = '%s: %s' % (sys.exc_info()[0], e)
-            logging.warn(msg)
+            log.warn(msg)
 
 
     def _save(self):
@@ -52,7 +54,7 @@ class SpoolerQueue:
             pickle.dump(self._queue, open(self._filename, 'w'), pickle.HIGHEST_PROTOCOL)
         except Exception, e:
             msg = '%s: %s' % (sys.exc_info()[0], e)
-            logging.error(msg)
+            log.error(msg)
 
 
     def isEmpty(self):
@@ -79,7 +81,7 @@ class SpoolerQueue:
                 "Illegal Argument, item must be an instance of class QueueItem"
         
         id = item.getId()
-        #logging.debug('adding new item to queue: %s' % id)
+        #log.debug('adding new item to queue: %s' % id)
         
         assert (not self._queue.has_key(id)), \
             "Item '%s' already exists in queue" % (id,)
@@ -100,14 +102,14 @@ class SpoolerQueue:
         @return: a QueueItem
         """
         try:
-            #logging.debug('id: %s' % id)
+            #log.debug('id: %s' % id)
             
             if not id:
                 (id, item) = self._queue.popitem()
             else:
                 item = self._queue.pop(id, None)
         
-            #logging.debug("pop item '%s'" % (id,))
+            #log.debug("pop item '%s'" % (id,))
 
             # store changes in file on disk
             self._save();
@@ -115,7 +117,7 @@ class SpoolerQueue:
             return item
 
         except KeyError, e :
-            logging.warn(str(e))
+            log.warn(str(e))
             return None
 
 

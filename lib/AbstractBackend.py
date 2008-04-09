@@ -35,7 +35,6 @@ class AbstractBackend(AbstractServer):
     testSchema = None
     version = None
     
-    
     def __init__(self, params):
         """
         @params dict with all parameters which must be set for a backend
@@ -43,6 +42,9 @@ class AbstractBackend(AbstractServer):
         AbstractServer.__init__(self, 
                                 params.get('host', None), 
                                 params.get('port', None))
+        
+        # reset logger
+        self.log = logging.getLogger('lib.AbstractBackend')
         
         assert self.id != '', 'An valid ID is required for this backend.'
         assert self.name != '', 'A valid name is required for this backend.'
@@ -95,7 +97,7 @@ class AbstractBackend(AbstractServer):
         try:
             spooler = xmlrpclib.Server(self.spooler)
 
-            logging.debug("Registering backend '%s (%s)' at spooler on '%s'" % 
+            self.log.debug("Registering backend '%s (%s)' at spooler on '%s'" % 
                           (self.id, self.version, self.spooler))
 
             (code, msg) = spooler.addBackend(self.auth, 
@@ -106,24 +108,24 @@ class AbstractBackend(AbstractServer):
                                              (self.host, self.port))
 
             if code != 1:
-                logging.error("Can't add backend to spooler: %s (%i)" % 
+                self.log.error("Can't add backend to spooler: %s (%i)" % 
                               (msg, code))
             elif not msg:
-                logging.error("Internal error: Spooler returned an "
+                self.log.error("Internal error: Spooler returned an "
                               "invalid id")
             else:
                 self._spoolerId = msg
                 registered = True
 
         except socket.error, serr:
-            logging.error("Socket error: %s (%s)" % (serr, self.spooler))
+            self.log.error("Socket error: %s (%s)" % (serr, self.spooler))
 
         except xmlrpclib.Fault, err:
-            logging.error("XMLRPC error: %s (%s)" % (err, self.spooler,))
+            self.log.error("XMLRPC error: %s (%s)" % (err, self.spooler,))
         
         
         if not registered:
-            logging.error("Can't add backend to spooler")
+            self.log.error("Can't add backend to spooler")
             #os._exit(1)
             
         return registered
@@ -134,7 +136,7 @@ class AbstractBackend(AbstractServer):
         @see: AbstractServer._manageBeforeStop()
         """
         try:
-            logging.debug("Removing backend '%s' from spooler '%s'" % 
+            self.log.debug("Removing backend '%s' from spooler '%s'" % 
                           ('%s %s (%s)' % (self.name, self.version, self.id), 
                            self.spooler,))
 
@@ -142,10 +144,10 @@ class AbstractBackend(AbstractServer):
             spooler.removeBackend(self.auth, self.id)
 
         except socket.error, serr:
-            logging.error("Socket error: %s (%s)" % (serr, self.spooler))
+            self.log.error("Socket error: %s (%s)" % (serr, self.spooler))
 
         except xmlrpclib.Fault, err:
-            logging.error("XMLRPC error: %s (%s)" % (err, self.spooler,))
+            self.log.error("XMLRPC error: %s (%s)" % (err, self.spooler,))
 
 
     def shutdown(self, auth):
@@ -219,10 +221,10 @@ class AbstractBackend(AbstractServer):
         result = {}
         
         for field in self.schema.fields():
-            #logging.debug('Processing field: %s' % field)
+            #self.log.debug('Processing field: %s' % field)
             result[field.getName()] = field.getAllProperties()
 
-        #logging.debug('Return: %s' % retval)
+        #self.log.debug('Return: %s' % retval)
         return  (1, result)
 
 
@@ -261,10 +263,10 @@ class AbstractBackend(AbstractServer):
             result = self._process_execute(job)
             
         except Exception, e:
-            logging.error(''.join(traceback.format_exception(*sys.exc_info())))
+            self.log.error(''.join(traceback.format_exception(*sys.exc_info())))
             
             msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
-            logging.error(msg)
+            self.log.error(msg)
             result = BackendResult(-200, msg)
 
             
@@ -293,7 +295,7 @@ class AbstractBackend(AbstractServer):
         """
         result = []
         
-        #logging.debug('job: %s' % job.getData())
+        #self.log.debug('job: %s' % job.getData())
 
         if job.has_key('tests'):
             # user has selected one or more tests
@@ -305,7 +307,7 @@ class AbstractBackend(AbstractServer):
         #    # not tests selected by the user, taking all available
         #    result = self.testSchema.fields()
             
-        #logging.debug('Following tests will be used %s: ' % result)
+        #self.log.debug('Following tests will be used %s: ' % result)
         return result
 
 
@@ -319,12 +321,12 @@ class AbstractBackend(AbstractServer):
 
         if self._spoolerId == None: 
             msg = "Authorization failed: Invalid spooler connection settings"
-            logging.error(msg)
+            self.log.error(msg)
             return False
 
         if not data or type(data) != dict or data['srv_id'] != self._spoolerId:
             s = "Authorization failed: Invalid data"
-            logging.error(s)
+            self.log.error(s)
             return False
 
         return True

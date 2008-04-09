@@ -36,7 +36,7 @@ class Spooler(AbstractServer):
     # resourcestring
     ERROR_AUTH_FAILED = "Authorization failed"
     DEFAULT_DOQUEUE_WAKEUP = 2 # 1 == 1000 ms
-
+    
     def __init__(self, host, port, pwdFile):
         """
         Creates a new spooler instance at the given host and port.
@@ -46,6 +46,9 @@ class Spooler(AbstractServer):
         @param: pwdFile: absolute path to password file
         """
         AbstractServer.__init__(self, host, port)
+        
+        # reset log
+        self.log = logging.getLogger('lib.Spooler')
 
         assert pwdFile and type(pwdFile) in (StringType, UnicodeType),\
             "%s requires a correct 'pwd_file' option" % self._className
@@ -89,7 +92,7 @@ class Spooler(AbstractServer):
         Starts a thread which checks the queue for new jobs.
         """
         # start a new thread which runs the doqueue-method
-        logging.info('Starting scheduler thread (%s)...' % self._className)
+        self.log.info('Starting scheduler thread (%s)...' % self._className)
         self._doqueueThread = threading.Thread(target=self._doqueue)
         self._doqueueThread.start()
         
@@ -102,15 +105,15 @@ class Spooler(AbstractServer):
         the spooler itself.
         """
         # stop doqueue thread
-        logging.info('Stopping scheduler thread (%s)...' % self._className)
+        self.log.info('Stopping scheduler thread (%s)...' % self._className)
         self._doqueueThreadExit = True
 
         while self._doqueueThread and self._doqueueThread.isAlive():
-            logging.debug('Scheduler thread is still alive, waiting %ds.' %
+            self.log.debug('Scheduler thread is still alive, waiting %ds' %
                            self.DEFAULT_DOQUEUE_WAKEUP)
             time.sleep(self.DEFAULT_DOQUEUE_WAKEUP)
         
-        logging.info('Stopping backends...')
+        self.log.info('Stopping backends...')
         
         # We make a copy of _backends because it will change during 
         # iteration: backends call removeBackend in their shutdown method,
@@ -142,7 +145,7 @@ class Spooler(AbstractServer):
         if uid in self._backends:
             chk = self._backends[uid]
 
-            logging.info("Stopping backend '%s' at '%s'" % (uid, chk['url']))
+            self.log.info("Stopping backend '%s' at '%s'" % (uid, chk['url']))
             self._callBackend(chk["url"], "shutdown")
 
             return (1, '')
@@ -183,7 +186,7 @@ class Spooler(AbstractServer):
                                      'url': xmlrpc_url,
                                      'isBusy': False}
 
-        logging.info("Backend '%s %s (%s) (%s)' added" % (name, version,
+        self.log.info("Backend '%s %s (%s) (%s)' added" % (name, version,
                                                           backendId,
                                                           xmlrpc_url))
 
@@ -206,7 +209,7 @@ class Spooler(AbstractServer):
         if backendId in self._backends:
             backend = self._backends[backendId]
 
-            logging.info("Removing backend '%s (%s)'" % (backendId, backend['url']))
+            self.log.info("Removing backend '%s (%s)'" % (backendId, backend['url']))
             del self._backends[backendId]
 
             return (1, "Backend '%s' removed" % backendId)
@@ -240,14 +243,14 @@ class Spooler(AbstractServer):
                 return (1, "No such backend: %s" % backenId)
 
             # append the job
-            logging.info("Enqueueing job '%s'" % job.getId())
+            self.log.info("Enqueueing job '%s'" % job.getId())
             self._queue.enqueue(job)
 
             return (1, job.getId())
 
         except Exception, e:
             msg = 'Invalid or insufficient data: %s: %s' % (sys.exc_info()[0], e)
-            logging.error(msg)
+            self.log.error(msg)
             return (-150, msg)
 
 
@@ -265,11 +268,11 @@ class Spooler(AbstractServer):
 
         result = {}
 
-        logging.debug("Dequeuing results for all jobs (%d)" % self._results.getSize())
+        self.log.debug("Dequeuing results for all jobs (%d)" % self._results.getSize())
 
         while(not self._results.isEmpty()):
             item = self._results.dequeue()
-            logging.info("Returning result for job '%s'" % item.getId())
+            self.log.info("Returning result for job '%s'" % item.getId())
             result[item.getId()] = item.getData()
 
         return result
@@ -292,14 +295,14 @@ class Spooler(AbstractServer):
 
         result = {}
 
-        logging.debug("Dequeuing result for job '%s'" % id)
+        self.log.debug("Dequeuing result for job '%s'" % id)
         item = self._results.dequeue(id)
 
         if item: 
-            logging.info("Returning result for job '%s'" % id)
+            self.log.info("Returning result for job '%s'" % id)
             result[item.getId()] = item.getData()
         else:
-            logging.info("No result for job '%s'" % id)
+            self.log.info("No result for job '%s'" % id)
 
         return result
 
@@ -316,7 +319,7 @@ class Spooler(AbstractServer):
         @param: authdata: username and password for authentication
         """
         
-        logging.debug('Returning spooler status information')
+        self.log.debug('Returning spooler status information')
 
         if not self._auth.test(authdata, GET_STATUS):
             return (-110, self.ERROR_AUTH_FAILED)
@@ -337,7 +340,7 @@ class Spooler(AbstractServer):
         @return: dict with backend names as keys
         """
         
-        logging.debug('Returning all available backends')
+        self.log.debug('Returning all available backends')
 
         if not self._auth.test(auth, GET_STATUS):
             return (-110, self.ERROR_AUTH_FAILED)
@@ -353,7 +356,7 @@ class Spooler(AbstractServer):
         @param: backendId: a backend's unique ID
         """
         
-        logging.debug("Trying to return status information for backend '%s'" % backendId)
+        self.log.debug("Trying to return status information for backend '%s'" % backendId)
 
         if not self._auth.test(auth, GET_BACKEND_INFO):
             return (-110, self.ERROR_AUTH_FAILED)
@@ -375,7 +378,7 @@ class Spooler(AbstractServer):
         @see: AbstractBackend.getInputFields
         """
         
-        logging.debug("Trying to return input fields for backend '%s'" % backendId)
+        self.log.debug("Trying to return input fields for backend '%s'" % backendId)
 
         if not self._auth.test(auth, GET_BACKEND_INFO):
             return (-110, self.ERROR_AUTH_FAILED)
@@ -397,7 +400,7 @@ class Spooler(AbstractServer):
         @see. AbstractBackend.getTestFields
         """
         
-        logging.debug("Trying to return test specs for backend '%s'" % backendId)
+        self.log.debug("Trying to return test specs for backend '%s'" % backendId)
 
         if not self._auth.test(auth, GET_BACKEND_INFO):
             return (-110, self.ERROR_AUTH_FAILED)
@@ -418,7 +421,7 @@ class Spooler(AbstractServer):
             return True
         else:
             msg = "No such backend: %s" % backendId
-            logging.warn(msg)
+            self.log.warn(msg)
             return False
         
         
@@ -443,7 +446,7 @@ class Spooler(AbstractServer):
                     backend = self._backends.get(job['backend'], None)
     
                     if not backend:
-                        logging.warn("Job %s can not be executed, no such "
+                        self.log.warn("Job %s can not be executed, no such "
                                      "backend: %s" % (job.getId(), backend['id']))
                                   
                         # enqueue the job so maybe later, if the backend
@@ -453,7 +456,7 @@ class Spooler(AbstractServer):
                     # backend is busy
                     elif backend.get('isBusy', False):
                         # backend is bussy, try again later
-                        logging.info('Backend %s is busy (%s)' % 
+                        self.log.info('Backend %s is busy (%s)' % 
                                       (backend['id'], job,))
                         # try later
                         self._queue.enqueue(job)
@@ -464,17 +467,17 @@ class Spooler(AbstractServer):
                         result = self._processJob(backend, job)
                         self._results.enqueue(result)
                         
-                        logging.info("Result of job '%s' added to result queue" 
+                        self.log.info("Result of job '%s' added to result queue" 
                                      % (result.getId(),))
         
                         backend['isBusy'] = False
                 else:
-                    #logging.debug('_doqueue: self._queue is empty');
+                    #self.log.debug('_doqueue: self._queue is empty');
                     pass
                     
             except Exception, e:
                 msg = '%s: %s' % (sys.exc_info()[0], e)
-                logging.error(msg)
+                self.log.error(msg)
             
             # wait a defined time before resuming
             time.sleep(self.DEFAULT_DOQUEUE_WAKEUP)
@@ -490,7 +493,7 @@ class Spooler(AbstractServer):
         @param: job: a job instance
         """
         try:
-            logging.info("Dispatching job '%s' to backend '%s'" % 
+            self.log.info("Dispatching job '%s' to backend '%s'" % 
                          (job.getId(), job['backend']))
 
             # invoke remote method call
@@ -506,17 +509,17 @@ class Spooler(AbstractServer):
             else:
                 # unexpected or unhandled result
                 msg = 'Unexpected result type: %s' % repr(type(rd))
-                logging.error(msg)
+                self.log.error(msg)
                 result = BackendResult(-151, msg, id=job.getId())
 
         except Exception, e:
             msg = '%s: %s' % (sys.exc_info()[0], e)
-            logging.error(msg)
+            self.log.error(msg)
 
             result = BackendResult(-153, msg, id=job.getId())
         
-        logging.debug('jobId: %s' % job.getId())
-        logging.debug('data: %s' % result.getData())
+        #self.log.debug('jobId: %s' % job.getId())
+        #self.log.debug('data: %s' % result.getData())
             
         return result
 
@@ -529,19 +532,19 @@ class Spooler(AbstractServer):
         @param: method: name of method that will be invoked
         @return: a tuple with code and result or an error message
         """
-        #logging.debug('xxx: %s' % repr(kw))
-        #logging.debug('xxx: %s' % repr(args))
+        #self.log.debug('xxx: %s' % repr(kw))
+        #self.log.debug('xxx: %s' % repr(args))
         
         s = xmlrpclib.Server(url)
         try:
             result = getattr(s, method)({"srv_id": self._srvId}, *kw, **args)
-            #logging.debug('_callBackend: %s' % repr(result))
+            #self.log.debug('_callBackend: %s' % repr(result))
             return result
         
         #except (socket.error, xmlrpclib.Fault, xmlrpclib.ProtocolError), exc:
         except Exception, e:
             msg = 'Server error: %s: %s (%s)' % (sys.exc_info()[0], e, method)
 
-            logging.error(''.join(traceback.format_exception(*sys.exc_info())))
+            self.log.error(''.join(traceback.format_exception(*sys.exc_info())))
             return msg
 
