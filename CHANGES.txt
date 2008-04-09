@@ -1,0 +1,5 @@
+# Changes in release 1.1 (planed for 2008-04-10)
+
+- Spooler and backends now use separate log files (spooler.log and 
+  backend.log).  A third log file (event.lof) is written and contains
+  all messages.
