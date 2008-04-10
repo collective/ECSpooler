@@ -10,7 +10,7 @@ Description
   output of a model solution for a set of test data.
   
   The HaskellIO backend is derived from Haskell backend and should be 
-  used if you TODO:
+  used for testing I/O code in Haskell.
 
 Prerequisites
 
