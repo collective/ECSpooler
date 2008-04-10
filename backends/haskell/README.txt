@@ -77,7 +77,8 @@ Quick Start
   For administrative tasks such as starting/stopping backends
   authentication is required.  Therefore ECSpooler ships with a
   password file ('etc/passwd') containing a user "root" with default
-  password "bazquux".
+  password "bazquux".  See the ECSpooler documentation if you would
+  like to add/change users and passwords.
  
   Testing a Haskell program with the Haskell backend requires a model 
   solution and a set of test data, e.g.,  
@@ -107,14 +108,11 @@ Quick Start
 More Haskell testing
 
   Testing I/O code in Haskell ist supported by the *HaskellIO* 
-  backend.  If you have configured the Haskell backend HaskellIO will 
-  also work.  Start the HaskellIO backend using the following command::
-    
-    backendctl -u root -p bazquux HaskellIO start
+  backend.
   
-  A backend which uses 
-  "QuickCheck"http://www.cs.chalmers.se/~rjmh/QuickCheck/ for testing 
-  is still in the implementation phase.
+  The *HaskellQC* backend uses 
+  "QuickCheck":http://www.cs.chalmers.se/~rjmh/QuickCheck/ for testing 
+  with properties and random test data.
   
 Support
 
