@@ -1,23 +1,22 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2005 Otto-von-Guericke-University, Magdeburg
+# Copyright (c) 2008 Otto-von-Guericke-University, Magdeburg
 #
 # This file is part of ECSpooler.
 import re
 
 from os.path import join, dirname, abspath
 
-from config import logDir
 from lib.util.BackendSchema import TestEnvironment, InputField, Schema
 from backends.haskell.HaskellConf import HaskellConf
 
-REGEX_FAILED = '(?m)Falsifiable, after \d+ tests?:'
-REGEX_FAILED_TESTDATA = '\n(-?.+)'
-REGEX_PASSED_TESTNUMBER = 'passed (\d+)'
-REGEX_LINENUMBER = ':\d+'
-DEFAULT_MODEL_MODULE_NAME = '#Model#'
-DEFAULT_STUDENT_MODULE_NAME =  '#Student#'
+#REGEX_FAILED = '(?m)Falsifiable, after \d+ tests?:'
+#REGEX_FAILED_TESTDATA = '\n(-?.+)'
+#REGEX_PASSED_TESTNUMBER = 'passed (\d+)'
+#REGEX_LINENUMBER = ':\d+'
+#DEFAULT_MODEL_MODULE_NAME = '#Model#'
+#DEFAULT_STUDENT_MODULE_NAME =  '#Student#'
 
 class HaskellQCConf(HaskellConf):
     """
@@ -28,7 +27,7 @@ class HaskellQCConf(HaskellConf):
     defined there.
     """
     
-    #interpreter = join(abspath(dirname(__file__)), 'runhugs+systrace')
+    interpreter = join(abspath(dirname(__file__)), 'runhugs+systrace')
     #interpreter = join(abspath(dirname(__file__)), 'runhugs.sh')
     
     # regex to get all property names
@@ -68,7 +67,8 @@ main = verboseCheck ${prop_}
             'properties', 
             required = True, 
             label = 'QuickCheck properties',
-            description = 'Enter one or more QuickCheck properties (cf. <http://>).',
+            description = 'Enter one or more QuickCheck properties ' +
+                          '(cf. <http://www.cs.chalmers.se/~rjmh/QuickCheck/>).',
             i18n_domain = 'EC',
         ),
     ))
@@ -83,8 +83,8 @@ main = verboseCheck ${prop_}
             syntax = HaskellConf.syntaxCheckTemplate,
             semantic = wrapperTemplate,
             lineNumberOffset = 2,
-            compiler = HaskellConf.interpreter,
-            interpreter = HaskellConf.interpreter,
+            compiler = interpreter,
+            interpreter = interpreter,
         ),
     ))
     
