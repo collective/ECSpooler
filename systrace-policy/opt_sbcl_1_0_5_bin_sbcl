@@ -1,0 +1,38 @@
+Policy: /opt/sbcl-1.0.5/bin/sbcl, Emulation: netbsd
+	netbsd-mmap: permit
+	netbsd-fsread: filename eq "/etc/ld.so.conf" then permit
+	netbsd-__fstat13: permit
+	netbsd-close: permit
+	netbsd-munmap: permit
+	netbsd-__sysctl: permit
+	netbsd-fsread: filename match "/lib/libm387.so.*" then permit
+	netbsd-fsread: filename match "/lib/libm.so.*" then permit
+	netbsd-fsread: filename match "/lib/libc.so.*" then permit
+	netbsd-__sigaction_sigtramp: permit
+	netbsd-__sigprocmask14: permit
+	netbsd-getpid: permit
+	netbsd-kill: pidname eq "/opt/sbcl-1.0.5/bin/sbcl" and signame eq "SIGUSR1" then permit
+	netbsd-setcontext: permit
+	netbsd-issetugid: permit
+	netbsd-fsread: filename eq "/etc/malloc.conf" then permit
+	netbsd-break: permit
+	netbsd-fsread: filename eq "/usr/share/locale/locale.alias" then permit
+	netbsd-fcntl: permit
+	netbsd-fsread: filename eq "/usr/share/locale/de_DE.ISO8859-1/LC_CTYPE" then permit
+	netbsd-lseek: permit
+	netbsd-read: permit
+	netbsd-fsread: filename eq "/usr/share/locale/de_DE.ISO8859-1" then permit
+	netbsd-getrlimit: permit
+	netbsd-setrlimit: permit
+	netbsd-mprotect: permit
+	netbsd-write: permit
+	netbsd-fsread: filename eq "/opt/sbcl-1.0.5/lib/sbcl/sbcl.core" then permit
+	netbsd-__sigaltstack14: permit
+	netbsd-__getcwd: permit
+	netbsd-getrusage: permit
+	netbsd-gettimeofday: permit
+	netbsd-fsread: filename eq "/tmp" then permit
+	netbsd-fsread: filename match "/tmp/*" then permit
+	netbsd-select: permit
+	netbsd-fsread: filename match "/tmp/*/*.lisp" then permit
+	netbsd-exit: permit
