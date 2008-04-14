@@ -2,9 +2,17 @@
 
 INTERPRETER=/opt/sbcl-1.0.5/bin/sbcl
 SBCL_HOME=${INTERPRETER%/bin/sbcl}/lib/sbcl; export SBCL_HOME
-OPTIONS="--noinform --no-sysinit --no-userinit "
+OPTIONS=" --noinform --disable-debugger --no-sysinit --no-userinit "
 
 # Explanation of SBCL command-line flags in use:
+#
+# --disable-debugger
+#    By default, a Common Lisp system tries to ask the programmer  for
+#    help when it gets in trouble (by printing a debug prompt, then
+#    listening, on *DEBUG-IO*). However, this is not useful behavior
+#    for  a  system running  with  no programmer available, and this
+#    option tries to set up more appropriate behavior for that
+#    situation
 #
 # --noinform
 #    Suppresses the startup banner text.

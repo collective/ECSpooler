@@ -18,8 +18,8 @@ class ClConf:
     Defines all properties used by backend Cl.
     """
 
-    #interpreter = join(abspath(dirname(__file__)), 'sbcl+systrace')
-    interpreter = join(abspath(dirname(__file__)), 'sbcl.sh')
+    interpreter = join(abspath(dirname(__file__)), 'sbcl+systrace')
+    #interpreter = join(abspath(dirname(__file__)), 'sbcl.sh')
 
     # The placeholder for the names of the packages that the model and
     # student solution will be put in
@@ -63,7 +63,7 @@ ${helpFunctions}
 ${SOURCE}
 ;; -------------------------------------------------------------------
 
-(defun main
+(defun main ()
   (progn
     ${testData}))
 """
@@ -73,17 +73,26 @@ ${SOURCE}
 (in-package :common-lisp-user)
 
 ;; load the model and the student packages
-(load "${%s}.lisp")
-(load "${%s}.lisp")
+(load "${%s}.lisp") ; model package
+(load "${%s}.lisp") ; student package
 
 ;; test function
 ${testFunction}
 
 ;; print test results
-(let ((ms (${%s}:main))
-      (ss (${%s}:main)))
-  (format t "isEqual=~a;;expected=~a;;received=~a~%%" (test ms ss) ms ss))
-''' % (NS_MODEL, NS_STUDENT, NS_MODEL, NS_STUDENT,)
+(let ((${%s}::ms (${%s}:main))  ; run model solution
+      (${%s}::ss (${%s}:main))) ; run student solution
+  (format t
+          "isEqual=~a;;expected=~a;;received=~a~%%"
+          (test ${%s}::ms ${%s}::ss)
+          ${%s}::ms
+          ${%s}::ss))
+''' % (NS_MODEL, NS_STUDENT,
+       NS_MODEL, NS_MODEL,     # let line 1
+       NS_STUDENT, NS_STUDENT, # let line 2
+       NS_MODEL, NS_STUDENT,   # form (test ...)
+       NS_MODEL, NS_STUDENT,
+       )
 
     # input schema
     inputSchema = Schema((

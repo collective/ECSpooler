@@ -52,22 +52,25 @@ class Cl(AbstractProgrammingBackend):
         """
         @see: lib.AbtractProgrammingBackend._postProcessCheckSyntax
         """
-        try:
-            # find line number in result
-            matches = re.findall('%s:(\d+)' % self.srcFileSuffix, message)
-    
-            #logging.debug("xxx: %s" % matches)
-
-            if matches:
-                # set line number minus x lines and return
-                return re.sub('.*%s:(\d+)'  % self.srcFileSuffix, 
-                              'line:%d' % (int(matches[0])-test.lineNumberOffset), 
-                              message)
-            
-        except Exception, e:
-            logging.warn('%s: %s' % (sys.exc_info()[0], e))
-
-        return message
+        # With SBCL, the first line on NetBSD is always
+        #
+        # Couldn't stat /proc/curproc/file; is /proc mounted?
+        #
+        # This line is removed here.
+        uname_lower=sys.platform.lower()
+        lines=message.split('\n')
+        if uname_lower.startswith('netbsd'):
+            lines=lines[1:]
+        # Also, in case of an error, the last line of SBCL's output is
+        # always
+        #
+        # unhandled condition in --disable-debugger mode, quitting
+        #
+        # This and the preceding empty line are also removed.
+        if (len(lines)>=3) and lines[-2].startswith('unhandled condition in --disable-debugger'):
+            lines=lines[:-3]
+        
+        return '\n'.join(lines)
 
 
     # -- semantic check -------------------------------------------------------
@@ -87,7 +90,7 @@ class Cl(AbstractProgrammingBackend):
         """
         random.seed(self)
         def mk_pkg_name():
-            l=list("abcdefghijklmnopqrstuvwxyz")
+            l=list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
             random.shuffle(l)
             return ''.join(l)
 
@@ -142,8 +145,8 @@ class Cl(AbstractProgrammingBackend):
         studentSrc = re.sub(r'\$\{SOURCE\}', submission, ClConf.semanticCheckTemplate)
         studentSrc = re.sub(r'\$\{MODULE\}', PKG_STUDENT, studentSrc)
 
-        logging.debug('modelSrc: %s\n' % modelSrc)
-        logging.debug('studentSrc: %s\n' % studentSrc)
+        #logging.debug('modelSrc: %s\n' % modelSrc)
+        #logging.debug('studentSrc: %s\n' % studentSrc)
 
         # define return values
         feedback = BackendResult.UNKNOWN
@@ -182,6 +185,8 @@ class Cl(AbstractProgrammingBackend):
 
             # remove all remaining placeholders
             wrapper = re.sub(r'\$\{.*\}', '', wrapper)
+
+            #logging.debug('wrapper: %s\n' % wrapper)
 
             # run with all test data
             for t in testdata:
@@ -247,7 +252,7 @@ class Cl(AbstractProgrammingBackend):
                     #logging.debug('expected: %s' % expected)
                     #logging.debug('received: %s' % received)
                     
-                    if isEqual.lower() != 'T':
+                    if isEqual != 'T':
                         # TODO: i18n
                         feedback = "\nYour submission failed. Test " \
                                     "case was: '%s' (%s)" \

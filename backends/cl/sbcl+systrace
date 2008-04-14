@@ -1,22 +1,36 @@
 #! /opt/ast/bin/ksh
 
 POLICYDIR=/opt/ECSpooler/systrace-policy
-INTERPRETER=/opt/mzscheme/bin/mzscheme
-OPTIONS="-m -v -f "
+INTERPRETER=/opt/sbcl-1.0.5/bin/sbcl
+SBCL_HOME=${INTERPRETER%/bin/sbcl}/lib/sbcl; export SBCL_HOME
+OPTIONS=" --noinform --disable-debugger --no-sysinit --no-userinit "
 
-# Explanation of MzScheme command-line flags in use:
+# Explanation of SBCL command-line flags in use:
 #
-# -m
+# --disable-debugger
+#    By default, a Common Lisp system tries to ask the programmer  for
+#    help when it gets in trouble (by printing a debug prompt, then
+#    listening, on *DEBUG-IO*). However, this is not useful behavior
+#    for  a  system running  with  no programmer available, and this
+#    option tries to set up more appropriate behavior for that
+#    situation
+#
+# --noinform
 #    Suppresses the startup banner text.
 #
-# -v 
-#    Don't load any startup scripts.
+# --no-sysinit
+#    Don't load any system-wide initialization files.
 #
-# -f file
-#    Loads file after MzScheme starts.
+# --no-userinit
+#    Don't load any user initialization file.
+#
+# --load file
+#    Loads file after SBCL starts.
+#
+# --eval "(quit)"
+#    Quit after executing the loaded file.
 
 trap 'kill $! && trap - TERM && kill $$' TERM
 
-systrace -a -d $POLICYDIR $INTERPRETER $OPTIONS "$@" &
-#$INTERPRETER $OPTIONS "$@" &
+systrace -a -d $POLICYDIR $INTERPRETER $OPTIONS --load "$@" --eval "(quit)" &
 wait %%
