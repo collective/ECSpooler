@@ -70,7 +70,7 @@ class Cl(AbstractProgrammingBackend):
         return message
 
 
-    # -- semantic check ---------------------------------------------------------
+    # -- semantic check -------------------------------------------------------
     def _postProcessCheckSemantic(self, test, message):
         """
         @see: lib.AbtractProgrammingBackend._postProcessCheckSyntax
