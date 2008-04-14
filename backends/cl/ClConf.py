@@ -82,7 +82,7 @@ ${testFunction}
 ;; print test results
 (let ((ms (${%s}:main))
       (ss (${%s}:main)))
-  (format t "isEqual=~a;;expected=~a;;received=~a~%" (test ms ss) ms ss))
+  (format t "isEqual=~a;;expected=~a;;received=~a~%%" (test ms ss) ms ss))
 ''' % (NS_MODEL, NS_STUDENT, NS_MODEL, NS_STUDENT,)
 
     # input schema

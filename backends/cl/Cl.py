@@ -24,17 +24,13 @@ class Cl(AbstractProgrammingBackend):
     """
     
     id = 'cl'
-    name = 'CL'
+    name = 'Cl'
     version = '0.1'
 
     srcFileSuffix = '.lisp'
 
     schema = ClConf.inputSchema
     testSchema = ClConf.tests
-
-    swf __init__(self, *args, **kwargs):
-        random.seed()
-        self(*args, **kwargs)
 
     # -- syntax check ---------------------------------------------------------
     def _preProcessCheckSyntax(self, test, src, **kwargs):
@@ -89,14 +85,16 @@ class Cl(AbstractProgrammingBackend):
         @return: a BackendResult object with result value and message
         @see: lib.AbstractProgrammingBackend._process_checkSemantics
         """
-        def mk_pkg():
+        random.seed(self)
+        def mk_pkg_name():
             l=list("abcdefghijklmnopqrstuvwxyz")
             random.shuffle(l)
-            return l
+            return ''.join(l)
 
-        PKG_STUDENT=mk_pkg()
-        PKG_MODEL=while True:
-            PKG_MODEL=mk_pkg()
+        PKG_STUDENT=mk_pkg_name()
+        PKG_MODEL=None
+        while True:
+            PKG_MODEL=mk_pkg_name()
             if PKG_MODEL!=PKG_STUDENT:
                 break
         
@@ -143,6 +141,9 @@ class Cl(AbstractProgrammingBackend):
         
         studentSrc = re.sub(r'\$\{SOURCE\}', submission, ClConf.semanticCheckTemplate)
         studentSrc = re.sub(r'\$\{MODULE\}', PKG_STUDENT, studentSrc)
+
+        logging.debug('modelSrc: %s\n' % modelSrc)
+        logging.debug('studentSrc: %s\n' % studentSrc)
 
         # define return values
         feedback = BackendResult.UNKNOWN
