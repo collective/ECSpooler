@@ -50,12 +50,6 @@ ${SOURCE}
 
     semanticCheckTemplate = \
 """
-(defpackage :${MODULE}
-  (:use :common-lisp)
-  (:export :main))
-
-(in-package :${MODULE})
-
 ;; helper functions
 ${helpFunctions}
 
@@ -70,28 +64,26 @@ ${SOURCE}
 
     wrapperTemplate = \
 '''
-(in-package :common-lisp-user)
-
 ;; load the model and the student packages
-(load "${%s}.lisp") ; model package
 (load "${%s}.lisp") ; student package
+(defparameter ${%s} (main))
+
+(load "${%s}.lisp") ; model package
+(defparameter ${%s} (main))
 
 ;; test function
 ${testFunction}
 
 ;; print test results
-(let ((${%s}::ms (${%s}:main))  ; run model solution
-      (${%s}::ss (${%s}:main))) ; run student solution
-  (format t
-          "isEqual=~a;;expected=~a;;received=~a~%%"
-          (test ${%s}::ms ${%s}::ss)
-          ${%s}::ms
-          ${%s}::ss))
-''' % (NS_MODEL, NS_STUDENT,
-       NS_MODEL, NS_MODEL,     # let line 1
-       NS_STUDENT, NS_STUDENT, # let line 2
+(format t "isEqual=~a;;expected=~a;;received=~a~%%"
+        (test ${%s} ${%s}) ; model, student
+        ${%s}  ; model
+        ${%s}) ; student
+''' % (NS_STUDENT, NS_STUDENT,
+       NS_MODEL, NS_MODEL,
        NS_MODEL, NS_STUDENT,   # form (test ...)
-       NS_MODEL, NS_STUDENT,
+       NS_MODEL,
+       NS_STUDENT,
        )
 
     # input schema
