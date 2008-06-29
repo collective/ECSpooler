@@ -4,10 +4,9 @@
 # Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
-import sys
 import unittest
 
-from backends.java_re import JavaRE
+from backends.javare import JavaRE
 from lib.data.BackendJob import BackendJob
 from ProgrammingBackendTestCase import ProgrammingBackendTestCase
 
@@ -15,11 +14,11 @@ class testJavaRE(ProgrammingBackendTestCase):
     """
     """
     
-    backendClassName = 'java_re.JavaRE.JavaRE'
+    backendClassName = 'javare.JavaRE.JavaRE'
 
     # -- individual tests -----------------------------------------------------
 
-    jobdata = {'backend': 'java_re', 
+    jobdata = {'backend': 'javare', 
                'submission': '"\\bheise online\\b"',
                'modelSolution': '"\\bheise online\\b"',
                'tests': ['findFirstGroup0'],
