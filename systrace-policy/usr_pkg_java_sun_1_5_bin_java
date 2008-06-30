@@ -102,7 +102,7 @@ Policy: /usr/pkg/java/sun-1.5/bin/java, Emulation: linux
 	linux-fsread: filename match "/tmp/*/StudentPackage/*.class" then permit
 	linux-fsread: filename match "/tmp/*/input-*.txt" then permit
 	linux-fsread: filename match "/tmp/*/RETestRes.class" then permit
-    linux-fsread: filename match "/opt/ECSpooler/backends/junit/junit_libs" then permit
+    linux-fsread: filename match "/opt/ECSpooler/backends/junit/junit_libs/*.jar" then permit
     linux-fsread: filename match "/tmp/*/JUnitTester.class" then permit
 	linux-exit_group: permit
 	linux-exit_group: permit
