@@ -32,7 +32,7 @@ class Erlang(AbstractProgrammingBackend):
 
     schema = ErlangConf.inputSchema
     testSchema = ErlangConf.tests
-    version = '1.0'
+    #version = '1.0'
 
     # -- check syntax ---------------------------------------------------------
     def _preProcessCheckSyntax(self, test, src, **kwargs):

@@ -32,7 +32,7 @@ class Java(AbstractProgrammingBackend):
 
     schema = JavaConf.inputSchema
     testSchema = JavaConf.tests
-    version = '0.9'
+    #version = '0.9'
 
     def getClassName(self, src):
         """
