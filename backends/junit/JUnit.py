@@ -19,7 +19,8 @@ class JUnit(AbstractProgrammingBackend):
     
     id = 'junit'
     name = 'JUnit'
-    version = '1.0'
+    #version = '1.0'
+
     schema = JUnitConf.inputSchema
     testSchema = JUnitConf.tests
     srcFileSuffix = '.java'
@@ -32,7 +33,7 @@ class JUnit(AbstractProgrammingBackend):
     
     
 #--------  Methods for modifying incomming source code  ------------------------
-    def getClassName(self,source):
+    def getClassName(self, source):
         """
         Returns the class name of a given java source.
         
@@ -42,7 +43,7 @@ class JUnit(AbstractProgrammingBackend):
         matcher = JUnitConf.CLASS_NAME_RE.search(source)
         
         assert matcher is not None,\
-        'Name of the public class could not be extracted from source\n\n%s' % repr(source)
+        'Name of the public class could not be extracted from source\n\n%s' % source
         
         return matcher.group('className')
         
@@ -226,8 +227,6 @@ class JUnit(AbstractProgrammingBackend):
         assert submission is not None,\
             'Semantic check requires a valid submission:\n\n%s' % repr(submission)
             
-        submissionClassName = self.getClassName(submission)
-            
         tests = self._getTests(job)
         if len(tests) == 0:
             message = 'No test specification selected.'
@@ -235,6 +234,14 @@ class JUnit(AbstractProgrammingBackend):
             return BackendResult(-217,message)
         test = tests[0]
         
+        try:
+            submissionClassName = self.getClassName(submission)
+        except AssertionError, ae:
+            message = str(ae)
+            logging.warn('%s, %s' % (message, job.getId()))
+            return BackendResult(-230,message)
+            
+
         # get compiler
         compiler = test.compiler
         
@@ -266,7 +273,8 @@ class JUnit(AbstractProgrammingBackend):
                 suffix=self.srcFileSuffix,
                 dir=job.getId(),
                 encoding=test.encoding)
-                
+            
+            # compile using javac
             exitcode, result = self._runInterpreter(
                 compiler,
                 os.path.dirname(wrapperModule['file']),
@@ -276,7 +284,7 @@ class JUnit(AbstractProgrammingBackend):
             assert exitcode == EX_OK,\
                 'Error in wrapper code during semantic check:\n\n%s' % result
                 
-
+            # run using java
             exitcode, result = self._runInterpreter(
                 interpreter,
                 os.path.dirname(wrapperModule['file']),
@@ -294,31 +302,15 @@ class JUnit(AbstractProgrammingBackend):
             return BackendResult(-230,msg)
         
         if exitcode != EX_OK:
-            result = "\nYour submission failed. Test " \
-            "case was: '%s' (%s)" \
-            "\n\n Received result: %s"\
-            % (result.split(" ")[0], test.getName(), result)
+            #result = "\nYour submission failed. Test " \
+            #"case was: '%s' (%s)" \
+            #"\n\n Received result: %s"\
+            #% (result.split(" ")[0], test.getName(), result)
 
             return BackendResult(False, result)
         
         
         else:
-            return BackendResult(True,'\nYour submission passed all tests.')
+            #return BackendResult(True,'\nYour submission passed all tests.')
+            return BackendResult(True, result)
             
-            
-            
-            
-
-            
-        
-        
-        
-        
-
-        
-
-        
-        
-        
-        
-        
