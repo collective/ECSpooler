@@ -20,6 +20,6 @@ class HaskellIO(Haskell):
     
     id = 'haskell-io'
     name = 'Haskell I/O'
-    version = '1.0'
+    #version = '1.0'
 
     testSchema = HaskellIOConf.tests

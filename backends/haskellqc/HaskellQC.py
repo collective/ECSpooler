@@ -24,7 +24,7 @@ class HaskellQC(Haskell):
         
     id = 'haskellqc'
     name = 'Haskell QuickCheck'
-    version = '1.0'
+    #version = '1.0'
     
     schema = HaskellQCConf.inputSchema
     testSchema = HaskellQCConf.tests

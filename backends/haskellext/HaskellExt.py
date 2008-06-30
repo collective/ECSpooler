@@ -31,7 +31,7 @@ class HaskellExt(Haskell):
     
     id = 'haskellext'
     name = 'Haskell (extended)'
-    version = '1.0'
+    #version = '1.0'
 
     schema = HaskellExtConf.inputSchema
     testSchema = HaskellExtConf.testSchema
