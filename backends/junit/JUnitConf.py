@@ -17,7 +17,7 @@ class JUnitConf:
     #interpreter = join(abspath(dirname(__file__)), 'java.sh')
 
     # The packages that the model and student solution will be put in
-    NS_STUDENT = 'studentPackage'
+    NS_STUDENT = 'StudentPackage'
     
     # The name of the wrapper class that performs the semantic check
     CLASS_SEMANTIC_CHECK = 'JUnitTester'
