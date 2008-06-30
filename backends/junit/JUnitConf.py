@@ -11,11 +11,10 @@ class JUnitConf:
     Properties used by backend JUnit.
     """
 
-    #compiler = join(abspath(dirname(__file__)), 'javac')
-    compiler = join(abspath(dirname(__file__)), 'javac.sh')
-    #interpreter = join(abspath(dirname(__file__)), 'java+systrace)
-    interpreter = join(abspath(dirname(__file__)), 'java.sh')
-    #interpreter = join(abspath(dirname(__file__)), 'java+systrace')
+    compiler = join(abspath(dirname(__file__)), 'javac')
+    #compiler = join(abspath(dirname(__file__)), 'javac.sh')
+    interpreter = join(abspath(dirname(__file__)), 'java+systrace')
+    #interpreter = join(abspath(dirname(__file__)), 'java.sh')
 
     # The packages that the model and student solution will be put in
     NS_STUDENT = 'studentPackage'
