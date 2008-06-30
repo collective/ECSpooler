@@ -10,6 +10,7 @@ import sys, os, threading, signal
 import socket, xmlrpclib
 import logging
 
+from os.path import join, dirname, abspath
 from types import StringTypes, DictionaryType
 
 # local imports
@@ -33,9 +34,9 @@ class AbstractBackend(AbstractServer):
     name =  ''
     schema = None
     testSchema = None
-    version = None
+    version = ''
     
-    def __init__(self, params):
+    def __init__(self, params, versionFile=__file__):
         """
         @params dict with all parameters which must be set for a backend
         """
@@ -46,9 +47,16 @@ class AbstractBackend(AbstractServer):
         # reset logger
         self.log = logging.getLogger('lib.AbstractBackend')
         
-        assert self.id != '', 'An valid ID is required for this backend.'
+        try:
+            # set version from backend's version.txt
+            self.version = file(join(abspath(dirname(versionFile)), 'version.txt'), 'r').read()
+        except IOError, ioe:
+            # write warn message, but do nothing else
+            self.log.warn(ioe)
+
+        assert self.id != '', 'A valid ID is required for this backend.'
         assert self.name != '', 'A valid name is required for this backend.'
-        assert self.version != '', 'A valid version is required for this backend.'
+        #assert self.version != '', 'A valid version is required for this backend.'
 
         assert self.schema != None, \
             'A input schema is required for this backend'
