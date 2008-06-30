@@ -25,7 +25,7 @@ class Python(AbstractProgrammingBackend):
     
     id = 'python'
     name = 'Python'
-    version = '1.0'
+    #version = '1.0'
 
     srcFileSuffix = '.py'
 

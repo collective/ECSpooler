@@ -20,7 +20,7 @@ def non_null_str(s):
 
 class Prolog(AbstractProgrammingBackend):
     """
-    A simple checker class for checking Haskell programs by comparing
+    A backend class for checking Prolog programs by comparing
     student and model solution on given test data.
     """
     
@@ -31,7 +31,7 @@ class Prolog(AbstractProgrammingBackend):
 
     schema = PrologConf.inputSchema
     testSchema = PrologConf.tests
-    version = '0.9'
+    #version = '0.9'
 
     def cleanUpErrMsg(self, msg, path):
         if not path.endswith(os.path.sep):

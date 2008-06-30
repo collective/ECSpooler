@@ -24,7 +24,7 @@ class Scheme(AbstractProgrammingBackend):
     
     id = 'scheme'
     name = 'Scheme'
-    version = '1.1'
+    #version = '1.1'
 
     srcFileSuffix = '.scm'
 

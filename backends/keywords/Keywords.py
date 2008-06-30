@@ -26,7 +26,7 @@ class Keywords(AbstractBackend):
     name =  'Keywords'
     schema = KeywordsConf.inputSchema
     testSchema = KeywordsConf.tests
-    version = '1.0'
+    #version = '1.0'
     
     # -- internal methods used by subclasses ----------------------------------
     def _process_execute(self, job):
