@@ -110,9 +110,9 @@ def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost,
                     'host': '%s', \
                     'port': %d, \
                     'spooler': 'http://%s:%d', \
-                    'auth': %s})" \
+                    'auth': %s}, %s.__file__)" \
                 % (moduleName, backendHost, i, \
-                   spoolerHost, spoolerPort, repr(spoolerAuth),)
+                   spoolerHost, spoolerPort, repr(spoolerAuth), backendId)
                 
         retval = _tryGetBackendInstance(backendId, instanceCreateStmt)
         
