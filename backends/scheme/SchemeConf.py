@@ -5,7 +5,7 @@
 #
 # This file is part of ECSpooler.
 
-import os, sys, logging 
+import sys, logging 
 from os.path import join, dirname, abspath
 
 from lib.util.BackendSchema import InputField
