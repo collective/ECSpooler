@@ -24,7 +24,6 @@ class Haskell(AbstractProgrammingBackend):
     
     id = 'haskell'
     name = 'Haskell'
-    version = '1.0'
 
     srcFileSuffix = '.hs'
 
