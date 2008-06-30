@@ -71,7 +71,7 @@ public class Caesar
 
     jobdata = {'backend': 'junit', 
                'submission': submission,
-               'tests': ['JUnitTest'],
+               'tests': ['default'],
                'unitTests': unitTests,
                }
 
