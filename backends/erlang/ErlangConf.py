@@ -19,11 +19,11 @@ class ErlangConf:
     Defines all properties used by backend Erlang.
     """
 
-    compiler = join(abspath(dirname(__file__)), 'erlc')
-    #compiler = join(abspath(dirname(__file__)), 'erlc.sh')
+    #compiler = join(abspath(dirname(__file__)), 'erlc')
+    compiler = join(abspath(dirname(__file__)), 'erlc.sh')
     
-    interpreter = join(abspath(dirname(__file__)), 'erl+systrace')
-    #interpreter = join(abspath(dirname(__file__)), 'erl.sh')
+    #interpreter = join(abspath(dirname(__file__)), 'erl+systrace')
+    interpreter = join(abspath(dirname(__file__)), 'erl.sh')
 
     # load source for simple testing
     try:

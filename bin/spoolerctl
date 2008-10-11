@@ -12,31 +12,19 @@ information from the spooler.  __main__ reads the command lines
 arguments and processes them.
 """
 
-import os, sys, time, signal, socket, xmlrpclib, getopt
+import os, sys, time, signal, socket, xmlrpclib, getopt, tempfile
 import traceback
 import logging
 
 # add parent directory to the system path
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir))
-
-from config import LOGLEVEL, NOBODY_UID, NOBODY_GID
-from lib.Spooler import Spooler
-
-# get logger
-log = logging.getLogger('lib.Spooler')
-
-# Run process as nobody
-try:
-    os.setuid(NOBODY_UID)
-except os.error, e:
-    log.warn("Cannot change uid: %s" % e)
-    print >> sys.stderr, "Cannot change uid:", e
+log = None
 
 def _startSpooler(host, port, pwdFile):
     """
     """
-    log.info("Starting spooler on %s port %d..." % (host, port))
-    print "Starting spooler on %s port %d..." % (host, port)
+    log.info("Starting spooler on %s port %d ..." % (host, port))
+    print "INFO: Starting spooler on %s port %d ..." % (host, port)
 
     try:
         if sys.platform in ['unixware7']:
@@ -56,31 +44,40 @@ def _startSpooler(host, port, pwdFile):
     else:
         # parent process
         time.sleep(1)
-        print 'pid=%d' % cpid
+        print 'INFO: pid=%d' % cpid
 
 
 def _stopSpooler(host, port, auth):
     """
     """
     try:
-        log.info("Stopping ECSpooler on %s port %d..." % (host, port))
-        print "Stopping ECSpooler on %s port %d..." % (host, port)
+        log.info("Stopping ECSpooler on %s:%d ..." % (host, port))
+        print "INFO: Stopping ECSpooler on %s:%d ..." % (host, port)
 
         spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
         pid = spooler.getStatus(auth)[1]['pid']
         
-        try:
-            # stops the spooler sending kill -15 process-id
-            os.kill(pid, signal.SIGTERM)         
-        except AttributeError:
-            log.warn('os.kill and/or signal.SIGTERM not defined. '
+        # TODO: THIS FLAW IS VERY DANGEROUS (if the remote host returns a pid
+        # which accidently matches a pid on the localhost)
+        # Actually the spooler should shutdown itself on message
+        if host == 'localhost':
+            try:
+                # stops the spooler sending kill -15 process-id
+                os.kill(pid, signal.SIGTERM)         
+            except AttributeError:
+                log.warn('os.kill and/or signal.SIGTERM not defined. '
                           'Trying to stop spooler elsewhere.')
             # FIXME:
             #spooler.shutdown(auth)
+        else
+            print "ERROR: remote shutdown not supported"
+
     except Exception, e: 
-        print "%s: %s" % (sys.exc_info()[0], e)
-        log.error("Unable to stop ECSpooler on %s port %d" % (host, port))
-        print "Unable to stop ECSpooler on %s port %d" % (host, port)
+        print "WARNING: %s: %s" % (sys.exc_info()[0], e)
+        log.warn("Unable to stop ECSpooler on %s:%d" % (host, port))
+        print "WARNING: Unable to stop ECSpooler on %s:%d" % (host, port)
+        if LOGLEVEL == logging.DEBUG:
+            traceback.print_exc()
         pass
 
 
@@ -102,22 +99,78 @@ def _removeBackend(host, port, auth, backendId):
     
 
 def usage():
-    print "Usage: spoolerctl [-H HOSTNAME] [-P PORT] start\n" \
-    "       spoolerctl [-H HOSTNAME] [-P PORT] -u USERNAME -p PASSWORD " \
-    "stop|restart|status"
+    print """
+Usage:  spoolerctl [OPTION ...] {start|stop|restart|status}
+
+OPTIONs are:
+  -t dir          Directory to use for temporary files.  If not specified, the
+                  OS default TMPDIR will be used.
+                  Sets the environment variable TMPDIR to the given value.
+  -v dir          Directory where to store jobs and results.
+                  Default: INSTALLDIR/var/
+                  Sets the environment variable VARDIR to the given value.
+  -w dir          Direcotry to use as working directory.  Default: current
+                  working directory.
+  -L dir          Directory where to store logs.  Default: INSTALLDIR/log
+                  Sets the environment variable LOGDIR to the given value.
+  -l loglevel     LogLevel to use: {FATAL|ERROR|WARN|INFO|DEBUG|NONE}. 
+                  Sets the environment variable LOGLEVEL to the given value.
+  -H host         Hostname or IP to connect/bind to.  Default: localhost
+  -P port         Port to connect/bind to.  Default: 5050
+  -u user         Name of the user required for authentication when executing 
+                  stop|restart|status command
+  -p password     Password of the user required for authentication when
+                  executing stop|restart|status command
+  -a authfile     File to use to lookup the password for the given user.  The
+                  file contains one 'user:password' entry per line.  This
+                  option should be used instead of the -p option to avoid
+                  exposing the password to every user on the system (e.g. via
+                  ps -ef, pargs etc.).
+"""
 
 
 def authError(cmd):
-    print "Command '%s' requires username and password." % cmd
+    print "ERROR: Command '%s' requires username and password." % cmd
 
+def getPassFromFile(file, user):
+    """
+    Read the given file of user:password entries and return the password
+    for the given user if found.
+			@return: None if the given file does not exist or has no entry
+             for the given user, the users' password otherwise.
+    """
+
+    if not os.path.exists(file):
+        print "WARNING: Unable to read '%s'" % (file)
+        return None
+
+    lines = []
+    try:
+        pwdFile = open(file, "r")
+        lines = pwdFile.readlines()
+        pwdFile.close()
+    except IOError, ioe:
+        print "WARNING: Error when reading file '%s': %s" % (file, ioe);
+        return None
+
+    for line in lines:
+        if line.startswith("#"): continue
+        if not line.strip(): continue
+        _tmp = line.split(':', 2)
+        if len(_tmp) == 2 and _tmp[0] == user:
+            return _tmp[1]
+
+    return None
+            
 
 def main():    
     """
     """
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "H:P:u:p:h", 
-                                   ["host=", "port=", "user=", "password=",
-                                    "help"])
+        opts, args = getopt.getopt(sys.argv[1:], "l:t:w:v:L:H:P:u:p:a:h", 
+                     ["loglevel=", "tmpdir=", "workdir=", "vardir=", "logdir=",
+                      "host=", "port=", "user=", "password=", "authfile=",
+                      "help"])
     except getopt.GetoptError:
         # print help information and exit:
         usage()
@@ -127,7 +180,10 @@ def main():
     port = None
     user = None
     password = None
-    
+    tmpdir = None
+    workdir = None
+    authfile = None
+
     for o, a in opts:
         if o in ("-h", "--help"):
             usage()
@@ -149,7 +205,28 @@ def main():
         if o in ("-p", "--password"):
             password = a
 
-    
+        if o in ("-l", "--loglevel"):
+            os.environ['LOGLEVEL'] = a
+
+        if o in ("-t", "--tmpdir"):
+            if not a == "default":
+                tmpdir = a;
+
+        if o in ("-L", "--logdir"):
+            if not a == "default":
+                os.environ['LOGDIR'] = a
+
+        if o in ("-v", "--vardir"):
+            if not a == "default":
+                os.environ['VARDIR'] = a
+
+        if o in ("-w", "--workdir"):
+            if not a == "default":
+                workdir = a
+
+        if o in ("-a", "--authfile"):
+            authfile = a
+
     if len(args) == 0:
         usage()
         sys.exit(2)
@@ -157,9 +234,53 @@ def main():
     else:
         command = args[0]
         
+        """ Q&D: Prevent initializing backend stuff in config.py """
+        os.environ['EC_SRVC'] = "SPOOLER";
+
+        global Spooler, LOGLEVEL;
+        from config import LOGLEVEL, NOBODY_UID, NOBODY_GID
+        from lib.Spooler import Spooler
+        
+        # get logger
+        global log
+        log = logging.getLogger('lib.Spooler')
+        
+        # Run process as nobody if we are root
+        if os.geteuid() == 0:
+            try:
+                os.setuid(NOBODY_UID)
+            except os.error, e:
+                log.warn("Cannot change uid: %s" % e)
+                print >> sys.stderr, "WARNING: Cannot change uid:", e
+        
         if not host: host = 'localhost' #socket.getfqdn()
         if not port: port = 5050
-        
+        if tmpdir:
+            os.environ['TMPDIR'] = tmpdir
+            if not os.path.exists(tmpdir):
+                try:
+                    os.mkdir(tmpdir)
+                except Exception, e:
+                    print "WARNING: Unable to create directory: %s - using the default '%s' instead" % (e, tempfile.gettempdir())
+
+            if os.geteuid() != 0 and tmpdir == tempfile.gettempdir():
+                """ Too much trouble one could cause as root """
+                try:
+                    os.chmod(tmpdir, 0700)
+                except Exception, e:
+                    print "WARNING: Unable to chmod 0770 %s: %s" % (tmpdir, e)
+
+        if workdir:
+            try:
+                os.chdir(workdir)
+            except Exception, e:
+                print "WARNING: Unable to change working directory to '%s': %s" % (e, workdir)
+
+        if authfile and user:
+            _pw = getPassFromFile(authfile, user)
+            if _pw:
+                password = _pw
+            
         pwdFile = os.path.join(os.path.dirname(__file__),
                                '..', 'etc', 'passwd')
         
@@ -188,12 +309,12 @@ def main():
 
                     elif command == 'rmbackend':
                         if len(args) < 2:
-                            print 'rmbackend needs a backend ID'
+                            print 'ERROR: rmbackend needs a backend ID'
                             sys.exit(2)
                         print _removeBackend(host, port, auth, args[1])
     
                     else:
-                        print 'Unknown command %s' % command
+                        print 'ERROR: Unknown command %s' % command
                         usage()
 
         except (socket.error, xmlrpclib.Fault), exc:
@@ -204,7 +325,7 @@ def main():
                 #print exc           # __str__ allows args to printed directly
                 #print sys.exc_info()[0]
 
-            print "Server error: %s: %s" % (sys.exc_info()[0], exc)
+            print "ERRROR: Server - %s: %s" % (sys.exc_info()[0], exc)
 
         except Exception, e:
             if LOGLEVEL == logging.DEBUG:
@@ -214,10 +335,9 @@ def main():
                 #print e           # __str__ allows args to printed directly
                 #print sys.exc_info()[0]
 
-            print "Error (%s): %s" % (sys.exc_info()[0], e)
+            print "ERROR: %s: %s" % (sys.exc_info()[0], e)
 
 
 # -- Main ----------------------------------------------------------------------
 if __name__ == "__main__":
     main()
-            

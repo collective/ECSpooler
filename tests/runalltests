@@ -16,6 +16,7 @@ import sys
 import unittest
 
 # add parent directory to the system path
+sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir,'backends'))
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir))
 
 # change dir to test dir

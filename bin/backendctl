@@ -14,53 +14,38 @@ with entries about spooler server's host and port as well as base port
 for the backend. If a port is already in use, we will try another one.
 """
 
-import os, sys, time, socket, xmlrpclib
+import os, sys, time, socket, xmlrpclib, tempfile
 import traceback
 import getopt
 import logging
 
 # add parent directory to the system path
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir))
+log = None
 
-from config import LOGLEVEL, NOBODY_UID, NOBODY_GID
-from backends import *
-
-# get logger
-log = logging.getLogger('lib.AbstractBackend')
-
-# Run process as nobody
-try:
-    os.setuid(NOBODY_UID)
-except os.error, e:
-    log.warn("Cannot change uid: %s" % e)
-    print >> sys.stderr, "Cannot change uid:", e
-
+# TODO: should be in config.py
 MAX_TRIALS = 15
-#BACKEND_HOST = socket.getfqdn()
-BACKEND_HOST = 'localhost'
 
-def _startBackend(backendId, backendPort, spoolerHost, spoolerPort, 
-                   spoolerAuth):
+def _startBackend(backendId, backendHost, backendPort, spoolerHost, spoolerPort,
+                  spoolerAuth):
     """
     Starts a backend with the given parameters.
     """
-    backendHost = BACKEND_HOST
-
     try:
         exec 'from backends.%s import %s' % (backendId.lower(), backendId)
         exec 'id = %s.%s.id' % (backendId, backendId,)
     except NameError, ne:
-        print >> sys.stderr, "No such backend: '%s'" % (backendId,)
+        print >> sys.stderr, "ERROR: No such backend: '%s'" % (backendId,)
         raise ne
     except AttributeError, ae:
-        print >> sys.stderr, "No such backend: '%s'.  Did you mean '%s'?" \
+        print >> sys.stderr, "ERROR: No such backend: '%s'.  Did you mean '%s'?" \
               % (backendId, backendId.capitalize(),)
         raise ae
     
     exec 'version = %s.%s.version' % (backendId, backendId,)
 
     log.info("Starting backend '%s %s (%s)' on %s..." % (backendId, version, id, backendHost))
-    print "Starting backend '%s %s (%s)' on %s..." % (backendId, version, id, backendHost)
+    print "INFO: Starting backend '%s %s (%s)' on %s..." % (backendId, version, id, backendHost)
 
     try:
         if sys.platform in ['unixware7']:
@@ -78,15 +63,17 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
         
         if backend:
             log.info('port=%d' % p)
-            print 'port=%d' % p
-            print backend.start()
+            print 'INFO: port=%d' % p
+            __tmp = backend.start()
+            if __tmp:
+                print "ERROR: " + __tmp
         else:
-            print 'Finally failed. See log for more information.'
+            print 'ERROR: Backend start finally failed. See log for more information.'
 
     else:
         # parent process
         time.sleep(1)
-        print 'pid=%d' % cpid
+        print 'INFO: pid=%d' % cpid
 
 
 def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost, 
@@ -158,26 +145,23 @@ def _stopBackend(backendId, spoolerHost, spoolerPort, spoolerAuth):
     """
     exec 'from backends.%s import %s' % (backendId.lower(), backendId)
 
-    backendHost = BACKEND_HOST
-
     exec 'from backends.%s import %s' % (backendId.lower(), backendId)
     exec 'id = %s.%s.id' % (backendId, backendId,)
     exec 'version = %s.%s.version' % (backendId, backendId,)
     
-    log.info("Stopping backend '%s %s (%s)' on %s..." % (backendId, version, 
-                                                          id, backendHost))
-    print "Stopping backend '%s %s (%s)' on %s..." % (backendId, version, id,
-                                                       backendHost)
+    log.info("Unregister backend '%s %s (%s)' on %s:%s ..." % (backendId,
+             version, id, spoolerHost, spoolerPort))
+    print "INFO: Unregister backend '%s %s (%s)' on %s:%s ..." % (backendId,
+             version, id, spoolerHost, spoolerPort)
 
-    spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost,
-                                                      spoolerPort))
+    spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost, spoolerPort))
     retval = spooler.stopBackend(spoolerAuth, id)
     
     if retval:
         if retval[0]:
-            print 'Done.'
+            print 'INFO: Done.'
         else:
-            print retval[1]
+            print 'WARNING: ' + retval[1]
 
 
 def _getStatus(backendId, spoolerHost, spoolerPort, spoolerAuth):
@@ -194,25 +178,96 @@ def _getStatus(backendId, spoolerHost, spoolerPort, spoolerAuth):
 
 
 def usage():
-    print "Usage: backendctl [-H SPOOLER_HOSTNAME] " \
-          "[-P SPOOLER_PORT] -u USERNAME -p PASSWORD " \
-          "[-B BACKEND_PORT] BACKEND start|stop|restart|status"
+    print """
+Usage: backendctl [OPTION ...] BACKEND {start|stop|restart|status}
 
+OPTIONs are:
+  -t dir          Directory to use for temporary files.  If not specified, the
+                  OS default TMPDIR will be used.
+                  Sets the environment variable TMPDIR to the given value.
+  -v dir          Directory where to store jobs and results. 
+                  Default: INSTALLDIR/var/
+                  Sets the environment variable VARDIR to the given value.
+  -w dir          Direcotry to use as working directory.
+                  Default: current working directory.
+  -L dir          Directory where to store logs.  Default: INSTALLDIR/log
+                  Sets the environment variable LOGDIR to the given value.
+  -l loglevel     LogLevel to use: {FATAL|ERROR|WARN|INFO|DEBUG|NONE}.
+                  Sets the environment variable LOGLEVEL to the given value.
+  -i interpreter  Absolute path to the interpreter to use.  If specified, the
+                  environment variable INTERPRETER is set to this value, so
+                  that it can be used by wrapper scripts used by the backend.
+  -c compiler     Absolute path to the compiler to use.  If specified, the
+                  environment variable COMPILER is set to this value, so
+                  that it can be used by wrapper scripts used by the backend.
+  -T value        Sets the environment variable EC_TRACE to the given value,
+                  which might be used to decide, which wrapper (tracer) should
+                  run the actual task.  See backends/*Conf.py 
+  -d              Don't cleanup the temporary files created when running a job.
+  -H host         Hostname or IP of the machine to use to connect to the
+                  spooler.  Default: localhost
+  -P port         Port of the spooler to connect to.  Default: 5050
+  -b hostname     Hostname or IP to bind to.  Default: localhost
+  -B port         Port to bind to, i.e. where to listen for new request.
+                  Default: First free port in the range of 5060 .. 5074.
+  -u user         Name of the user required for authentication when executing
+                  stop|restart|status command
+  -p password     Password of the user required for authentication when
+                  executing stop|restart|status command
+  -a authfile     File to use to lookup the password for the given user.  The
+                  file contains one 'user:password' entry per line.  This
+                  option should be used instead of the -p option to avoid
+                  exposing the password to every user on the system (e.g. via
+                  ps -ef, pargs etc.).
+  BACKEND         Name of the backend to start|stop|restart|status.
+"""
 
 def authError(cmd):
-    print "%s requires username and password" % cmd
+    print "ERROR: %s requires username and password" % cmd
 
+def getPassFromFile(file, user):
+    """
+    Read the given file of user:password entries and return the password
+    for the given user if found.
+    @return: None if the given file does not exist or has no entry
+             for the given user, the users' password otherwise.
+    """
+
+    if not os.path.exists(file):
+        print "WARNING: Unable to read '%s'" % (file)
+        return None
+
+    lines = []
+    try:
+        pwdFile = open(file, "r")
+        lines = pwdFile.readlines()
+        pwdFile.close()
+    except IOError, ioe:
+        print "WARNING: Error when reading file '%s': %s" % (file, ioe);
+        return None
+
+    for line in lines:
+        if line.startswith("#"): continue
+        if not line.strip(): continue
+        __tmp = line.split(':', 2)
+        if len(__tmp) == 2 and __tmp[0] == user:
+            return __tmp[1]
+
+    return None
 
 def main():
     """
     """
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "H:P:u:p:B:h", 
-                               ["spoolerhost=", "spoolerport=", 
-                                "user=", "password=", 
-                                "backendport=",
-                                "help"])
+        opts, args = getopt.getopt(sys.argv[1:], 
+                      "i:c:T:dl:t:w:v:L:H:P:u:p:a:B:b:h", 
+                     ["interpreter=", "compiler=", "trace=", "debug",
+                      "loglevel=", "tmpdir=", "workdir=", "vardir=", "logdir=",
+                      "spoolerhost=", "spoolerport=", 
+                      "user=", "password=", "authfile=", 
+                      "backendport=", "backendhost=",
+                      "help"])
     except getopt.GetoptError:
         # print help information and exit:
         usage()
@@ -222,7 +277,13 @@ def main():
     spoolerPort = None
     user = None
     password = None
+    backendHost = None
     backendPort = None
+    interpreter = None
+    compiler = None
+    tmpdir = None
+    workdir = None
+    authfile = None
     
     for o, a in opts:
         if o in ("-h", "--help"):
@@ -252,17 +313,115 @@ def main():
                 usage()
                 sys.exit(2)
     
+        if o in ("-b", "--backendhost"):
+            backendHost = a
+
+        if o in ("-i", "--interpreter"):
+            interpreter = a
+
+        if o in ("-c", "--compiler"):
+            compiler = a
+
+        if o in ("-d", "--debug"):
+			os.environ['CLEANUP'] = False;
+
+        if o in ("-l", "--loglevel"):
+            os.environ['LOGLEVEL'] = a;
+
+        if o in ("-t", "--tmpdir"):
+            if not a == "default":
+                tmpdir = a;
+
+        if o in ("-L", "--logdir"):
+            if not a == "default":
+                os.environ['LOGDIR'] = a;
+
+        if o in ("-v", "--vardir"):
+            if not a == "default":
+                os.environ['VARDIR'] = a;
+
+        if o in ("-w", "--workdir"):
+            if not a == "default":
+                workdir = a
+
+        if o in ("-a", "--authfile"):
+            authfile = a
+
+        if o in ("-T", "--trace"):
+            os.environ['EC_TRACE'] = a
+
+
     if len(args) != 2:
         usage()
         sys.exit(2)
 
     else:
         backendId, cmd = args
-        auth = {"username":user, "password":password}
+        if authfile and user:
+            __pw = getPassFromFile(authfile, user)
+            if __pw:
+                password = __pw
 
+        auth = {"username":user, "password":password}
+        """ Q&D: Prevent initializing spooler stuff in config.py """
+        os.environ['EC_SRVC'] = backendId.lower()
+
+		# TODO: cant't do that earlier since params need to be parsed first ...
+        from config import LOGLEVEL, NOBODY_UID, NOBODY_GID
+		# TODO: is this (originally even *) really required?
+		# _startBackend seems to do that anyway
+        __import__('backends.' + backendId.lower())
+        
+        # get logger
+        global log
+        log = logging.getLogger('lib.AbstractBackend')
+        
+        # Run process as nobody if we are root
+        if os.geteuid() == 0:
+            try:
+                os.setuid(NOBODY_UID)
+            except os.error, e:
+                log.warn("Cannot change uid: %s" % e)
+                print >> sys.stderr, "WARNING: Cannot change uid:", e
+
+		# TODO: defaults should be part of config.py
+        if not backendHost: backendHost = 'localhost'
         if not spoolerHost: spoolerHost = 'localhost' #socket.getfqdn()
         if not spoolerPort: spoolerPort = 5050
         if not backendPort: backendPort = 5060
+
+        if compiler:
+            if not os.path.exists(compiler):
+                print "WARNING: compiler option ignored - '%s' does not exist" % (compiler)
+            else:
+                os.environ['COMPILER'] = compiler;
+
+        if interpreter:
+            if not os.path.exists(interpreter):
+                print "WARNING: interpreter option ignored - '%s' does not exist" % (interpreter)
+            else:
+                os.environ['INTERPRETER'] = interpreter;
+
+        if tmpdir:
+            os.environ['TMPDIR'] = tmpdir
+            if not os.path.exists(tmpdir):
+                try:
+                    os.mkdir(tmpdir)
+                except Exception, e:
+                    print "WARNING: Unable to create directory: %s - using the default '%s' instead" % (e, tempfile.gettempdir())
+
+            if os.geteuid() != 0 and tmpdir == tempfile.gettempdir():
+                """ Too much trouble one could cause doing this as root """
+                try:
+                    os.chmod(tmpdir, 0700)
+                except Exception, e:
+                    print "WARNING: Unable to chmod 0770 %s: %s" % (tmpdir, e)
+
+        if workdir:
+            try:
+                os.chdir(workdir)
+            except Exception, e:
+                print "WARNING: Unable to change working directory to '%s': %s" % (e, workdir)
 
         if not user or not password:
             authError(cmd)
@@ -272,8 +431,8 @@ def main():
             try:
                 # check cmd option and do the indicated action
                 if cmd == 'start':
-                    _startBackend(backendId, backendPort, spoolerHost, 
-                                 spoolerPort, auth)
+                    _startBackend(backendId, backendHost, backendPort,
+                                  spoolerHost, spoolerPort, auth)
     
                 elif cmd == 'stop':
                     _stopBackend(backendId, spoolerHost, spoolerPort, auth)
@@ -282,8 +441,8 @@ def main():
                     _stopBackend(backendId, spoolerHost, spoolerPort, auth)
                     time.sleep(2)
         
-                    _startBackend(backendId, backendPort, spoolerHost, 
-                                 spoolerPort, auth)
+                    _startBackend(backendId, backendHost, backendPort,
+                                  spoolerHost, spoolerPort, auth)
 
                 elif cmd == 'status':
                     #raise NotImplementedError('Getting status information is ' +
@@ -291,7 +450,7 @@ def main():
                     print _getStatus(backendId, spoolerHost, spoolerPort, auth)
     
                 else:
-                    print 'Unknown command %s' % cmd
+                    print 'ERROR: Unknown command %s' % cmd
                     usage()
                     
             except Exception, e:
@@ -302,7 +461,7 @@ def main():
                     #print e           # __str__ allows args to printed directly
                     #print sys.exc_info()[0]
 
-                print "Error (%s): %s" % (sys.exc_info()[0], e)
+                print "ERROR: %s: %s" % (sys.exc_info()[0], e)
 
 # -- Main ----------------------------------------------------------------------
 if __name__ == "__main__":

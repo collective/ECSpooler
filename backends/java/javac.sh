@@ -1,6 +1,7 @@
 #! /bin/sh
 
-JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.5/Home; export JAVA_HOME
+JAVA_HOME=${JAVA_HOME:-/System/Library/Frameworks/JavaVM.framework/Versions/1.5/Home}; export JAVA_HOME
+
 
 JAVA_BIN=${JAVA_HOME}/bin
 COMPILER=${JAVA_BIN}/javac

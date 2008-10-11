@@ -16,7 +16,7 @@ class SpoolerQueue:
     A thread safe simple queue which stores queue items using pickle.
     """
     
-    log = logging.getLogger('lib.spooler')
+    log = logging.getLogger('lib.Spooler')
     
     def __init__(self, filename):
         """
@@ -25,13 +25,15 @@ class SpoolerQueue:
         """
         self._filename = filename
 
+        # initialize the queue
+        self._queue = {}
+
         if not os.path.exists(os.path.dirname(filename)): 
             os.makedirs(os.path.dirname(filename))
 
-        # initialize the queue
-        self._queue = {}
-        # try to load a queue from file
-        self._load()
+        if os.path.exists(filename): 
+            # try to load a queue from file
+            self._load()
 
  
     def _load(self):
@@ -43,7 +45,7 @@ class SpoolerQueue:
             self._queue = pickle.load(open(self._filename, 'r'))
         except Exception, e:
             msg = '%s: %s' % (sys.exc_info()[0], e)
-            log.warn(msg)
+            self.log.warn(msg)
 
 
     def _save(self):
@@ -54,7 +56,7 @@ class SpoolerQueue:
             pickle.dump(self._queue, open(self._filename, 'w'), pickle.HIGHEST_PROTOCOL)
         except Exception, e:
             msg = '%s: %s' % (sys.exc_info()[0], e)
-            log.error(msg)
+            self.log.error(msg)
 
 
     def isEmpty(self):
@@ -81,7 +83,7 @@ class SpoolerQueue:
                 "Illegal Argument, item must be an instance of class QueueItem"
         
         id = item.getId()
-        #log.debug('adding new item to queue: %s' % id)
+        #self.log.debug('adding new item to queue: %s' % id)
         
         assert (not self._queue.has_key(id)), \
             "Item '%s' already exists in queue" % (id,)
@@ -102,14 +104,14 @@ class SpoolerQueue:
         @return: a QueueItem
         """
         try:
-            #log.debug('id: %s' % id)
+            #self.log.debug('id: %s' % id)
             
             if not id:
                 (id, item) = self._queue.popitem()
             else:
                 item = self._queue.pop(id, None)
         
-            #log.debug("pop item '%s'" % (id,))
+            #self.log.debug("pop item '%s'" % (id,))
 
             # store changes in file on disk
             self._save();
@@ -117,7 +119,7 @@ class SpoolerQueue:
             return item
 
         except KeyError, e :
-            log.warn(str(e))
+            self.log.warn(str(e))
             return None
 
 

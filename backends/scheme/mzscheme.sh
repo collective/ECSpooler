@@ -1,6 +1,6 @@
 #! /bin/sh
 
-INTERPRETER=/opt/mzscheme/bin/mzscheme
+INTERPRETER=${INTERPRETER:-/local/usr/bin/mzscheme}
 OPTIONS="-m -v -f "
 
 # Explanation of MzScheme command-line flags in use:

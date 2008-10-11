@@ -18,8 +18,8 @@ class SchemeConf:
     Defines all properties used by backend Scheme.
     """
 
-    interpreter = join(abspath(dirname(__file__)), 'mzscheme+systrace')
-    #interpreter = join(abspath(dirname(__file__)), 'mzscheme.sh')
+    #interpreter = join(abspath(dirname(__file__)), 'mzscheme+systrace')
+    interpreter = join(abspath(dirname(__file__)), 'mzscheme.sh')
     
     streamLib = 'streams.scm'
 

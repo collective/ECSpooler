@@ -18,8 +18,8 @@ class HaskellConf:
     Defines all properties used by backend Haskell.
     """
 
-    interpreter = join(abspath(dirname(__file__)), 'runhugs+systrace')
-    #interpreter = join(abspath(dirname(__file__)), 'runhugs.sh')
+    #interpreter = join(abspath(dirname(__file__)), 'runhugs+systrace')
+    interpreter = join(abspath(dirname(__file__)), 'runhugs.sh')
     
     # load Haskell function to do a simple test
     try:

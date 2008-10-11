@@ -92,7 +92,7 @@ class Spooler(AbstractServer):
         Starts a thread which checks the queue for new jobs.
         """
         # start a new thread which runs the doqueue-method
-        self.log.info('Starting scheduler thread (%s)...' % self._className)
+        self.log.info('Starting scheduler thread (%s) ...' % self._className)
         self._doqueueThread = threading.Thread(target=self._doqueue)
         self._doqueueThread.start()
         
@@ -105,7 +105,7 @@ class Spooler(AbstractServer):
         the spooler itself.
         """
         # stop doqueue thread
-        self.log.info('Stopping scheduler thread (%s)...' % self._className)
+        self.log.info('Stopping scheduler thread (%s) ...' % self._className)
         self._doqueueThreadExit = True
 
         while self._doqueueThread and self._doqueueThread.isAlive():
@@ -113,7 +113,7 @@ class Spooler(AbstractServer):
                            self.DEFAULT_DOQUEUE_WAKEUP)
             time.sleep(self.DEFAULT_DOQUEUE_WAKEUP)
         
-        self.log.info('Stopping backends...')
+        self.log.info('Stopping backends ...')
         
         # We make a copy of _backends because it will change during 
         # iteration: backends call removeBackend in their shutdown method,

@@ -1,7 +1,13 @@
-#! /bin/sh
+#! /bin/ksh
 
-INTERPRETER=/opt/hugs/bin/runhugs
-OPTIONS="-P{HUGS}:/opt/ECSpooler/backends/haskellqc/haskell_libs:"
+INTERPRETER=/local/usr/bin/runhugs
+SELF="$0"
+SLD="${SELF%/*}"
+TLD=${SLD#/}
+if [ "$SLD" = "$TLD" ]; then
+        SLD=`pwd`/$SLD
+fi
+OPTIONS="-P{HUGS}:${SLD}/haskell_libs:"
 
 trap 'kill $! && trap - TERM && kill $$' TERM
 

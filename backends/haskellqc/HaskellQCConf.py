@@ -27,8 +27,8 @@ class HaskellQCConf(HaskellConf):
     defined there.
     """
     
-    interpreter = join(abspath(dirname(__file__)), 'runhugs+systrace')
-    #interpreter = join(abspath(dirname(__file__)), 'runhugs.sh')
+    #interpreter = join(abspath(dirname(__file__)), 'runhugs+systrace')
+    interpreter = join(abspath(dirname(__file__)), 'runhugs.sh')
     
     # regex to get all property names
     PROPERTIES_RE = re.compile(r'(?P<name>prop_[A-Z,a-z,0-9]+\w*)')
