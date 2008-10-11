@@ -1,0 +1,51 @@
+# recommended setup information wrt. security:
+
+ROLES:
+	ecsadm:ecsadm    EC Spooler/Backend Software Manager, i.e. able to install
+                     Software updates, change ECSpooler related files
+    ecsd:ecsd        The identity under which the Spooler Service is running
+    ecsbd:ecsbd		 The identity under which the backends are running
+
+FILEs and DIRs:
+	/etc/ecsd
+		File containing the user:password information required to issue spooler
+		commands when the -a option is used
+		Permissions: 0640 ecsadm:ecsd
+
+	/var/ecs/spooler
+		Working directory of the spooler (see option -w)
+		Permissions: 0770 ecsd:ecsadm
+
+	/var/ecs/spooler/log
+		Directory containing spooler logfiles (see option -L)
+		Permissions: 0770 ecsd:ecsadm
+
+	/var/ecs/spooler/data
+		Directory containing spooler data (see option -v)
+		Permissions: 0770 ecsd:ecsadm
+
+	/tmp/spooler
+		Directory containing temp files of the spooler (see option -t)
+		Permissions: 0770 ecsd:ecsadm	or	0700 ecsd:ecsd
+
+
+	/etc/ecsbd
+		File containing the user:password information required to issue backend
+		commands when the -a option is used
+		Permissions: 0640 ecsadm:ecsbd
+
+	/var/ecs/backends
+		Working directory of the backends (see option -w)
+		Permissions: 0770 ecsbd:ecsadm
+
+	/var/ecs/backends/log
+		Directory containing backend logfiles (see option -L)
+		Permissions: 0770 ecsbd:ecsadm
+
+	/var/ecs/backends/data
+		Directory containing data of backends (see option -v)
+		Permissions: 0770 ecsbd:ecsadm
+
+	/tmp/backends
+		Directory containing temp files of the backends (see option -t)
+		Permissions: 0770 ecsbd:ecsadm	or	0700 ecsbd:ecsbd

@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
+<!--
+	Copyright 2008 Jens Elkner
+-->
+<service_bundle type='manifest' name='ECSpooler'>
+<service
+	name='application/ec'
+	type='service'
+	version='1'>
+
+	<instance name='spooler' enabled='false'>
+		<!--
+			Wait for network interfaces to be initialized.
+		-->
+		<dependency name='network'
+			grouping='require_all'
+			restart_on='error'
+			type='service'>
+			<service_fmri value='svc:/milestone/network:default'/>
+		</dependency>
+		
+		<!--
+			Wait for all local filesystems to be mounted.
+		-->
+		<dependency name='filesystem-local'
+			grouping='require_all'
+			restart_on='none'
+			type='service'>
+			<service_fmri value='svc:/system/filesystem/local:default'/>
+		</dependency>
+
+		<exec_method
+			type='method'
+			name='start'
+			exec='%{spooler/basedir}/bin/spoolerctl -t %{spooler/tmpdir} -L %{spooler/logdir} -v %{spooler/vardir} -w %{spooler/workdir} -l %{spooler/loglevel} -H %{spooler/host} -P %{spooler/port} start'
+			timeout_seconds='60'>
+			<method_context>
+				<method_credential user='ecsd' group='ecsd' privileges='basic,!proc_session,!proc_info,!file_link_any'/>
+			</method_context>
+		</exec_method>
+
+		<!-- sending SIGTERM is actually, what the stop command would do -->
+		<exec_method
+			type='method'
+			name='stop'
+			exec='kill:'
+			timeout_seconds='60' >
+		</exec_method>
+
+		<property_group name='spooler' type='application'>
+			<stability value='Evolving' />
+			<!-- the base directory, where bin/spoolerctl resides -->
+			<propval name='basedir' type='astring' value='/data/ecs/ECSpooler'/>
+			<!-- see bin/spoolerctl -h -->
+			<propval name='host' type='host' value='localhost'/>
+			<propval name='port' type='integer' value='5050'/>
+			<propval name='tmpdir' type='astring' value='default'/>
+			<propval name='logdir' type='astring' value='default'/>
+			<propval name='vardir' type='astring' value='default'/>
+			<propval name='workdir' type='astring' value='default'/>
+			<propval name='loglevel' type='astring' value='INFO'/>
+		</property_group>
+
+		<property_group name='startd' type='framework'>
+			<!-- sub-process core dumps shouldn't restart session -->
+			<propval name='ignore_error' type='astring' value='core,signal' />
+		</property_group>
+
+		<property_group name='general' type='framework'>
+			<propval name='action_authorization' type='astring'
+				value='solaris.smf.manage.ecs' />
+		</property_group>
+	</instance>
+
+	<stability value='Evolving' />
+
+	<template>
+		<common_name>
+			<loctext xml:lang='C'>EC Spooler</loctext>
+		</common_name>
+		<description>
+			<loctext xml:lang='C'>
+ECSpooler provides automatic testing of submissions for ECAutoAssessmentBox.
+When a student submits a program, it is first sent to the spooler, which in
+turn queues the submission. When the appropriate backend becomes available,
+i.e. has registered itself with the spooler and is idle, the submission will be
+passed to the backend for further processing. 
+			</loctext>
+		</description>
+		<documentation>
+			<doc_link name='wdok.cs'
+				uri='http://wdok.cs.uni-magdeburg.de/forschung/projekte/educomponents/software/ecspooler' />
+		</documentation>
+	</template>
+</service>
+
+</service_bundle>

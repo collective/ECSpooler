@@ -1,0 +1,52 @@
+Solaris SMF support
+-------------------
+
+see smf_security(5), svccfg(1M), svcs(1), svcadm(1M), svcprop(1)
+
+The advantage of using Solaris Service Management Facilities (SMF) is:
+	- the OS tracks dependencies and e.g. restart/stops all backends
+	  automatically, if the spooler (on whome the backends depend on) gets
+	  restarted/stopped. Also if one disables the spooler, the backends
+	  are stopped as well automatically, since they depend on the spooler
+	  service and vice versa.
+	- SMF takes care, that the services (spooler, backends) keep running.
+	  If a service dies/coredumps, it gets automatically restarted by SMF
+	  (often called self-healing).
+    - Since one is able to set the properties on each service indiviually,
+	  there is no need to change the config.py back and forward all the
+	  time. Also there should be no need to change the wrapper scripts
+	  (backend/**/*.sh) and taht's why the whole ECSpooler can be made
+	  readonly (ro), or imported as ro loopback filesystem into several
+	  Solaris zones ...
+	- last but not least: SMF guarantees, that the services come up in the
+	  right order and are started in the case of unattended reboots
+
+Mini-Howto SMF:
+---------------
+0) make sure, the content of the manifest is correct:
+	svccfg validate spooler.manifest
+
+1) import the service:
+	svccfg import spooler.manifest
+
+[2] modify properties:
+	svccfg -s ec:spooler setprop spooler/port = integer: 5050
+    svccfg -s ec:spooler setprop spooler/tmpdir = astring: "/tmp/ecs"
+    ...
+    svcadm refresh ec:spooler
+
+[3] add add. env vars:
+	svccfg -s ec:spooler setenv -m start MYVAR value
+
+4) enable the service:
+	svcadm enable ec:spooler
+
+5) check, whether the service is running:
+	svcs -xv
+
+[6] disable a service:
+	svcadm disable ec:spooler
+
+[7] remove a service:
+	svccfg delete ec
+
