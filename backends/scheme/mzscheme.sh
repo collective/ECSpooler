@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/ksh
 
 INTERPRETER=${INTERPRETER:-/local/usr/bin/mzscheme}
 OPTS="-m -v -f "

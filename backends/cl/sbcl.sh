@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/ksh
 
 INTERPRETER=${INTERPRETER:-"/opt/sbcl-1.0.5/bin/sbcl"}
 export SBCL_HOME=${INTERPRETER%/bin/sbcl}/lib/sbcl

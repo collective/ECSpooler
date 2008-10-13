@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/ksh
 
 SELF="$0"
 SLD="${SELF%/*}"

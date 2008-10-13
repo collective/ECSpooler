@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/ksh
 
 INTERPRETER=${INTERPRETER:-python}
 
