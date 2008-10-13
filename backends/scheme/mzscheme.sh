@@ -1,7 +1,7 @@
 #! /bin/sh
 
 INTERPRETER=${INTERPRETER:-/local/usr/bin/mzscheme}
-OPTIONS="-m -v -f "
+OPTS="-m -v -f "
 
 # Explanation of MzScheme command-line flags in use:
 #
@@ -16,6 +16,10 @@ OPTIONS="-m -v -f "
 
 trap 'kill $! && trap - TERM && kill $$' TERM
 
-$INTERPRETER $OPTIONS "$@" &
+if [ -x /usr/bin/newtask ]; then
+	/usr/bin/newtask -p Scheme -F $INTERPRETER $OPTIONS "$@" &
+else
+	$INTERPRETER $OPTIONS "$@" &
+fi
 
 wait %%

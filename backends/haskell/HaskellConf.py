@@ -7,6 +7,7 @@
 import sys, logging, re
 
 from os.path import join, dirname, abspath
+import os
 
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -18,9 +19,11 @@ class HaskellConf:
     Defines all properties used by backend Haskell.
     """
 
-    #interpreter = join(abspath(dirname(__file__)), 'runhugs+systrace')
-    interpreter = join(abspath(dirname(__file__)), 'runhugs.sh')
-    
+    trc = os.getenv('EC_TRACE')
+    intp = 'runhugs.sh'
+    if trc == 'bsd': intp = 'runhugs+systrace'
+    interpreter = join(abspath(dirname(__file__)), intp)
+
     # load Haskell function to do a simple test
     try:
         simpleTest = file(join(dirname(__file__), 'simpleTest.hs'), 'r').read()

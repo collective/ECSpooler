@@ -18,8 +18,10 @@ class ClConf:
     Defines all properties used by backend Cl.
     """
 
-    interpreter = join(abspath(dirname(__file__)), 'sbcl+systrace')
-    #interpreter = join(abspath(dirname(__file__)), 'sbcl.sh')
+    trc = os.getenv('EC_TRACE')
+    intp = 'sbcl.sh'
+    if trc == 'bsd': intp = 'sbcl+systrace'
+    interpreter = join(abspath(dirname(__file__)), intp)
 
     # The placeholder for the names of the packages that the model and
     # student solution will be put in

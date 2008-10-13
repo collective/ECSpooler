@@ -11,10 +11,6 @@ import logging
 from types import IntType, StringTypes
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
-# local imports
-from config import *
-
-
 class AbstractServer:
     """
     This is the abstract server class which will be used for spooler and 
@@ -76,7 +72,7 @@ class AbstractServer:
         
         if self._manageBeforeStart():
 
-            self.log.info('Starting server thread (%s)...' % (self._className, ))
+            self.log.info('Starting server thread (%s) ...' % (self._className, ))
 
             self._serverThread = threading.Thread(target=self._XMLRPCThread)
             self._serverThread.setDaemon(1)
@@ -120,7 +116,7 @@ class AbstractServer:
         self._manageBeforeStop()
 
         # stop server thread
-        self.log.info('Stopping server thread (%s)...' % self._className)
+        self.log.info('Stopping server thread (%s) ...' % self._className)
         self._server.server_close()
         
         os._exit(0)

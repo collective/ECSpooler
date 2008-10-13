@@ -228,5 +228,5 @@ if __name__ == '__main__':
     uamd5 = UserAuthMD5(join(dirname(__file__), '..', '..', 'etc', 'passwd'))
     print uamd5.authorize('test', 'SuPPe')
     print uamd5.authorize('demo', 'foobar')
-    
-    print md5.md5('Asdf,.').hexdigest()
+    import sys
+    print md5.md5(sys.argv[1]).hexdigest()

@@ -411,5 +411,3 @@ class AbstractProgrammingBackend(AbstractBackend):
         except Exception, e:
             self.log.warn('Internal error during clean up: %s: %s' % \
                           (sys.exc_info()[0], e))
-        
-

@@ -18,8 +18,10 @@ class PrologConf:
     Properties used by backend Prolog.
     """
 
-    interpreter = join(abspath(dirname(__file__)), 'pl+systrace')
-    #interpreter = join(abspath(dirname(__file__)), 'pl.sh')
+    trc = os.getenv('EC_TRACE')
+    intp = 'pl.sh'
+    if trc == 'bsd': intp = 'pl+systrace'
+    interpreter = join(abspath(dirname(__file__)), intp)
     
     compiler = interpreter
 

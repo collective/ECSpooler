@@ -7,6 +7,7 @@
 import re
 
 from os.path import join, dirname, abspath
+import os
 
 from lib.util.BackendSchema import TestEnvironment, InputField, Schema
 from backends.haskell.HaskellConf import HaskellConf
@@ -27,8 +28,10 @@ class HaskellQCConf(HaskellConf):
     defined there.
     """
     
-    #interpreter = join(abspath(dirname(__file__)), 'runhugs+systrace')
-    interpreter = join(abspath(dirname(__file__)), 'runhugs.sh')
+    trc = os.getenv('EC_TRACE')
+    intp = 'runhugs.sh'
+    if trc == 'bsd': intp = 'runhugs+systrace'
+    interpreter = join(abspath(dirname(__file__)), intp)
     
     # regex to get all property names
     PROPERTIES_RE = re.compile(r'(?P<name>prop_[A-Z,a-z,0-9]+\w*)')

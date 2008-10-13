@@ -21,7 +21,12 @@
 # -s script
 #    Execute this script.
 
-OP=$(/opt/swiprolog/bin/pl -q -f none -t halt -s "$@" 2>&1)
+INTERPRETER=${INTERPRETER:-"/opt/swiprolog/bin/pl"}
+if [ -x /usr/bin/newtask ]; then
+	OP=$(/usr/bin/newtask -p Prolog -F ${INTERPRETER} -q -f none -t halt -s "$@" 2>&1)
+else
+	OP=$(${INTERPRETER} -q -f none -t halt -s "$@" 2>&1)
+fi
 ERR=$?
 
 echo "$OP"

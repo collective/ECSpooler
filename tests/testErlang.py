@@ -14,7 +14,6 @@ from ProgrammingBackendTestCase import ProgrammingBackendTestCase
 class testErlang(ProgrammingBackendTestCase):
     """
     """
-    
     backendClassName = 'erlang.Erlang.Erlang'
 
     # -- individual tests -----------------------------------------------------

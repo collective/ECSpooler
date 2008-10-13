@@ -1,8 +1,8 @@
 #! /bin/sh
 
-INTERPRETER=/opt/sbcl-1.0.5/bin/sbcl
-SBCL_HOME=${INTERPRETER%/bin/sbcl}/lib/sbcl; export SBCL_HOME
-OPTIONS=" --noinform --disable-debugger --no-sysinit --no-userinit "
+INTERPRETER=${INTERPRETER:-"/opt/sbcl-1.0.5/bin/sbcl"}
+export SBCL_HOME=${INTERPRETER%/bin/sbcl}/lib/sbcl
+OPTS=" --noinform --disable-debugger --no-sysinit --no-userinit "
 
 # Explanation of SBCL command-line flags in use:
 #
@@ -31,6 +31,10 @@ OPTIONS=" --noinform --disable-debugger --no-sysinit --no-userinit "
 
 trap 'kill $! && trap - TERM && kill $$' TERM
 
-$INTERPRETER $OPTIONS --load "$@" --eval "(quit)" &
+if [ -x /usr/bin/newtask ]; then
+	/usr/bin/newtask -p CommonLisp -F $INTERPRETER $OPTS --load "$@" --eval "(quit)" &
+else
+	$INTERPRETER $OPTS --load "$@" --eval "(quit)" &
+fi
 
 wait %%

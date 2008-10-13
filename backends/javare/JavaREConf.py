@@ -18,12 +18,14 @@ class JavaREConf:
     Properties used by backend Java.
     """
 
-    #compiler = join(abspath(dirname(__file__)), 'javac')
-    compiler = join(abspath(dirname(__file__)), 'javac.sh')
+    trc = os.getenv('EC_TRACE')
+    comp = 'javac.sh'
+    if trc == 'bsd': comp = 'javac'
+    compiler = join(abspath(dirname(__file__)), comp)
 
-    #interpreter = join(abspath(dirname(__file__)), 'java+systrace')
-    interpreter = join(abspath(dirname(__file__)), 'java.sh')
-
+    intp = 'java.sh'
+    if trc == 'bsd': intp = 'java+systrace'
+    interpreter = join(abspath(dirname(__file__)), intp)
 
     # The name of the wrapper class that performs the syntactic check
     CLASS_SYNTACTIC_CHECK = 'SyntacticCheck'

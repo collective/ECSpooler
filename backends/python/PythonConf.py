@@ -4,7 +4,7 @@
 # Copyright (c) 2006 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
-import sys, logging
+import sys, logging, os
 from os.path import join, dirname, abspath
 
 from lib.util.BackendSchema import InputField
@@ -17,8 +17,10 @@ class PythonConf:
     Defines all properties used by backend Python.
     """
 
-    #interpreter = join(abspath(dirname(__file__)), 'python+systrace')
-    interpreter = join(abspath(dirname(__file__)), 'python.sh')
+    trc = os.getenv('EC_TRACE')
+    intp = 'python.sh'
+    if trc == 'bsd': intp = 'python+systrace'
+    interpreter = join(abspath(dirname(__file__)), intp)
 
     # load Haskell function to do a simple test
     try:

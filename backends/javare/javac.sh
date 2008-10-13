@@ -1,13 +1,18 @@
 #! /bin/sh
 
-JAVA_HOME=${JAVA_HOME:-/System/Library/Frameworks/JavaVM.framework/Versions/1.5/Home}; export JAVA_HOME
+SELF="$0"
+SLD="${SELF%/*}"
+TLD=${SLD#/}
+if [ "$SLD" = "$TLD" ]; then
+    SLD=`pwd`/$SLD
+fi
 
-JAVA_BIN=${JAVA_HOME}/bin
-COMPILER=${JAVA_BIN}/javac
-
-JVM_HOME=${JAVA_HOME}; export JVM_HOME
-PATH=${JAVA_BIN}:${PATH}; export PATH
+. $SLD/../javabase.sh
 
 ulimit -d `ulimit -H -d`
 
-${COMPILER} -encoding utf-8 "$@"
+if [ -x /usr/bin/newtask ]; then
+	/usr/bin/newtask -p Java -F ${COMPILER} -encoding utf-8 "$@"
+else
+	${COMPILER} -encoding utf-8 "$@"
+fi

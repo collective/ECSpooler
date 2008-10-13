@@ -10,6 +10,7 @@ import unittest
 
 import xmlrpclib
 
+os.environ['EC_SRVC'] = 'SPOOLER'
 from lib.Spooler import Spooler
 
 class testSpooler(unittest.TestCase):

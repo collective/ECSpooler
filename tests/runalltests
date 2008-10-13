@@ -13,11 +13,15 @@ Runs all tests in the current directory.
 import os
 import sys
 
-import unittest
-
 # add parent directory to the system path
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir,'backends'))
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir))
+
+import unittest, logging.handlers
+import config
+
+config.initLogging(logging.INFO, 'test',
+       os.path.join(os.path.dirname(__file__), '../var'))
 
 # change dir to test dir
 os.chdir(os.path.join(os.path.abspath(os.path.dirname(__file__))))

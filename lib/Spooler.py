@@ -15,7 +15,6 @@ import logging
 #from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 # local imports
-#from config import 
 from lib.AbstractServer import AbstractServer
 from lib.data.BackendJob import BackendJob
 from lib.data.BackendResult import BackendResult
@@ -533,7 +532,7 @@ class Spooler(AbstractServer):
         @return: a tuple with code and result or an error message
         """
         #self.log.debug('xxx: %s' % repr(kw))
-        #self.log.debug('xxx: %s' % repr(args))
+        self.log.debug("xmlrpclib.Server('%s')" % (url))
         
         s = xmlrpclib.Server(url)
         try:
