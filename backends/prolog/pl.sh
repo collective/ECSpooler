@@ -21,8 +21,12 @@
 # -s script
 #    Execute this script.
 
-INTERPRETER=${INTERPRETER:-"/opt/swiprolog/bin/pl"}
-if [ -x /usr/bin/newtask ]; then
+if [ -n "$PL_HOME" -a -x "${PL_HOME}/bin/pl" ]; then
+	INTERPRETER="${PL_HOME}/bin/pl"
+else
+	INTERPRETER=${INTERPRETER:-"/opt/swiprolog/bin/pl"}
+fi
+if [ -x /usr/bin/newtask -a -n "$USE_RCTL" ]; then
 	OP=$(/usr/bin/newtask -p Prolog -F ${INTERPRETER} -q -f none -t halt -s "$@" 2>&1)
 else
 	OP=$(${INTERPRETER} -q -f none -t halt -s "$@" 2>&1)

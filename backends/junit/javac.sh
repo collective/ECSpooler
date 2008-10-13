@@ -11,7 +11,7 @@ fi
 
 ulimit -d `ulimit -H -d`
 
-if [ -x /usr/bin/newtask ]; then
+if [ -x /usr/bin/newtask -a -n "$USE_RCTL" ]; then
     /usr/bin/newtask -p Java -F ${COMPILER} -encoding utf-8 "$@"
 else
     ${COMPILER} -encoding utf-8 "$@"

@@ -1,6 +1,10 @@
 #! /bin/ksh
 
-INTERPRETER=${INTERPRETER:-"/opt/sbcl-1.0.5/bin/sbcl"}
+if [ -n "$CL_HOME" -a -x "${CL_HOME}/bin/sbcl" ]; then
+	INTERPRETER="${CL_HOME}/bin/sbcl"
+else
+	INTERPRETER=${INTERPRETER:-"/opt/sbcl-1.0.5/bin/sbcl"}
+fi
 export SBCL_HOME=${INTERPRETER%/bin/sbcl}/lib/sbcl
 OPTS=" --noinform --disable-debugger --no-sysinit --no-userinit "
 
@@ -31,7 +35,7 @@ OPTS=" --noinform --disable-debugger --no-sysinit --no-userinit "
 
 trap 'kill $! && trap - TERM && kill $$' TERM
 
-if [ -x /usr/bin/newtask ]; then
+if [ -x /usr/bin/newtask -a -n "$USE_RCTL" ]; then
 	/usr/bin/newtask -p CommonLisp -F $INTERPRETER $OPTS --load "$@" --eval "(quit)" &
 else
 	$INTERPRETER $OPTS --load "$@" --eval "(quit)" &

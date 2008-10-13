@@ -21,7 +21,7 @@ if [ -z "$JAVA_HOME" ]; then
     fi
 fi
 
-JVM_OPTS="-32 -client -Xms16M -Xmx64M"
+JVM_OPTS="-d32 -client -Xms16M -Xmx64M"
 export JAVA_HOME
 JAVA_BIN=${JAVA_HOME}/bin
 INTERPRETER=${JAVA_BIN}/java

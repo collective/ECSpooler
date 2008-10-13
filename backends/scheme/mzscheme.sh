@@ -1,6 +1,10 @@
 #! /bin/ksh
 
-INTERPRETER=${INTERPRETER:-/local/usr/bin/mzscheme}
+if [ -n "$SCHEME_HOME" -a -x "${SCHEME_HOME}/bin/mzscheme" ]; then
+	INTERPRETER="${SCHEME_HOME}/bin/mzscheme"
+else
+	INTERPRETER=${INTERPRETER:-/usr/local/bin/mzscheme}
+fi
 OPTS="-m -v -f "
 
 # Explanation of MzScheme command-line flags in use:
@@ -16,10 +20,10 @@ OPTS="-m -v -f "
 
 trap 'kill $! && trap - TERM && kill $$' TERM
 
-if [ -x /usr/bin/newtask ]; then
-	/usr/bin/newtask -p Scheme -F $INTERPRETER $OPTIONS "$@" &
+if [ -x /usr/bin/newtask -a -n "$USE_RCTL" ]; then
+	/usr/bin/newtask -p Scheme -F $INTERPRETER $OPTS "$@" &
 else
-	$INTERPRETER $OPTIONS "$@" &
+	$INTERPRETER $OPTS "$@" &
 fi
 
 wait %%
