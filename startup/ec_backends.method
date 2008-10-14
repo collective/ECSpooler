@@ -11,7 +11,8 @@
 
 NAME="EduComponents Backend "
 SPOOLER_FMRI='svc:/application/ec:spooler'
-
+USE_RCTL='true'
+export USE_RCTL
 
 # Read command line arguments
 method="$1"     # %m
