@@ -1,0 +1,147 @@
+#!/bin/sh
+#
+# "$Id$"
+#
+# description:
+#   Startup/shutdown script for EduComponent Backends
+#
+# default: S/K39 0/K39 1/K39 2/K39 3/S90
+
+. /lib/svc/share/smf_include.sh
+
+NAME="EduComponents Backend "
+SPOOLER_FMRI='svc:/application/ec:spooler'
+
+
+# Read command line arguments
+method="$1"     # %m
+instance="$2"       # %i
+
+BACKEND_NAME="$3"
+
+if [ -z "$BE_NAME" ]; then
+	exit SMF_EXIT_ERR_FATAL
+fi
+# Set defaults; SMF_FMRI should have been set, but just in case.
+if [ -z "$SMF_FMRI" ]; then
+	if [ -z "$instance" -o -z "$method" ]; then
+		exit SMF_EXIT_ERR_NOSMF
+	fi
+	SMF_FMRI="svc:/application/ec/backend:${instance}"
+fi
+
+getoptions() {
+	VAL=`/usr/bin/svcprop -p 'options/basedir' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		BACKENDCTL="${VAL}/bin/backendctl"
+	else
+		echo "Property 'options/basedir' is not set for $SMF_FMRI"
+		exit SMF_EXIT_ERR_CONFIG
+	fi
+	cmdopts=""
+	VAL=`/usr/bin/svcprop -p 'options/tmpdir' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="-t $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/logdir' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -L $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/vardir' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -v $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/workdir' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -w $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/loglevel' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -l $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/sphost' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -H $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/port' $SPOOLER_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -P $VAL "
+	else
+		echo "WARNING: ec:spooler property options/port is not set!"
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/trace' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -T $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/cleanup' $SMF_FMRI 2>/dev/null`
+	if [ "$VAL" = 'false' ]; then
+		cmdopts="${cmdopts} -d "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/interpreter' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -i $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/compiler' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -c $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/vardir' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -v $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/host' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -b $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/port' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -B $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/user' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -u $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/authfile' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -a $VAL "
+	fi
+}
+
+getoptions
+if [ ! -x "${BACKENDCTL}" ]; then
+	echo "${BACKENDCTL} does not exist"
+	echo "Adjust property 'options/basedir' for $SMF_FMRI"
+	exit $SMF_EXIT_ERR_FATAL
+fi
+
+case "$method" in
+	start)
+		echo "Starting $NAME $BACKEND_NAME ... \c"
+		${BACKENDCTL} ${cmdopts} "$BACKEND_NAME" start
+		if [ $? -ne 0 ]; then
+			echo 'failed.'
+			exit $SMF_EXIT_ERR_CONFIG
+		else
+			echo 'done.'
+		fi
+		;;
+	stop)
+		echo "Stopping $NAME $BACKEND_NAME ... \c"
+		${BACKENDCTL} ${cmdopts} "$BACKEND_NAME" stop
+		if [ $? -eq 0 ]; then
+			echo 'done.'
+		else
+			echo 'faild.'
+			exit $SMF_EXIT_ERR_OTHER
+		fi
+		;;
+	status)
+		${BACKENDCTL} ${cmdopts} "$BACKEND_NAME" status
+		;;
+	*)
+		echo "Usage: $0 {start|status|stop}"
+		exit $SMF_EXIT_ERR_FATAL
+		;;
+esac
+
+exit $SMF_EXIT_OK

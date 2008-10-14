@@ -41,13 +41,12 @@
 		<exec_method
 			type='method'
 			name='start'
-			exec='%{spooler/basedir}/bin/backendctl -t %{be/tmpdir} -L %{be/logdir} -v %{be/vardir} -w %{be/workdir} -l %{be/loglevel} -H %{be/sphost} -P %{be/spport} -T %{be/trace} -i %{be/interpreter} -c %{be/compiler} -b %{be/host} -B %{be/port} -u %{be/user} -a %{be/authfile} Erlang start'
+			exec='/etc/svc/method/ec-backend %i %m Erlang'
 			timeout_seconds='60'>
 			<method_context>
 				<method_credential user='ecsbd' group='ecsbd' privileges='basic,!proc_session,!proc_info,!file_link_any'/>
 				<method_environment>
-					<envvar name='PATH' value='/local/usr/bin:/usr/bin'/>
-					<envvar name='ERL_HOME' value='/local/usr/lib/erlang/erts-5.5.4/'/>
+					<envvar name='ERL_HOME' value='/local/usr/lib/erlang/erts-5.5.4'/>
 				</method_environment>
 			</method_context>
 		</exec_method>
@@ -55,30 +54,44 @@
 		<exec_method
 			type='method'
 			name='stop'
-			exec='kill:'
+			exec='/etc/svc/method/ec-backend %i %m Erlang'
 			timeout_seconds='60' />
 
-		<property_group name='port' type='application'>
+		<property_group name='options' type='application'>
 			<stability value='Evolving' />
-			<!-- backend parameter -->
-			<propval name='port' type='integer' value='5060'/>
+			<!-- directory, which contains bin/backendctl -->
+			<propval name='basedir' type='astring' value='/data/ecs/ECSpooler'/>
+
+			<!-- backend parameter  -H ... -->
+			<propval name='port' type='integer' value='5061'/>
+			<!-- backend parameter  -B ... -->
 			<propval name='host' type='host' value='localhost'/>
-			<!-- spooler parameter: enable, if it runs on a remote host -->
+			<!-- -u ... -->
             <propval name='user' type='astring' value='demo'/>
+			<!-- -a ... -->
             <propval name='authfile' type='astring' value='/etc/ecsbd'/>
-			<!--
+			<!-- if remote, enable these ones as well 
 			<propval name='spport' type='integer' value='5050'/>
             <propval name='sphost' type='host' value='localhost'/>
 			-->
-            <propval name='tmpdir' type='astring' value='default'/>
-            <propval name='logdir' type='astring' value='default'/>
-            <propval name='vardir' type='astring' value='default'/>
-            <propval name='workdir' type='astring' value='default'/>
+			<!-- -t ... -->
+            <propval name='tmpdir' type='astring' value='/tmp/backends/erlang'/>
+			<!-- -L ... -->
+            <propval name='logdir' type='astring' value='/var/ecs/backends/log'/>
+			<!-- -v ... -->
+            <propval name='vardir' type='astring' value='/var/ecs/backends/data'/>
+			<!-- -w ... -->
+            <propval name='workdir' type='astring' value='/var/ecs/backends'/>
+			<!-- -l ... -->
             <propval name='loglevel' type='astring' value='INFO'/>
-			<propval name='port' type='integer' value='5060'/>
-			<propval name='port' type='integer' value='5060'/>
-			<propval name='port' type='integer' value='5060'/>
-			<propval name='port' type='integer' value='5060'/>
+			<!-- -d -->
+			<propval name='cleanup' type='boolean' value='true'/>
+			<!-- -i ... -->
+			<propval name='interpreter' type='astring' value=''/>
+			<!-- -c ... -->
+			<propval name='compiler' type='astring' value=''/>
+			<!-- -T ... -->
+			<propval name='trace' type='astring' value=''/>
 		</property_group>
 
 		<property_group name='startd' type='framework'>
@@ -101,11 +114,11 @@
 
 	<template>
 		<common_name>
-			<loctext xml:lang='C'>EC Backend for Haskell</loctext>
+			<loctext xml:lang='C'>EC Backend for Erlang</loctext>
 		</common_name>
 		<description>
 			<loctext xml:lang='C'>
-This EC backend provides syntax checking and testing for Haskell using Hugs 98.
+This EC backend provides syntax checking and testing for Erlang.
 			</loctext>
 		</description>
 		<documentation>

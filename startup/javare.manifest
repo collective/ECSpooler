@@ -9,7 +9,7 @@
 	type='service'
 	version='1'>
 
-	<instance name='haskell' enabled='false'>
+	<instance name='javare' enabled='false'>
 		<!--
 			Wait for network interfaces to be initialized.
 		-->
@@ -41,13 +41,12 @@
 		<exec_method
 			type='method'
 			name='start'
-			exec='/etc/svc/method/ec-backend %i %m Haskell'
+			exec='/etc/svc/method/ec-backend %i %m JavaRE'
 			timeout_seconds='60'>
 			<method_context>
 				<method_credential user='ecsbd' group='ecsbd' privileges='basic,!proc_session,!proc_info,!file_link_any'/>
 				<method_environment>
-					<envvar name='HUGS_HOME' value='/local/usr'/>
-					<envvar name='HUGSDIR' value='/local/usr/lib/hugs'/>
+					<envvar name='JAVA_HOME' value='/opt/java'/>
 				</method_environment>
 			</method_context>
 		</exec_method>
@@ -55,7 +54,7 @@
 		<exec_method
 			type='method'
 			name='stop'
-			exec='/etc/svc/method/ec-backend %i %m Haskell'
+			exec='/etc/svc/method/ec-backend %i %m JavaRE'
 			timeout_seconds='60' />
 
 		<property_group name='options' type='application'>
@@ -64,7 +63,7 @@
 			<propval name='basedir' type='astring' value='/data/ecs/ECSpooler'/>
 
 			<!-- backend parameter  -H ... -->
-			<propval name='port' type='integer' value='5060'/>
+			<propval name='port' type='integer' value='5065'/>
 			<!-- backend parameter  -B ... -->
 			<propval name='host' type='host' value='localhost'/>
 			<!-- -u ... -->
@@ -76,7 +75,7 @@
             <propval name='sphost' type='host' value='localhost'/>
 			-->
 			<!-- -t ... -->
-            <propval name='tmpdir' type='astring' value='/tmp/backends/haskell'/>
+            <propval name='tmpdir' type='astring' value='/tmp/backends/javare'/>
 			<!-- -L ... -->
             <propval name='logdir' type='astring' value='/var/ecs/backends/log'/>
 			<!-- -v ... -->
@@ -115,11 +114,11 @@
 
 	<template>
 		<common_name>
-			<loctext xml:lang='C'>EC Backend for Haskell</loctext>
+			<loctext xml:lang='C'>EC Backend for Java Regex</loctext>
 		</common_name>
 		<description>
 			<loctext xml:lang='C'>
-This EC backend provides syntax checking and testing for Haskell using Hugs 98.
+This EC backend provides syntax checking and testing for Java Regex.
 			</loctext>
 		</description>
 		<documentation>

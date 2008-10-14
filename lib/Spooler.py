@@ -108,7 +108,7 @@ class Spooler(AbstractServer):
         self._doqueueThreadExit = True
 
         while self._doqueueThread and self._doqueueThread.isAlive():
-            self.log.debug('Scheduler thread is still alive, waiting %ds' %
+            self.log.info('Scheduler thread is still alive, waiting %ds' %
                            self.DEFAULT_DOQUEUE_WAKEUP)
             time.sleep(self.DEFAULT_DOQUEUE_WAKEUP)
         
@@ -119,6 +119,11 @@ class Spooler(AbstractServer):
         # which will change _backends.
         backends = self._backends.copy()
         
+        # TODO: Don't if SMF is enabled, since the backend would be respawned
+        #       automatically by SMF (self healing) - env var SMF_METHOD
+        #       is an indicator, that the service is running under SMF
+        # just unregister it and perhaps send a message to the backend to
+        # give a hint to free resources/unbind
         for backend in backends.itervalues():
              self._callBackend(backend['url'], 'shutdown')
              
@@ -145,6 +150,7 @@ class Spooler(AbstractServer):
             chk = self._backends[uid]
 
             self.log.info("Stopping backend '%s' at '%s'" % (uid, chk['url']))
+            # don't if SMF is enabled - self healing - see above
             self._callBackend(chk["url"], "shutdown")
 
             return (1, '')

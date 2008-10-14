@@ -424,7 +424,7 @@ def main():
                     #print sys.exc_info()[0]
 
                 log.error("%s: %s" % (sys.exc_info()[0], e))
-             logging.getLogger('').removeHandler(std_loghandler)
+            logging.getLogger('').removeHandler(std_loghandler)
 
 # -- Main ----------------------------------------------------------------------
 if __name__ == "__main__":

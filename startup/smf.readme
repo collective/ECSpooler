@@ -50,3 +50,21 @@ Mini-Howto SMF:
 [7] remove a service:
 	svccfg delete ec
 
+
+For backends adjust a *.manifest and:
+0) make sure ec_backends.method resides in /etc/svc/method/ and is r-x by root
+   if the directory does  not exiost yet, create it
+	mdir -p /etc/svc/method/
+	cp ec_backends.method /etc/svc/method/ec_backend
+	chmod 0755 /etc/svc/method/ec_backend
+
+1) copy a manifest of choice and adjust:
+	- instance name ($mybackend)
+	- BackendName in start and stop method
+	- options/port
+	- options/tmpdir
+2) import the manifest
+	svccfg import $mybackend.manifest
+3) enable the service:
+	svcadm enable backend/$mybackend
+...
