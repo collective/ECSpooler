@@ -55,10 +55,10 @@
 			<!-- see bin/spoolerctl -h -->
 			<propval name='host' type='host' value='localhost'/>
 			<propval name='port' type='integer' value='5050'/>
-			<propval name='tmpdir' type='astring' value='default'/>
-			<propval name='logdir' type='astring' value='default'/>
-			<propval name='vardir' type='astring' value='default'/>
-			<propval name='workdir' type='astring' value='default'/>
+			<propval name='tmpdir' type='astring' value=''/>
+			<propval name='logdir' type='astring' value=''/>
+			<propval name='vardir' type='astring' value=''/>
+			<propval name='workdir' type='astring' value=''/>
 			<propval name='loglevel' type='astring' value='INFO'/>
 		</property_group>
 
