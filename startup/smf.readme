@@ -68,3 +68,26 @@ For backends adjust a *.manifest and:
 3) enable the service:
 	svcadm enable backend/$mybackend
 ...
+
+
+property values of the spooler:
+------------------------------
+List all values set:  svccfg -s ec/spooler listprop "spooler/*"
+Modify a setting:     svccfg -s ec/spooler setprop spooler/logdir=/var/log/ecs
+	- make changes persistent: 'svcadm refresh ec/spooler'
+	- restart the service to apply changes now: 'svcadm restart ec/spooler'
+		(note: cause automatically restart of all enabled backends)
+
+property values of a backend:
+-----------------------------
+List all values set:
+	svccfg -s :haskell listprop "options/*"
+Modify a setting:
+	svccfg -s :haskell setprop options/logdir=/var/log/ecs
+	- make changes persistent: 'svcadm refresh :haskell'
+	- restart the service to apply changes now: 'svcadm restart :haskell'
+Add env vars to the start method:
+	svccfg -s :haskell setprop \
+	'start/environment = astring: ("MY_HOME=/usr/local" "BAR=/usr/lib/foo")'
+Del env vars from the start method:
+	svccfg -s :haskell setprop 'start/environment = ""'
