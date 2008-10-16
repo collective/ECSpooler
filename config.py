@@ -4,7 +4,7 @@
 # Copyright (c) 2005 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
-import sys, os, string
+import sys, os, string, tempfile
 import logging.handlers
 
 PROJECTNAME = 'ECSpooler'
@@ -34,6 +34,8 @@ RUN_AS_UID = 42		# fallback, if there is no pwd module to determine UID
 # -- all available backends (import names) ------------------------------------
 ALL_BACKENDS = 'erlang,haskell,haskellqc,haskellext,haskellio,java,junit,python,scheme,prolog,cl,javare,keywords'
 
+
+log = None
 
 ##
 # Set the default data dir to use.
@@ -152,8 +154,7 @@ def setTempDir(tmpdir):
         try:
             os.mkdir(tmpdir)
         except Exception, e:
-            log.warn("Unable to create directory: %s - "
-               + "using the default '%s' instead" % (e, tempfile.gettempdir()))
+            log.warn("Unable to create directory: %s - using the default '%s' instead" % (e, tempfile.gettempdir()))
         if os.geteuid() != 0 and tmpdir == tempfile.gettempdir():
             """ Too much trouble one could cause as root """
             try:

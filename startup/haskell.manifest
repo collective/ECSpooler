@@ -41,7 +41,7 @@
 		<exec_method
 			type='method'
 			name='start'
-			exec='/etc/svc/method/ec-backend %i %m Haskell'
+			exec='/etc/svc/method/ec-backend %m Haskell %i'
 			timeout_seconds='60'>
 			<method_context>
 				<method_credential user='ecsbd' group='ecsbd' privileges='basic,!proc_session,!proc_info,!file_link_any'/>
@@ -52,10 +52,11 @@
 			</method_context>
 		</exec_method>
 
+			<!-- exec='/etc/svc/method/ec-backend %m Haskell %i' -->
 		<exec_method
 			type='method'
 			name='stop'
-			exec='/etc/svc/method/ec-backend %i %m Haskell'
+			exec=':kill'
 			timeout_seconds='60' />
 
 		<property_group name='options' type='application'>
@@ -68,7 +69,7 @@
 			<!-- backend parameter  -B ... -->
 			<propval name='host' type='host' value='localhost'/>
 			<!-- -u ... -->
-            <propval name='user' type='astring' value='demo'/>
+            <propval name='user' type='astring' value='root'/>
 			<!-- -a ... -->
             <propval name='authfile' type='astring' value='/etc/ecsbd'/>
 			<!-- if remote, enable these ones as well 
@@ -97,7 +98,7 @@
 
 		<property_group name='startd' type='framework'>
 			<!-- sub-process core dumps shouldn't restart session -->
-			<propval name='ignore_error' type='astring' value='core,signal' />
+			<propval name='ignore_error' type='astring' value='core' />
 		</property_group>
 
 		<!--

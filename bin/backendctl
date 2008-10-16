@@ -14,7 +14,7 @@ with entries about spooler server's host and port as well as base port
 for the backend. If a port is already in use, we will try another one.
 """
 
-import os, sys, time, socket, xmlrpclib, tempfile
+import os, sys, time, socket, xmlrpclib, tempfile, signal
 import traceback
 import getopt
 import logging
@@ -26,6 +26,7 @@ import config
 # get logger
 std_loghandler = config.initLogging()
 log = logging.getLogger('lib.AbstractBackend')
+config.log = log
 
 # TODO: should be in config.py
 MAX_TRIALS = 15
@@ -50,33 +51,39 @@ def _startBackend(backendId, backendHost, backendPort, spoolerHost, spoolerPort,
 
     log.info("Starting backend '%s %s (%s)' on %s ..." % (backendId, version, id, backendHost))
 
-    try:
-        if sys.platform in ['unixware7']:
-            cpid = os.fork1()
-        else:
-            cpid = os.fork()
-    except AttributeError, aerr:
-        log.warn('os.fork not defined - skipping.')
-        cpid = 0
-
-    if cpid == 0:
-        # child process
-        (backend, p)= _getBackendInstance(backendId, backendHost, backendPort, 
+    (backend, p) = _getBackendInstance(backendId, backendHost, backendPort, 
                                      spoolerHost, spoolerPort, spoolerAuth)
-        
-        if backend:
-            log.info('%s port=%d' % (backendId, p))
+    
+    pout, pin = os.pipe()
+    if backend:
+        log.info('%s port=%d' % (backendId, p))
+        try:
+            if sys.platform in ['unixware7']:
+                cpid = os.fork1()
+            else:
+                cpid = os.fork()
+        except AttributeError, aerr:
+            log.warn('os.fork not defined - skipping.')
+            cpid = 0
+    else:
+        log.error('Backend start finally failed. See log for more information.')
+    if cpid == 0:
+        ok = "OK"
+        try:
+            # child process
             __tmp = backend.start()
             if __tmp:
                 log.error(__tmp)
-        else:
-            log.error('Backend start finally failed. See log for more information.')
-
+                ok = "NO"
+        finally:
+            os.write(pout, ok);
     else:
         # parent process
-        time.sleep(1)
         log.info('backend pid=%d' % cpid)
-
+        got = os.read(pin,2)
+        if (got != "OK"):
+            return 1
+        return 0
 
 def _getBackendInstance(backendId, backendHost, backendPort, spoolerHost, 
                         spoolerPort, spoolerAuth):
@@ -390,10 +397,11 @@ def main():
             usage()
             sys.exit(2)
         else:
+            ret = 0
             try:
                 # check cmd option and do the indicated action
                 if cmd == 'start':
-                    _startBackend(backendId, backendHost, backendPort,
+                    ret = _startBackend(backendId, backendHost, backendPort,
                                   spoolerHost, spoolerPort, auth)
     
                 elif cmd == 'stop':
@@ -414,6 +422,7 @@ def main():
                 else:
                     log.error('ERROR: Unknown command %s' % cmd)
                     usage()
+                    ret = 99
                     
             except Exception, e:
                 if log.isEnabledFor(logging.DEBUG):
@@ -422,10 +431,12 @@ def main():
                     #print e.args      # arguments stored in .args
                     #print e           # __str__ allows args to printed directly
                     #print sys.exc_info()[0]
+                    ret = 99
 
                 log.error("%s: %s" % (sys.exc_info()[0], e))
             logging.getLogger('').removeHandler(std_loghandler)
+            return ret
 
 # -- Main ----------------------------------------------------------------------
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

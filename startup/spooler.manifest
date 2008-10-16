@@ -5,11 +5,11 @@
 -->
 <service_bundle type='manifest' name='ECSpooler'>
 <service
-	name='application/ec'
+	name='application/ec/spooler'
 	type='service'
 	version='1'>
 
-	<instance name='spooler' enabled='false'>
+	<instance name='default' enabled='false'>
 		<!--
 			Wait for network interfaces to be initialized.
 		-->
@@ -50,16 +50,24 @@
 
 		<property_group name='spooler' type='application'>
 			<stability value='Evolving' />
+			<propval name='modify_authorization' type='astring'
+				value='solaris.smf.manage.ecs' />
 			<!-- the base directory, where bin/spoolerctl resides -->
 			<propval name='basedir' type='astring' value='/data/ecs/ECSpooler'/>
 			<!-- see bin/spoolerctl -h -->
 			<propval name='host' type='host' value='localhost'/>
 			<propval name='port' type='integer' value='5050'/>
-			<propval name='tmpdir' type='astring' value=''/>
-			<propval name='logdir' type='astring' value=''/>
-			<propval name='vardir' type='astring' value=''/>
-			<propval name='workdir' type='astring' value=''/>
+			<propval name='tmpdir' type='astring' value='/tmp/spooler'/>
+			<propval name='logdir' type='astring' value='/var/ecs/spooler/log'/>
+			<propval name='vardir' type='astring' value='/var/ecs/spooler/data'/>
+			<propval name='workdir' type='astring' value='/var/ecs/spooler'/>
 			<propval name='loglevel' type='astring' value='INFO'/>
+		</property_group>
+		<property_group name='start' type='method'>
+			<propval name='modify_authorization' type='astring'
+				value='solaris.smf.manage.ecs' />
+			<propval name='action_authorization' type='astring'
+				value='solaris.smf.manage.ecs' />
 		</property_group>
 
 		<property_group name='startd' type='framework'>
