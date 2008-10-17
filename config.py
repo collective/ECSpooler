@@ -65,15 +65,15 @@ def getLogLevel(level):
     if __lvl == "CRITICAL" or __lvl == "FATAL":
         return logging.CRITICAL
     elif __lvl == "ERROR":
-        LOGLEVEL = logging.ERROR
+        return logging.ERROR
     elif __lvl == "WARNING" or __lvl == "WARN":
-        LOGLEVEL = logging.WARNING
+        return logging.WARNING
     elif __lvl == "INFO":
-        LOGLEVEL = logging.INFO
+        return logging.INFO
     elif __lvl == "DEBUG":
-        LOGLEVEL = logging.DEBUG
+        return logging.DEBUG
     elif __lvl == "NOTSET" or __lvl == "NONE":
-        LOGLEVEL = logging.NOTSET
+        return logging.NOTSET
     else:
         return None
 ##
@@ -152,7 +152,7 @@ def setTempDir(tmpdir):
     os.environ['TMPDIR'] = tmpdir
     if not os.path.exists(tmpdir):
         try:
-            os.mkdir(tmpdir)
+            os.makedirs(tmpdir,0755)
         except Exception, e:
             log.warn("Unable to create directory: %s - using the default '%s' instead" % (e, tempfile.gettempdir()))
         if os.geteuid() != 0 and tmpdir == tempfile.gettempdir():

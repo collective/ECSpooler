@@ -71,11 +71,11 @@ getoptions() {
 	if [ -n "$VAL" -a "$VAL" != '""' ]; then
 		cmdopts="${cmdopts} -H $VAL "
 	fi
-	VAL=`/usr/bin/svcprop -p 'spooler/port' $SPOOLER_FMRI 2>/dev/null`
+	VAL=`/usr/bin/svcprop -p 'options/port' $SPOOLER_FMRI 2>/dev/null`
 	if [ -n "$VAL" -a "$VAL" != '""' ]; then
 		cmdopts="${cmdopts} -P $VAL "
 	else
-		echo "WARNING: property 'spooler/port' of $SPOOLER_FMRI is not set!"
+		echo "WARNING: property 'options/port' of $SPOOLER_FMRI is not set!"
 	fi
 	VAL=`/usr/bin/svcprop -p 'options/trace' $SMF_FMRI 2>/dev/null`
 	if [ -n "$VAL" -a "$VAL" != '""' ]; then

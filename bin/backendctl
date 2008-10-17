@@ -257,8 +257,10 @@ def getPassFromFile(file, user):
 
     for line in lines:
         if line.startswith("#"): continue
-        if not line.strip(): continue
+        line = line.strip()
+        if not line: continue
         __tmp = line.split(':', 2)
+        log.debug("Got user=%s, pass=%s" % (__tmp[0], __tmp[1]))
         if len(__tmp) == 2 and __tmp[0] == user:
             return __tmp[1]
 
@@ -372,6 +374,7 @@ def main():
                 password = __pw
 
         auth = {"username":user, "password":password}
+        log.debug("setting auths to %s" % auth)
 		# TODO: is this (originally even *) really required?
 		# _startBackend seems to do that anyway
         __import__('backends.' + backendId.lower())
