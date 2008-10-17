@@ -34,7 +34,7 @@
 			type='method'
 			name='start'
 			exec='%{options/basedir}/bin/spoolerctl -t %{options/tmpdir} -L %{options/logdir} -v %{options/vardir} -w %{options/workdir} -l %{options/loglevel} -H %{options/host} -P %{options/port} start'
-			timeout_seconds='60'>
+			timeout_seconds='120'>
 			<method_context>
 				<method_credential user='ecsd' group='ecsd' privileges='basic,!proc_session,!proc_info,!file_link_any'/>
 			</method_context>

@@ -42,7 +42,7 @@
 			type='method'
 			name='start'
 			exec='/etc/svc/method/ec-backend %m Scheme %i'
-			timeout_seconds='60'>
+			timeout_seconds='120'>
 			<method_context>
 				<method_credential user='ecsbd' group='ecsbd' privileges='basic,!proc_session,!proc_info,!file_link_any'/>
 				<method_environment>

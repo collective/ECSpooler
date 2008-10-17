@@ -49,8 +49,21 @@ class AbstractServer:
         self._serverThread = None
 
         # create a server instance, but do not run it
-        self._server = SimpleXMLRPCServer((self.host, self.port), 
+        count = 0
+        self._server = None
+        while not self._server:
+            try:
+                self._server = SimpleXMLRPCServer((self.host, self.port), 
                                            SimpleXMLRPCRequestHandler, False)
+            except socket.error, (errno, msg):
+                # check 4 'addr already in use' (usually from unclean shutdown)
+                if errno == 125 and count < 20:
+                    count += 1
+                    self.log.info("Waiting for free socket ...")
+                    time.sleep(5)
+                else:
+                    raise
+                
                                            
         # register functions (must be implemented in subclasses)
         self._registerFunctions()
@@ -99,7 +112,7 @@ class AbstractServer:
                 # Green-IT: don't waste cpu cycles using while true: sleep(0.1)
                 signal.pause()
             except KeyboardInterrupt, ki:
-                self.log.info('Receiving keyboard interrupt.')
+                self.log.info('Received keyboard interrupt.')
                 self._stop(signal.SIGTERM, None)
 
         else:
@@ -114,7 +127,7 @@ class AbstractServer:
         @param: signal: the signal (TERM or KILL)
         @param: stack:
         """
-        self.log.info('Receiving signal %s, shutting down (%s).' % 
+        self.log.info('Received signal %s, shutting down (%s).' % 
                        (signal, self._className))
 
         self._manageBeforeStop()
@@ -123,7 +136,8 @@ class AbstractServer:
         self.log.info('Stopping server thread (%s) ...' % self._className)
         self._server.server_close()
         self.log.info('Exiting.')
-        os._exit(0)
+        # os_exit doesn't clean up used sockets properly
+        sys.exit(0)
 
         
     def _reconfig(self, signal, stack):

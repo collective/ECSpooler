@@ -294,8 +294,8 @@ def main():
                     ret = 99
 
         except (socket.error, xmlrpclib.Fault), exc:
-            if log.isEnabledFor(logging.DEBUG):
-                traceback.print_exc()
+            #if log.isEnabledFor(logging.DEBUG):
+            traceback.print_exc()
                 #print type(exc)     # the exception instance
                 #print exc.args      # arguments stored in .args
                 #print exc           # __str__ allows args to printed directly
