@@ -10,23 +10,30 @@
 . /lib/svc/share/smf_include.sh
 
 NAME="EduComponents Backend "
-SPOOLER_FMRI='svc:/application/ec:spooler'
+SPOOLER_FMRI='svc:/application/ec/spooler:default'
 USE_RCTL='true'
 export USE_RCTL
 
 # Read command line arguments
-method="$1"     # %m
-instance="$2"       # %i
+method="$1"		# %m
+BACKEND_NAME="$2"
+instance="$3"		# %i
 
-BACKEND_NAME="$3"
 
-if [ -z "$BE_NAME" ]; then
-	exit SMF_EXIT_ERR_FATAL
+Usage() {
+	echo "Usage: $0 {start|status|stop} instance BackendName"
+}
+
+if [ -z "$BACKEND_NAME" ]; then
+	echo "Missing BackendName - exiting"
+	Usage
+	exit $SMF_EXIT_ERR_FATAL
 fi
 # Set defaults; SMF_FMRI should have been set, but just in case.
 if [ -z "$SMF_FMRI" ]; then
-	if [ -z "$instance" -o -z "$method" ]; then
-		exit SMF_EXIT_ERR_NOSMF
+	if [ -z "$instance" ]; then
+		instance=`echo "$BACKEND_NAME" | tr '[:upper:]' '[:lower:]'`
+		exit $SMF_EXIT_ERR_NOSMF
 	fi
 	SMF_FMRI="svc:/application/ec/backend:${instance}"
 fi
@@ -36,17 +43,17 @@ getoptions() {
 	if [ -n "$VAL" -a "$VAL" != '""' ]; then
 		BACKENDCTL="${VAL}/bin/backendctl"
 	else
-		echo "Property 'options/basedir' is not set for $SMF_FMRI"
-		exit SMF_EXIT_ERR_CONFIG
+		echo "Property 'options/basedir' is not set for $SMF_FMRI - exiting"
+		exit $SMF_EXIT_ERR_CONFIG
 	fi
 	cmdopts=""
-	VAL=`/usr/bin/svcprop -p 'options/tmpdir' $SMF_FMRI 2>/dev/null`
-	if [ -n "$VAL" -a "$VAL" != '""' ]; then
-		cmdopts="-t $VAL "
-	fi
 	VAL=`/usr/bin/svcprop -p 'options/logdir' $SMF_FMRI 2>/dev/null`
 	if [ -n "$VAL" -a "$VAL" != '""' ]; then
 		cmdopts="${cmdopts} -L $VAL "
+	fi
+	VAL=`/usr/bin/svcprop -p 'options/tmpdir' $SMF_FMRI 2>/dev/null`
+	if [ -n "$VAL" -a "$VAL" != '""' ]; then
+		cmdopts="${cmdopts} -t $VAL "
 	fi
 	VAL=`/usr/bin/svcprop -p 'options/vardir' $SMF_FMRI 2>/dev/null`
 	if [ -n "$VAL" -a "$VAL" != '""' ]; then
@@ -64,11 +71,11 @@ getoptions() {
 	if [ -n "$VAL" -a "$VAL" != '""' ]; then
 		cmdopts="${cmdopts} -H $VAL "
 	fi
-	VAL=`/usr/bin/svcprop -p 'options/port' $SPOOLER_FMRI 2>/dev/null`
+	VAL=`/usr/bin/svcprop -p 'spooler/port' $SPOOLER_FMRI 2>/dev/null`
 	if [ -n "$VAL" -a "$VAL" != '""' ]; then
 		cmdopts="${cmdopts} -P $VAL "
 	else
-		echo "WARNING: ec:spooler property options/port is not set!"
+		echo "WARNING: property 'spooler/port' of $SPOOLER_FMRI is not set!"
 	fi
 	VAL=`/usr/bin/svcprop -p 'options/trace' $SMF_FMRI 2>/dev/null`
 	if [ -n "$VAL" -a "$VAL" != '""' ]; then
@@ -118,10 +125,12 @@ fi
 case "$method" in
 	start)
 		echo "Starting $NAME $BACKEND_NAME ... \c"
+		echo "${BACKENDCTL} ${cmdopts} $BACKEND_NAME start"
 		${BACKENDCTL} ${cmdopts} "$BACKEND_NAME" start
-		if [ $? -ne 0 ]; then
+		ST=$?
+		if [ $ST -ne 0 ]; then
 			echo 'failed.'
-			exit $SMF_EXIT_ERR_CONFIG
+			exit $ST
 		else
 			echo 'done.'
 		fi
@@ -132,7 +141,7 @@ case "$method" in
 		if [ $? -eq 0 ]; then
 			echo 'done.'
 		else
-			echo 'faild.'
+			echo 'failed.'
 			exit $SMF_EXIT_ERR_OTHER
 		fi
 		;;
@@ -140,7 +149,6 @@ case "$method" in
 		${BACKENDCTL} ${cmdopts} "$BACKEND_NAME" status
 		;;
 	*)
-		echo "Usage: $0 {start|status|stop}"
 		exit $SMF_EXIT_ERR_FATAL
 		;;
 esac
