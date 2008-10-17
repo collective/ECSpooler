@@ -66,22 +66,27 @@ def _startBackend(backendId, backendHost, backendPort, spoolerHost, spoolerPort,
             log.warn('os.fork not defined - skipping.')
             cpid = 0
     else:
-        log.error('Backend start finally failed. See log for more information.')
+        log.error('Backend start failed. See log for more information.')
+        return 1
+
     if cpid == 0:
-        ok = "OK"
         try:
             # child process
-            __tmp = backend.start()
+            __tmp = backend.start(pout)
             if __tmp:
                 log.error(__tmp)
-                ok = "NO"
-        finally:
-            os.write(pout, ok);
+        except Exception, e:
+            os.write(pout, 'FAILED');
     else:
         # parent process
         log.info('backend pid=%d' % cpid)
-        got = os.read(pin,2)
+        got = os.read(pin,6)
+        log.info('backend %s %s' % (backendId, got))
         if (got != "OK"):
+            try:
+                os.waitpid(cpid, 0)
+            except Exception, e:
+                pass
             return 1
         return 0
 
@@ -431,9 +436,9 @@ def main():
                     #print e.args      # arguments stored in .args
                     #print e           # __str__ allows args to printed directly
                     #print sys.exc_info()[0]
-                    ret = 99
-
+                ret = 99
                 log.error("%s: %s" % (sys.exc_info()[0], e))
+
             logging.getLogger('').removeHandler(std_loghandler)
             return ret
 

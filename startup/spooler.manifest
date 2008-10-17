@@ -33,7 +33,7 @@
 		<exec_method
 			type='method'
 			name='start'
-			exec='%{spooler/basedir}/bin/spoolerctl -t %{spooler/tmpdir} -L %{spooler/logdir} -v %{spooler/vardir} -w %{spooler/workdir} -l %{spooler/loglevel} -H %{spooler/host} -P %{spooler/port} start'
+			exec='%{options/basedir}/bin/spoolerctl -t %{options/tmpdir} -L %{options/logdir} -v %{options/vardir} -w %{options/workdir} -l %{options/loglevel} -H %{options/host} -P %{options/port} start'
 			timeout_seconds='60'>
 			<method_context>
 				<method_credential user='ecsd' group='ecsd' privileges='basic,!proc_session,!proc_info,!file_link_any'/>
@@ -48,7 +48,7 @@
 			timeout_seconds='60' >
 		</exec_method>
 
-		<property_group name='spooler' type='application'>
+		<property_group name='options' type='application'>
 			<stability value='Evolving' />
 			<propval name='modify_authorization' type='astring'
 				value='solaris.smf.manage.ecs' />
@@ -63,12 +63,6 @@
 			<propval name='workdir' type='astring' value='/var/ecs/spooler'/>
 			<propval name='loglevel' type='astring' value='INFO'/>
 		</property_group>
-		<property_group name='start' type='method'>
-			<propval name='modify_authorization' type='astring'
-				value='solaris.smf.manage.ecs' />
-			<propval name='action_authorization' type='astring'
-				value='solaris.smf.manage.ecs' />
-		</property_group>
 
 		<property_group name='startd' type='framework'>
 			<!-- sub-process core dumps shouldn't restart session -->
@@ -76,6 +70,8 @@
 		</property_group>
 
 		<property_group name='general' type='framework'>
+			<propval name='modify_authorization' type='astring'
+				value='solaris.smf.manage.ecs' />
 			<propval name='action_authorization' type='astring'
 				value='solaris.smf.manage.ecs' />
 		</property_group>

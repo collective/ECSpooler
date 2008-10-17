@@ -66,8 +66,7 @@ class Spooler(AbstractServer):
         # doqueue thread (we will use only one thread)
         self._doqueueThread = None
         self._doqueueThreadExit = False
-        self._doqueueThreadLock = thread.allocate_lock()
-
+        self._doqueueThreadCond = threading.Condition()
 
     def _registerFunctions(self):
         """
@@ -107,11 +106,11 @@ class Spooler(AbstractServer):
         self.log.info('Stopping scheduler thread (%s) ...' % self._className)
         self._doqueueThreadExit = True
 
-        while self._doqueueThread and self._doqueueThread.isAlive():
-            self.log.info('Scheduler thread is still alive, waiting %ds' %
-                           self.DEFAULT_DOQUEUE_WAKEUP)
-            time.sleep(self.DEFAULT_DOQUEUE_WAKEUP)
-        
+        self._doqueueThreadCond.acquire()
+        self._doqueueThreadCond.notifyAll()
+        self._doqueueThreadCond.wait()
+        self._doqueueThreadCond.release()
+
         self.log.info('Stopping backends ...')
         
         # We make a copy of _backends because it will change during 
@@ -249,7 +248,10 @@ class Spooler(AbstractServer):
 
             # append the job
             self.log.info("Enqueueing job '%s'" % job.getId())
+            self._doqueueThreadCond.acquire()
             self._queue.enqueue(job)
+            self._doqueueThreadCond.notifyAll()		# wake up _dequeue
+            self._doqueueThreadCond.release()
 
             return (1, job.getId())
 
@@ -434,69 +436,75 @@ class Spooler(AbstractServer):
         """
         Performs the dispatching of a job to a backend.
 
-        This method is called in a separate thread, which is opened
-        and managed by the threading.Thread class. _doqueue() runs in a 
-        loop until _doqueue_thread_stop is True.
+        _doqueue() runs in a loop until _doqueueThreadExit is True.
+        In the loop it waits for _doqueueThreadCond, dequeues an entry,
+        notifies _doqueueThreadCond and finally releases it before
+        it starts waiting for _doqueueThreadCond again.
+
+        @see Condition#acquire()
+        @see Condition#wait()
+        @see Queue#dequeue()
+        @see Condition#notify()
+        @see Condition#release()
+        @see #_processJob
         """
 
         while not self._doqueueThreadExit:
-
-            try:
-                #self._doqueueThreadLock.acquire()
-            
-                # is the queue empty?
-                if not self._queue.isEmpty():
-                    # get next job from the queue and the selected backend
-                    job = self._queue.dequeue()
-                    backend = self._backends.get(job['backend'], None)
+            self._doqueueThreadCond.acquire()
+            self._doqueueThreadCond.wait()
+            try:  # Python bug: try ... except ... finally does not work
+                try:
+                    seen = None
+                    while not self._queue.isEmpty():
+                        if self._doqueueThreadExit:
+                            break;
+                        # get next job from the queue and the selected backend
+                        # TODO: iterate over the queue without dequeueing
+                        job = self._queue.dequeue()
+                        if seen == job:
+                            # wait 'til next one can be processed
+                            self._queue.enqueue(job)
+                            break;
+                        backend = self._backends.get(job['backend'], None)
     
-                    if not backend:
-                        self.log.warn("Job %s can not be executed, no such "
-                                     "backend: %s" % (job.getId(), backend['id']))
+                        if not backend:
+                            self.log.warn("Job %s can not be executed, no such "
+                                         "backend: %s" % (job.getId(), backend['id']))
                                   
-                        # enqueue the job so maybe later, if the backend
-                        # is available, we can process it
-                        self._queue.enqueue(job)
-    
-                    # backend is busy
-                    elif backend.get('isBusy', False):
-                        # backend is bussy, try again later
-                        self.log.info('Backend %s is busy (%s)' % 
-                                      (backend['id'], job,))
-                        # try later
-                        self._queue.enqueue(job)
-                    # process job
-                    else:
-                        backend['isBusy'] = True
-                        
-                        result = self._processJob(backend, job)
-                        self._results.enqueue(result)
-                        
-                        self.log.info("Result of job '%s' added to result queue" 
-                                     % (result.getId(),))
-        
-                        backend['isBusy'] = False
-                else:
-                    #self.log.debug('_doqueue: self._queue is empty');
-                    pass
-                    
-            except Exception, e:
-                msg = '%s: %s' % (sys.exc_info()[0], e)
-                self.log.error(msg)
-            
-            # wait a defined time before resuming
-            time.sleep(self.DEFAULT_DOQUEUE_WAKEUP)
+                            # enqueue the job so maybe later, if the backend
+                            # is available, we can process it
+                            self._queue.enqueue(job)
 
+                        # backend is busy
+                        elif backend.get('isBusy', False):
+                            # backend is bussy, try again later
+                            self.log.info('Backend %s is busy (%s)' % 
+                                      (backend['id'], job,))
+                            # try later
+                            self._queue.enqueue(job)
+                        # process job
+                        else:
+                            # dont block - continue to service other backends
+                            threading.Thread(target=_self._processJob, 
+                                 args=(backend, job, self._doqueueThreadCond)).start()
+
+                except Exception, e:
+                    msg = '%s: %s' % (sys.exc_info()[0], e)
+                    self.log.error(msg)
+
+            finally:
+                self._doqueueThreadCond.notify()
+                self._doqueueThreadCond.release()
         # end while loop
 
-
-    def _processJob(self, backend, job):
+    def _processJob(self, backend, job, cond):
         """
         Processing the job by dispatching it to the backend.
         
         @param: backend: a dict with backend attributes (such as id, name, url,)
         @param: job: a job instance
         """
+        backend['isBusy'] = True
         try:
             self.log.info("Dispatching job '%s' to backend '%s'" % 
                          (job.getId(), job['backend']))
@@ -523,6 +531,13 @@ class Spooler(AbstractServer):
 
             result = BackendResult(-153, msg, id=job.getId())
         
+        self._results.enqueue(result)
+        self.log.info("Result of job '%s' added to result queue" 
+                                         % (result.getId(),))
+        backend['isBusy'] = False
+        cond.acquire();
+        cond.notifyAll();		# wake up the queue runner etc.
+        cond.release();
         #self.log.debug('jobId: %s' % job.getId())
         #self.log.debug('data: %s' % result.getData())
             

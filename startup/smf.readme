@@ -2,6 +2,7 @@ Solaris SMF support
 -------------------
 
 see smf_security(5), svccfg(1M), svcs(1), svcadm(1M), svcprop(1)
+http://opensolaris.org/os/project/smf-doc/smf-dev/smf-book.pdf
 
 The advantage of using Solaris Service Management Facilities (SMF) is:
 	- the OS tracks dependencies and e.g. restart/stops all backends
@@ -23,6 +24,11 @@ The advantage of using Solaris Service Management Facilities (SMF) is:
 
 Mini-Howto SMF:
 ---------------
+Operate/modify the properties of a service like spooler or backend,
+'solaris.smf.manage.ecs' authorization is required - see auths(1) . Per
+default it is utilized for modify_authorization and action_authorization,
+thus giving service operator the max. flexibility they need - so take care.
+
 0) make sure, the content of the manifest is correct:
 	svccfg validate spooler.manifest
 
@@ -30,33 +36,33 @@ Mini-Howto SMF:
 	svccfg import spooler.manifest
 
 [2] modify properties:
-	svccfg -s ec:spooler setprop spooler/port = integer: 5050
-    svccfg -s ec:spooler setprop spooler/tmpdir = astring: "/tmp/ecs"
+	svccfg -s spooler:default setprop options/port = integer: 5050
+    svccfg -s spooler:default setprop options/tmpdir = astring: "/tmp/ecs"
     ...
-    svcadm refresh ec:spooler
+    svcadm refresh spooler
 
 [3] add add. env vars:
-	svccfg -s ec:spooler setenv -m start MYVAR value
+	svccfg -s spooler setenv -m start MYVAR value
 
 4) enable the service:
-	svcadm enable ec:spooler
+	svcadm enable spooler
 
 5) check, whether the service is running:
 	svcs -xv
 
 [6] disable a service:
-	svcadm disable ec:spooler
+	svcadm disable spooler
 
 [7] remove a service:
-	svccfg delete ec
+	svccfg delete spooler
 
 
 For backends adjust a *.manifest and:
 0) make sure ec_backends.method resides in /etc/svc/method/ and is r-x by root
    if the directory does  not exiost yet, create it
 	mdir -p /etc/svc/method/
-	cp ec_backends.method /etc/svc/method/ec_backend
-	chmod 0755 /etc/svc/method/ec_backend
+	cp ec_backends.method /etc/svc/method/ec-backend
+	chmod 0755 /etc/svc/method/ec-backend
 
 1) copy a manifest of choice and adjust:
 	- instance name ($mybackend)
@@ -72,10 +78,10 @@ For backends adjust a *.manifest and:
 
 property values of the spooler:
 ------------------------------
-List all values set:  svccfg -s ec/spooler listprop "spooler/*"
-Modify a setting:     svccfg -s ec/spooler setprop spooler/logdir=/var/log/ecs
-	- make changes persistent: 'svcadm refresh ec/spooler'
-	- restart the service to apply changes now: 'svcadm restart ec/spooler'
+List all values set:  svccfg -s spooler:default listprop "options/*"
+Modify a setting:     svccfg -s spooler:default setprop options/logdir=/var/ecs
+	- make changes persistent: 'svcadm refresh options:refresh'
+	- restart the service to apply changes now: 'svcadm restart spooler:default'
 		(note: cause automatically restart of all enabled backends)
 
 property values of a backend:

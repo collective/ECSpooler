@@ -64,10 +64,13 @@ class AbstractServer:
         self._server.serve_forever()
 
 
-    def start(self):
+    def start(self, pout):
         """
         Runs this XML-RPC server instance, but do so in a different thread.
         The main thread simply sleeps so that it can respond to signals.
+
+        @param pout    Pipe to the parent to notify about successful startup
+                       ('OK') or failure('FAIL')
         """
         
         if self._manageBeforeStart():
@@ -91,15 +94,16 @@ class AbstractServer:
                 except AttributeError, err:
                     self.log.warn('signal.SIGBREAK is not defined - skipping it.')
     
+            os.write(pout, 'OK')
             try:
-                while 1:
-                    time.sleep(0.1)
-                #end while
+                # Green-IT: don't waste cpu cycles using while true: sleep(0.1)
+                signal.pause()
             except KeyboardInterrupt, ki:
                 self.log.info('Receiving keyboard interrupt.')
                 self._stop(signal.SIGTERM, None)
 
         else:
+          os.write(pout, 'FAILED')
           return "Couldn't start server thread. See log for more details"
 
 
@@ -118,7 +122,7 @@ class AbstractServer:
         # stop server thread
         self.log.info('Stopping server thread (%s) ...' % self._className)
         self._server.server_close()
-        
+        self.log.info('Exiting.')
         os._exit(0)
 
         

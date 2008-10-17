@@ -41,7 +41,7 @@
 		<exec_method
 			type='method'
 			name='start'
-			exec='/etc/svc/method/ec-backend %i %m Python'
+			exec='/etc/svc/method/ec-backend %m Python %i'
 			timeout_seconds='60'>
 			<method_context>
 				<method_credential user='ecsbd' group='ecsbd' privileges='basic,!proc_session,!proc_info,!file_link_any'/>
@@ -54,11 +54,15 @@
 		<exec_method
 			type='method'
 			name='stop'
-			exec='/etc/svc/method/ec-backend %i %m Python'
+			exec=':kill'
 			timeout_seconds='60' />
 
 		<property_group name='options' type='application'>
 			<stability value='Evolving' />
+			<propval name='modify_authorization' type='astring'
+				value='solaris.smf.manage.ecs' />
+			<!-- set, export the env var USE_RCTL='true' for task wrappers -->
+			<propval name='use_resource_ctrl' type='boolean' value='true' />
 			<!-- directory, which contains bin/backendctl -->
 			<propval name='basedir' type='astring' value='/data/ecs/ECSpooler'/>
 
@@ -99,12 +103,9 @@
 			<propval name='ignore_error' type='astring' value='core,signal' />
 		</property_group>
 
-		<!--
-			Add all users, which should be able to manage this service
-			into /etc/user_attr or use appropriate profiles. E.g.:
-			echo 'jdoe::::auths=solaris.smf.manage.ecs' >>/etc/user_att
-		-->
 		<property_group name='general' type='framework'>
+			<propval name='modify_authorization' type='astring'
+				value='solaris.smf.manage.ecs' />
 			<propval name='action_authorization' type='astring'
 				value='solaris.smf.manage.ecs' />
 		</property_group>
