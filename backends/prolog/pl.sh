@@ -27,7 +27,7 @@ else
 	INTERPRETER=${INTERPRETER:-"/opt/swiprolog/bin/pl"}
 fi
 if [ -x /usr/bin/newtask -a -n "$USE_RCTL" ]; then
-	OP=$(/usr/bin/newtask -p Prolog -F ${INTERPRETER} -q -f none -t halt -s "$@" 2>&1)
+	OP=$(pfexec /usr/bin/newtask -p Prolog -F ${INTERPRETER} -q -f none -t halt -s "$@" 2>&1)
 else
 	OP=$(${INTERPRETER} -q -f none -t halt -s "$@" 2>&1)
 fi

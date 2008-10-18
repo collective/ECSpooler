@@ -9,8 +9,8 @@ fi
 trap 'kill $! && trap - TERM && kill $$' TERM
 
 if [ -x /usr/bin/newtask -a -n "$USE_RCTL" ]; then
-	/usr/bin/newtask -p Python -F $INTERPRETER "$@" &
-	#/usr/bin/newtask -p Python -F $INTERPRETER /tmp/test.py &
+	pfexec /usr/bin/newtask -p Python -F $INTERPRETER "$@" &
+	#pfexec /usr/bin/newtask -p Python -F $INTERPRETER /tmp/test.py &
 else
 	$INTERPRETER "$@" &
 fi

@@ -19,7 +19,7 @@ OPTS="-P{HUGS}:${SLD}/haskell_libs:"
 trap 'kill $! && trap - TERM && kill $$' TERM
 
 if [ -x /usr/bin/newtask -a -n "$USE_RCTL" ]; then
-	/usr/bin/newtask -p Haskell -F $INTERPRETER $OPTS "$@" &
+	pfexec /usr/bin/newtask -p Haskell -F $INTERPRETER $OPTS "$@" &
 else
 	$INTERPRETER $OPTS "$@" &
 fi

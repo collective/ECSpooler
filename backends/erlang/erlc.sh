@@ -8,7 +8,7 @@ export BINDIR=${ERL_HOME}/bin
 COMPILER=${BINDIR}/erlc
 
 if [ -x /usr/bin/newtask -a -n "$USE_RCTL" ]; then
-	/usr/bin/newtask -p Erlang -F $COMPILER "$@"
+	pfexec /usr/bin/newtask -p Erlang -F $COMPILER "$@"
 else
 	$COMPILER "$@"
 fi
