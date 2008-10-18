@@ -22,8 +22,7 @@ from lib.data.BackendResult import BackendResult
 from lib.util.auth import *
 from lib.util.SpoolerQueue import SpoolerQueue
 
-from config import JOB_QUEUE_STORAGE
-from config import RESULT_QUEUE_STORAGE
+import config
 
 
 class Spooler(AbstractServer):
@@ -55,10 +54,12 @@ class Spooler(AbstractServer):
         # a dictionary for backends
         self._backends = {}
         # q queue to managing incomming jobs
-        self._queue = SpoolerQueue(JOB_QUEUE_STORAGE)
+        self.log.debug('Using job store %s' + config.JOB_QUEUE_STORAGE)
+        self._queue = SpoolerQueue(config.JOB_QUEUE_STORAGE)
 
         # a queue for managing backend results
-        self._results = SpoolerQueue(RESULT_QUEUE_STORAGE)
+        self.log.debug("Using result store %s" % config.RESULT_QUEUE_STORAGE)
+        self._results = SpoolerQueue(config.RESULT_QUEUE_STORAGE)
         
         # using md5 encrypted passwords in file etc/passwd for authentification
         self._auth = UserAuthMD5(pwdFile)
@@ -485,12 +486,12 @@ class Spooler(AbstractServer):
                         # process job
                         else:
                             # dont block - continue to service other backends
-                            threading.Thread(target=_self._processJob, 
+                            threading.Thread(target=self._processJob, 
                                  args=(backend, job, self._doqueueThreadCond)).start()
 
                 except Exception, e:
                     msg = '%s: %s' % (sys.exc_info()[0], e)
-                    self.log.error(msg)
+                    self.log.warn(msg)
 
             finally:
                 self._doqueueThreadCond.notify()

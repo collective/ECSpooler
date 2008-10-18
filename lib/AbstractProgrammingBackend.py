@@ -16,7 +16,7 @@ from lib.AbstractBackend import AbstractBackend
 from lib.util import utils
 from lib.data.BackendResult import BackendResult
 
-from config import CLEANUP
+import config
 
 try:
     EX_OK = os.EX_OK
@@ -394,7 +394,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         @dir a directory in temporary path
         """
 
-        if not CLEANUP:
+        if not config.CLEANUP:
             return
         
         try:
