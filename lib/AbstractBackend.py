@@ -271,10 +271,8 @@ class AbstractBackend(AbstractServer):
             result = self._process_execute(job)
             
         except Exception, e:
-            self.log.error(''.join(traceback.format_exception(*sys.exc_info())))
-            
+            self.log.error(traceback.format_exc())
             msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
-            self.log.error(msg)
             result = BackendResult(-200, msg)
 
             

@@ -564,8 +564,7 @@ class Spooler(AbstractServer):
         
         #except (socket.error, xmlrpclib.Fault, xmlrpclib.ProtocolError), exc:
         except Exception, e:
+            self.log.error(traceback.format_exc())
             msg = 'Server error: %s: %s (%s)' % (sys.exc_info()[0], e, method)
-
-            self.log.error(''.join(traceback.format_exception(*sys.exc_info())))
             return msg
 

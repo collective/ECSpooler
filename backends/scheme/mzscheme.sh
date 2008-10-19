@@ -21,7 +21,7 @@ OPTS="-m -v -f "
 trap 'kill $! && trap - TERM && kill $$' TERM
 
 if [ -x /usr/bin/newtask -a -n "$USE_RCTL" ]; then
-	pfexec /usr/bin/newtask -p Scheme -F $INTERPRETER $OPTS "$@" &
+	/usr/bin/pfexec /usr/bin/newtask -p Scheme -F $INTERPRETER $OPTS "$@" &
 else
 	$INTERPRETER $OPTS "$@" &
 fi

@@ -152,15 +152,15 @@ def setTempDir(tmpdir):
     os.environ['TMPDIR'] = tmpdir
     if not os.path.exists(tmpdir):
         try:
-            os.makedirs(tmpdir,0755)
+            os.makedirs(tmpdir, 0755)
         except Exception, e:
             log.warn("Unable to create directory: %s - using the default '%s' instead" % (e, tempfile.gettempdir()))
         if os.geteuid() != 0 and tmpdir == tempfile.gettempdir():
             """ Too much trouble one could cause as root """
             try:
-                os.chmod(tmpdir, 0700)
+                os.chmod(tmpdir, 0711)
             except Exception, e:
-                log.warn("Unable to chmod 0770 %s: %s" % (tmpdir, e))
+                log.warn("Unable to chmod 0711 %s: %s" % (tmpdir, e))
 
 def setWorkingDir(dir):
     if not dir:

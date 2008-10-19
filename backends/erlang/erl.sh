@@ -12,7 +12,7 @@ INTERPRETER="beam -- -root $ROOTDIR -progname erlexec -- \
 trap 'kill $! && trap - TERM && kill $$' TERM
 
 if [ -x /usr/bin/newtask -a -n "$USE_RCTL" ]; then
-	pfexec /usr/bin/newtask -p Erlang -F $INTERPRETER &
+	/usr/bin/pfexec /usr/bin/newtask -p Erlang -F $INTERPRETER &
 else
 	$INTERPRETER &
 fi

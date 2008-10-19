@@ -21,7 +21,7 @@ import config
 from lib.Spooler import Spooler
 
 # get logger
-std_loghandler = config.initLogging()
+config.initLogging()
 log = logging.getLogger('lib.Spooler')
 
 def _startSpooler(host, port, pwdFile):
@@ -47,7 +47,10 @@ def _startSpooler(host, port, pwdFile):
     if cpid == 0:
         try:
             # child process
-            __tmp = spooler.start(pout)
+            for handler in logging._handlerList:
+                if not isinstance(handler, logging.FileHandler):
+                    logging.getLogger('').removeHandler(handler)
+            __tmp = spooler.start(pout)		# blocks 'til shutdown
             if __tmp:
                 log.error(__tmp)
         except Exception, e:
@@ -92,8 +95,7 @@ def _stopSpooler(host, port, auth):
     except Exception, e: 
         log.warn("Unable to stop ECSpooler on %s:%d - %s:%s" %
             (host, port, sys.exc_info()[0], e))
-        if log.isEnabledFor(logging.DEBUG):
-            traceback.print_exc()
+        log.debug(traceback.format_exc())
         pass
 
 
@@ -244,7 +246,6 @@ def main():
         sys.exit(2)
 
     else:
-        config.initLogging(loglevel, 'spooler')
         command = args[0]
         
         # Run process as nobody if we are root
@@ -262,6 +263,7 @@ def main():
         ret = 0       
         try:
             if command == 'start':
+                config.initLogging(loglevel, 'spooler')
                 ret = _startSpooler(host, port, pwdFile)
     
             elif not user or not password:
@@ -275,6 +277,7 @@ def main():
                     _stopSpooler(host, port, auth)
 
                 elif command == 'restart':
+                    config.initLogging(loglevel, 'spooler')
                     _stopSpooler(host, port, auth)
                     time.sleep(3)
                     ret = _startSpooler(host, port, pwdFile)
@@ -294,27 +297,23 @@ def main():
                     ret = 99
 
         except (socket.error, xmlrpclib.Fault), exc:
-            #if log.isEnabledFor(logging.DEBUG):
-            traceback.print_exc()
+            ret = 99
+            log.debug(traceback.format_exc())
                 #print type(exc)     # the exception instance
                 #print exc.args      # arguments stored in .args
                 #print exc           # __str__ allows args to printed directly
                 #print sys.exc_info()[0]
-            ret = 99
             log.error("Server - %s: %s" % (sys.exc_info()[0], exc))
 
         except Exception, e:
-            if log.isEnabledFor(logging.DEBUG):
-                traceback.print_exc()
+            ret = 99
+            log.debug(traceback.format_exc())
                 #print type(e)     # the exception instance
                 #print e.args      # arguments stored in .args
                 #print e           # __str__ allows args to printed directly
                 #print sys.exc_info()[0]
-
-            ret = 99
             log.error("%s: %s" % (sys.exc_info()[0], e))
 
-        logging.getLogger('').removeHandler(std_loghandler)
         return ret
 
 # -- Main ----------------------------------------------------------------------

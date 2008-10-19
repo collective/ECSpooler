@@ -5,7 +5,7 @@
 #
 # This file is part of ECSpooler.
 
-import sys, os, re, time
+import sys, os, re, time, traceback
 import logging
 
 from types import StringType, UnicodeType
@@ -71,12 +71,14 @@ class Java(AbstractProgrammingBackend):
         matches = re.findall('(^.*%s:(\d+))' % 'java', message, re.MULTILINE)
 
         # replace each filename and line number
-        for match in matches:
-            message = re.sub(match[0], 
-                             'line: %d' % (int(match[1]) - test.lineNumberOffset), 
-                             message, 
-                             1)
-
+        try:
+            for match in matches:
+                message = re.sub(match[0], 
+                                 'line: %d' % (int(match[1]) - test.lineNumberOffset), 
+                                 message, 
+                                 1)
+        except Exception, e:
+            logging.error(traceback.format_exc())
         return message
                       
 

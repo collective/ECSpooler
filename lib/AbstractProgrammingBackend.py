@@ -85,8 +85,8 @@ class AbstractProgrammingBackend(AbstractBackend):
 
         except Exception, e:
             msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
+            self.log.debug(traceback.format_exc())
             self.log.error(msg)
-            self.log.error(traceback.format_exc())
             result = BackendResult(-200, msg)
                 
 
@@ -167,11 +167,10 @@ class AbstractProgrammingBackend(AbstractBackend):
                 #self.log.debug('result: %s' % repr(result))
                 
             except Exception, e:
-                #traceback.print_exc()
                 msg = 'Internal error during syntax check: %s: %s' % \
                         (sys.exc_info()[0], e)
-                              
-                self.log.error(msg)
+                self.log.debug(traceback.format_exc())
+                self.log.error(msg);
                 return BackendResult(-220, msg)
             
             self.log.debug('exitcode: %s' % repr(-exitcode))
@@ -284,6 +283,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         
         # write file
         utils.writeFile(source, fName, encoding)
+        os.chmod(os.path.dirname(fName), 01777)
         
         # get modul name
         #mName = os.path.basename(fName).replace(suffix, '')
@@ -359,10 +359,13 @@ class AbstractProgrammingBackend(AbstractBackend):
 
         # end interruptProcess
 
-        timer = threading.Timer(self.PROCESS_WAIT_TIME, interruptProcess)
-        timer.start()
+        native_rctl = os.getenv('USE_RCTL')
+        if not native_rctl:
+            timer = threading.Timer(self.PROCESS_WAIT_TIME, interruptProcess)
+            timer.start()
         exitcode = handle.wait()
-        timer.cancel()
+        if not native_rctl:
+            timer.cancel()
 
 
         if exitcode == SIGTERM:
@@ -409,5 +412,6 @@ class AbstractProgrammingBackend(AbstractBackend):
             shutil.rmtree(path)
 
         except Exception, e:
+            self.log.debug(traceback.format_exc())
             self.log.warn('Internal error during clean up: %s: %s' % \
                           (sys.exc_info()[0], e))

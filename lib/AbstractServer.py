@@ -4,7 +4,7 @@
 # Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
-import os, time, random, md5, thread, threading, signal
+import os, time, random, md5, thread, threading, signal, sys
 import socket, xmlrpclib
 import logging
 

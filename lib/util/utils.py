@@ -55,7 +55,7 @@ def writeFile(content, filename, encoding='utf-8'):
         return 1
     except Exception:
         # FIXME: return error message or through a special exception
-        logging.error(''.join(traceback.format_exception(*sys.exc_info())))
+        logging.error(traceback.format_exc())
         return 0
 
 
@@ -88,7 +88,7 @@ def delDir(path):
         return 1
         
     except Exception, e:
-        traceback.print_exc()
+        logging.error(traceback.format_exc())
         # FIXME: return error message
         return e
 

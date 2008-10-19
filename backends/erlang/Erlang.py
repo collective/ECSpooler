@@ -45,6 +45,12 @@ class Erlang(AbstractProgrammingBackend):
 
         result = re.sub('-module\((.*)\)\.', '-module(student).', 
                         src)
+        # erlexec needs env var HOME to be set
+        if not os.getenv('HOME'):
+            # since we don't know the location of test files yet ...
+            os.environ['HOME'] = os.getenv('TMPDIR')
+            logging.debug("Setting HOME for erlexec to " + os.environ['HOME'])
+ 
 
         return result, 'student'
 
@@ -138,7 +144,6 @@ class Erlang(AbstractProgrammingBackend):
                 model = self._writeModule('model', model, 
                                           self.srcFileSuffix, job.getId(),
                                           test.encoding)
-    
                 # compile model solution
                 exitcode, result = self._runInterpreter(compiler, 
                                                  os.path.dirname(model['file']),
@@ -166,7 +171,8 @@ class Erlang(AbstractProgrammingBackend):
             except AssertionError, err:
                 msg = 'Internal error during semantic check: %s: %s' % \
                       (sys.exc_info()[0], err)
-                logging.error(msg)
+                logging.debug(traceback.format_exc())
+                logging.error(mmsg)
                 return BackendResult(-230, msg)
 
            
@@ -220,7 +226,7 @@ class Erlang(AbstractProgrammingBackend):
                 except Exception, e:
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
-                                  
+                    logging.debug(traceback.format_exc())
                     logging.error(msg)
                     return BackendResult(-230, msg)
 

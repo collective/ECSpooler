@@ -24,7 +24,7 @@ sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pard
 import config
 
 # get logger
-std_loghandler = config.initLogging()
+config.initLogging()
 log = logging.getLogger('lib.AbstractBackend')
 config.log = log
 
@@ -72,7 +72,10 @@ def _startBackend(backendId, backendHost, backendPort, spoolerHost, spoolerPort,
     if cpid == 0:
         try:
             # child process
-            __tmp = backend.start(pout)
+            for handler in logging._handlerList:
+                if not isinstance(handler, logging.FileHandler):
+                    logging.getLogger('').removeHandler(handler)
+            __tmp = backend.start(pout)		# blocks here 'til shutdown
             if __tmp:
                 log.error(__tmp)
         except Exception, e:
@@ -260,7 +263,6 @@ def getPassFromFile(file, user):
         line = line.strip()
         if not line: continue
         __tmp = line.split(':', 2)
-        log.debug("Got user=%s, pass=%s" % (__tmp[0], __tmp[1]))
         if len(__tmp) == 2 and __tmp[0] == user:
             return __tmp[1]
 
@@ -367,17 +369,12 @@ def main():
 
     else:
         backendId, cmd = args
-        config.initLogging(loglevel, backendId.lower())
         if authfile and user:
             __pw = getPassFromFile(authfile, user)
             if __pw:
                 password = __pw
 
         auth = {"username":user, "password":password}
-        log.debug("setting auths to %s" % auth)
-		# TODO: is this (originally even *) really required?
-		# _startBackend seems to do that anyway
-        __import__('backends.' + backendId.lower())
         
         # Run process as nobody if we are root
         config.runAs(config.RUN_AS, config.RUN_AS_UID)
@@ -409,6 +406,7 @@ def main():
             try:
                 # check cmd option and do the indicated action
                 if cmd == 'start':
+                    config.initLogging(loglevel, backendId.lower())
                     ret = _startBackend(backendId, backendHost, backendPort,
                                   spoolerHost, spoolerPort, auth)
     
@@ -418,7 +416,7 @@ def main():
                 elif cmd == 'restart':
                     _stopBackend(backendId, spoolerHost, spoolerPort, auth)
                     time.sleep(2)
-        
+                    config.initLogging(loglevel, backendId.lower())
                     _startBackend(backendId, backendHost, backendPort,
                                   spoolerHost, spoolerPort, auth)
 
@@ -433,16 +431,14 @@ def main():
                     ret = 99
                     
             except Exception, e:
-                if log.isEnabledFor(logging.DEBUG):
-                    traceback.print_exc()
+                ret = 99
+                log.debug(traceback.print_exc())
                     #print type(e)     # the exception instance
                     #print e.args      # arguments stored in .args
                     #print e           # __str__ allows args to printed directly
                     #print sys.exc_info()[0]
-                ret = 99
                 log.error("%s: %s" % (sys.exc_info()[0], e))
 
-            logging.getLogger('').removeHandler(std_loghandler)
             return ret
 
 # -- Main ----------------------------------------------------------------------

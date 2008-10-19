@@ -36,7 +36,7 @@ OPTS=" --noinform --disable-debugger --no-sysinit --no-userinit "
 trap 'kill $! && trap - TERM && kill $$' TERM
 
 if [ -x /usr/bin/newtask -a -n "$USE_RCTL" ]; then
-	pfexec /usr/bin/newtask -p CommonLisp -F $INTERPRETER $OPTS --load "$@" --eval "(quit)" &
+	/usr/bin/pfexec /usr/bin/newtask -p CommonLisp -F $INTERPRETER $OPTS --load "$@" --eval "(quit)" &
 else
 	$INTERPRETER $OPTS --load "$@" --eval "(quit)" &
 fi
