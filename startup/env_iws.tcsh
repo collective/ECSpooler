@@ -1,6 +1,6 @@
 # source this file before running tests/runalltests --> no need to adjust
 # backends/**/*.sh
-setenv TMPDIR /tmp/backends
+setenv TMPDIR /tmp/backends.test
 rm -rf $TMPDIR
 mkdir -p $TMPDIR
 setenv ERL_HOME /local/usr/lib/erlang/erts-5.5.4
