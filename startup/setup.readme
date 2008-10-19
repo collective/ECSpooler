@@ -1,10 +1,12 @@
-# recommended setup information wrt. security:
+# recommended setup information wrt. security and Solaris:
 
 ROLES:
 	ecsadm:ecsadm    EC Spooler/Backend Software Manager, i.e. able to install
                      Software updates, change ECSpooler related files
     ecsd:ecsd        The identity under which the Spooler Service is running
-    ecsbd:ecsbd		 The identity under which the backends are running
+    ecsbd:ecsbd		 The identity under which the Backend Services are running
+    noaccess:noaccess  The identity, under which the tests aka compiler/
+                       interpreter are invoked by the backend
 
 FILEs and DIRs:
 	/etc/ecsd
@@ -48,4 +50,147 @@ FILEs and DIRs:
 
 	/tmp/backends
 		Directory containing temp files of the backends (see option -t)
-		Permissions: 0770 ecsbd:ecsadm	or	0700 ecsbd:ecsbd
+		Permissions: 0771 ecsbd:ecsadm	or	0711 ecsbd:ecsbd
+
+
+===============================================================================
+TASKS System-Administrator (only once):
+===============================================================================
+cd /data/ecs/ECSpooler/startup
+ksh
+# uninstall obsolete services
+while true; do 
+grep 'instance name' *.manifest | cut -f2 -d\'  | \
+while read INST ; do
+	if [ "$INST" = "default" ]; then
+		svcadm disable ec/spooler
+		svccfg delete ec/spooler
+	else
+		svcadm disable "backend:${INST}"
+		svccfg delete "backend:${INST}"
+	fi
+done
+svcs -a | /usr/xpg4/bin/grep -q '/ec/'
+if [ $? -ne 0 ]; then
+	break
+else
+	sleep 2
+fi
+done
++ rm -rf /var/svc/log/application-ec-*
+
+# re-import
+for f in *.manifest ; do
+	svccfg import $f
+done
+
++ mkdir -p /etc/svc/method
++ cp ec_backends.method /etc/svc/method/ec-backend
++ chmod 755 /etc/svc/method/ec-backend
+
+# change backend user
+BE_USER='whatever'
+svcs -a | /usr/xpg4/bin/grep '/ec/backend:' | cut -f2- -d/ | \
+while read FMRI ; do
+	echo "/$FMRI"
+	svccfg -s "$FMRI" setprop options/user="$BE_USER"
+	svcadm refresh "/$FMRI"
+done
+
+
+# get all required projects:
+find backends -name "*.sh" -exec grep 'newtask -p' {} + | \
+	awk '{ print $4 }' | sort | uniq
+
+# ProjectName  maxVal ...
+proj="\
+	CommonLisp	64MB	20	100KB	4MB	10	20 \
+	Erlang		64MB	20	100KB	4MB	10	20 \
+	Haskell		64MB	20	100KB	4MB	10	20 \
+	Java		64MB	20	100KB	4MB	10	20 \
+	Prolog		64MB	20	100KB	4MB	10	20 \
+	Python		64MB	20	100KB	4MB	10	20 \
+	Scheme		64MB	20	100KB	4MB	10	20 \
+"
+# remove old and add new projects
+set -- $proj
+while [ $# -ge 6 ]; do
+	+ projdel "$1" 2>&1 | grep -v 'does not exist'
+	+ projadd -U ecsbd,noaccess -c "$1 EC Backend" \
+		-K "process.max-data-size=(priv,$2,deny)" \
+		-K "process.max-file-descriptor=(priv,$3,deny)" \
+		-K "process.max-file-size=(priv,$4,deny)" \
+		-K "process.max-stack-size=(priv,$5,deny)" \
+		-K "task.max-cpu-time=(priv,$6,signal=KILL)"  \
+		-K "task.max-lwps=(priv,$7,deny)" \
+		"$1"
+	shift 7
+done
++ touch /etc/ecsbd
++ chown ecsadm:ecsbd /etc/ecsbd
++ chmod 0640 /etc/ecsbd
++ chmod 0640 /data/ecs/ECSpooler/etc/passwd
+
+exit
+
+# make sure, that the following entries are 
+# in /etc/security/prof_attr:
+EC Backend:::EduComponents Backend:
+# in /etc/security/exec_attr - run newtask as noaccess:noaccess :
+EC Backend:suser:cmd:::/usr/bin/newtask:uid=60002;gid=60002
+# in /etc/user_attr:
+ecsbd::::profiles=EC Backend
+
+
+===============================================================================
+TASKS Service-Operator:
+===============================================================================
+Service operators should have 'solaris.smf.manage.ecs' authorization (see
+/etc/user_attr and/or /etc/security/prof_attr), otherwise *.manifest files
+need to be adapted.
+
+per default ALL Services are disabled after import!
+
+svcadm {enable|disable|refresh|restart} spooler
+svcadm {enable|disable|refresh|restart} :haskell       etc. for backends
+
+To check, which EC backends are installed, do:
+svcs -a | grep '/ec/'
+
+To list the configuration in use, do:
+svccfg export {spooler|backend}
+
+To let the spooler listen on all network interfaces of a machine, do:
+svccfg -s spooler:default setprop options/host=0.0.0.0
+svcadm refresh spooler; svcadm restart spooler
+
+Troubleshooting bzgl. 'service läuft nicht':
+--------------------------------------------
+To see, what is not running, do:
+svcs -xv
+tail -100 /var/svc/application-ec-spooler:default.log		or
+tail -100 /var/svc/application-ec-backend:haskell.log		etc.
+
+Further information wrt. SMF:
+-----------------------------
+/data/ecs/ECSpooler/startup/smf.readme
+
+
+To test recent ECSpooler on IWS/Sunpool Solaris machines, do:
+-------------------------------------------------------------
++ ecsadm
+cd /data/ecs/ECSpooler
+source startup/env_iws.tcsh
+tests/runalltests
+
+rm -rf /tmp/backends.test
+
+Update code:
+------------
+setenv CVS_RSH ssh
+setenv CVSROOT :ext:$user@$cvshost:/var/cvs
+cd /data/ecs/ECSpooler
+cvs update
+bzw.
+cd /data/ecs
+cvs co ECSpooler
