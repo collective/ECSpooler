@@ -4,6 +4,7 @@ Solaris SMF support
 see smf_security(5), svccfg(1M), svcs(1), svcadm(1M), svcprop(1)
 http://opensolaris.org/os/project/smf-doc/smf-dev/smf-book.pdf
 
+
 The advantage of using Solaris Service Management Facilities (SMF) is:
 	- the OS tracks dependencies and e.g. restart/stops all backends
 	  automatically, if the spooler (on whome the backends depend on) gets
