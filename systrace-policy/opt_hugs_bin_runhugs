@@ -25,6 +25,10 @@ Policy: /opt/hugs/bin/runhugs, Emulation: netbsd
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Prelude.hs" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Numeric.hs" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Monad.hs" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/List.hs" then permit
+        netbsd-fsread: filename match "/opt/hugs/lib/hugs/libraries/*.hs" then permit
 	netbsd-__sigaction_sigtramp: permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/Dynamic.hs" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Dynamic.hs" then permit
@@ -32,6 +36,7 @@ Policy: /opt/hugs/bin/runhugs, Emulation: netbsd
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/IOExts.hs" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/IORef.hs" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/IO.hs" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/Time.hs" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Maybe.hs" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Typeable.hs" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/ConcBase.hs" then permit
@@ -55,19 +60,37 @@ Policy: /opt/hugs/bin/runhugs, Emulation: netbsd
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Ratio.hs" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Data/Ix.hs" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/Word.hs" then permit
-	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/System/IO/Error.hs" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/System" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/System/Random.hs" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/System/Time.hs" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/System/CPUTime.hs" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/System/Locale.hs" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/System/IO" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/System/IO/Error.hs" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/System/IO/Unsafe.hs" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/Ptr.hs" then permit
 	netbsd-fsread: filename eq "/opt/hugs/lib/hugs/libraries/Hugs/System.hs" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/oldlib" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/oldlib/QuickCheck.hs" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/packages" then permit
+        netbsd-fsread: filename match "/opt/hugs/lib/hugs/packages/*" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/packages/QuickCheck/Debug" then permit
+        netbsd-fsread: filename eq "/opt/hugs/lib/hugs/packages/QuickCheck/Debug/QuickCheck.hs" then permit
 	netbsd-fsread: filename match "/tmp/*/wrapper.hs" then permit
 	netbsd-__getcwd: permit
 	netbsd-fsread: filename match "/tmp/*/Student.hs" then permit
 	netbsd-fsread: filename match "/tmp/*/Model.hs" then permit
+        netbsd-fsread: filename match "/tmp/*/Properties.hs" then permit
 	netbsd-fsread: filename match "/opt/ECSpooler/backends/haskell/haskell_libs" then permit
+        netbsd-fsread: filename match "/opt/ECSpooler/backends/haskellqc/haskell_libs" then permit
 	netbsd-fsread: filename match "/tmp/*/Prelude.hs" then deny[eperm]
 	netbsd-fsread: filename match "/tmp/*/Prelude.lhs" then deny[eperm]
 	netbsd-ioctl: permit
+        netbsd-fcntl: permit
+        netbsd-fstatvfs1: permit
+        netbsd-getdents: permit
+        netbsd-gettimeofday: permit
+        netbsd-getrusage: permit
 	netbsd-write: permit
 	netbsd-exit: permit
 

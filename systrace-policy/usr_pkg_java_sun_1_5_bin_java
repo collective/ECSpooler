@@ -34,6 +34,9 @@ Policy: /usr/pkg/java/sun-1.5/bin/java, Emulation: linux
 	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/libpthread.so.0" then permit
 	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/libpthread.so.0" then permit
 	linux-fsread: filename eq "/usr/pkg/java/lib/i386/libpthread.so.0" then permit
+        linux-fsread: filename eq "/usr/pkg/java/lib/i386/tls/libpthread.so.0" then permit
+        linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/tls/libpthread.so.0" then permit
+        linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/tls/libpthread.so.0" then permit
 	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/libdl.so.2" then permit
 	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/libdl.so.2" then permit
 	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/libc.so.6" then permit
@@ -77,6 +80,7 @@ Policy: /usr/pkg/java/sun-1.5/bin/java, Emulation: linux
 	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/jce.jar" then permit
 	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/charsets.jar" then permit
 	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/i386/client/classes.jsa" then permit
+        linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/security/java.security" then permit
 	linux-pipe: permit
 	linux-clone: permit
 	linux-write: permit
@@ -94,16 +98,23 @@ Policy: /usr/pkg/java/sun-1.5/bin/java, Emulation: linux
 	linux-fsread: filename match "/usr/lib/locale/*/LC_CTYPE" then permit
 	linux-fsread: filename eq "/usr/lib/gconv/gconv-modules.cache" then permit
 	linux-fsread: filename eq "/etc/localtime" then permit
+	linux-fsread: filename eq "/dev/random" then permit
+        linux-fsread: filename eq "/dev/urandom" then permit
 	linux-__getcwd: permit
-	linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/ext" then deny
+        linux-fsread: filename match "/usr/pkg/java/sun-1.5/lib/ext/*.jar" then permit
+        linux-fsread: filename eq "/usr/pkg/java/sun-1.5/lib/ext" then permit
 	linux-sched_yield: permit
 	linux-fsread: filename match "/tmp/*/SemanticCheck.class" then permit
 	linux-fsread: filename match "/tmp/*/ModelPackage/*.class" then permit
-	linux-fsread: filename match "/tmp/*/StudentPackage/*.class" then permit
+	linux-fsread: filename match "/tmp/*/studentPackage/*.class" then permit
 	linux-fsread: filename match "/tmp/*/input-*.txt" then permit
 	linux-fsread: filename match "/tmp/*/RETestRes.class" then permit
-    linux-fsread: filename match "/opt/ECSpooler/backends/junit/junit_libs/*.jar" then permit
-    linux-fsread: filename match "/tmp/*/JUnitTester.class" then permit
+        linux-fsread: filename match "/opt/ECSpooler/backends/junit/junit_libs/*.jar" then permit
+        linux-fsread: filename match "/opt/ECSpooler/backends/junit/junit_libs/*.class" then permit
+        linux-fsread: filename match "/home/amelung/ECSpooler/backends/junit/junit_libs/*.jar" then permit
+        linux-fsread: filename match "/tmp/*/JUnitTester.class" then permit
+        linux-fsread: filename match "/tmp/*/.hotspot_compiler" then permit
+        linux-fsread: filename match "/tmp/*/.hotspotrc" then permit
 	linux-exit_group: permit
 	linux-exit_group: permit
 	linux-waitpid: permit
