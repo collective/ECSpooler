@@ -1,0 +1,9 @@
+#! /opt/ast/bin/ksh
+
+POLICYDIR=/opt/ECSpooler/systrace-policy
+INTERPRETER=/opt/python/bin/python
+
+trap 'kill $! && trap - TERM && kill $$' TERM
+
+systrace -a -d $POLICYDIR $INTERPRETER "$@" &
+wait %%
