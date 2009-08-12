@@ -5,17 +5,153 @@
 #
 # This file is part of ECSpooler.
 
-import sys, os, re, time
+import sys, os, re
 import logging
 
 from types import StringType, UnicodeType
+from os.path import join, dirname
 
 # local imports
-from PrologConf import PrologConf
-from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend, EX_OK
+from lib.data.BackendResult import BackendResult
+from lib.util.BackendSchema import InputField
+from lib.util.BackendSchema import RepeatField
+from lib.util.BackendSchema import Schema
+from lib.util.BackendSchema import TestEnvironment
+
+from backends.prolog import config
+
+# enable logging
+log = logging.getLogger('backends.haskell')
+
+# The packages that the model and student solution will be put in
+NS_MODEL   = 'model'
+NS_STUDENT = 'student'
+
+# The name of the wrapper class that performs the semantic check
+CLASS_SEMANTIC_CHECK = 'SemanticCheck'
+
+VAR_NAME_RE = r'\b[_A-Z][A-Za-z0-9_]*\b'
+
+# load Prolog functions to do tests
+# try:
+#     simpleTest = file(join(dirname(__file__), 'simpleTest.pl'), 'r').read()
+# except IOError, ioe:
+#     raise ioe
+#     simpleTest = ''
+# This code *should* throw up if 'simpleTest.pl' cannot be loaded.
+SIMPLE_TEST = file(join(dirname(__file__), 'simpleTest.pl'), 'r').read()
+PERM_TEST   = file(join(dirname(__file__), 'permTest.pl'),   'r').read()
+PRED_TEST   = file(join(dirname(__file__), 'predTest.pl'),   'r').read()
+
+WRAPPER_TEMPLATE = \
+""":- use_module('%s').
+:- use_module('%s').
+
+join([],    _, '').
+join([X],   _, O) :- swritef(O, '%%w', [X]).
+join([X|R], I, O) :- join(R, I, JR), swritef(O, '%%w%%w%%w', [X, I, JR]).
+
+format_res1_sub([], [], []).
+format_res1_sub([N|Rn], [V|Rv], [O|Ro]) :- format_res1_sub(Rn, Rv, Ro),
+    swritef(O, '%%w <- %%w', [N, V]).
+format_res1([], 'Yes').
+format_res1(V, O) :- format_res1_sub([${strTestVarNames}], V, A),
+    join(A, ', ', B),
+    swritef(O, '{%%w}', [B]).
+
+format_res([],   'No').
+format_res(I, O) :- maplist(format_res1, I, T), join(T, ' or ', O).
+
+first_solution_or_nil(Pred, []) :- \+ call(Pred, _).
+first_solution_or_nil(Pred, [X]) :- call(Pred, X).
+
+${helpFunctions}
+
+model([${testVarNames}])   :- %s:${testData}
+student([${testVarNames}]) :- %s:${testData}
+
+display_res(Model_results, Student_results, Equal) :-
+    format_res(Model_results,   FMs),
+    format_res(Student_results, FSs), 
+        writef('isEqual=%%w;;expected=%%w;;received=%%w', [Equal, FMs, FSs]).
+
+${testFunction}
+""" % (NS_MODEL, NS_STUDENT, NS_MODEL, NS_STUDENT,)
+
+# input schema
+inputSchema = Schema((
+    
+    InputField(
+        'modelSolution', 
+        required = True, 
+        label = 'Model solution',
+        description = 'Enter a model solution.',
+        i18n_domain = 'EC',
+    ),
+    
+    InputField(
+        'helpFunctions', 
+        label = 'Help functions',
+        description = 'Enter help functions if needed.',
+        i18n_domain = 'EC',
+    ),
+    
+    RepeatField(
+        'testData', 
+        #accessor = # must return a list; default is one element per line
+        required = True, 
+        label = 'Test data',
+        description = 'Enter one or more function calls. '+ 
+                    'A function call consists of the ' + 
+                    'function name (given in the exercise directives) ' + 
+                    'and test data as parameters of this funtion. '+
+                    'Each function call must be written in a single line.',
+        i18n_domain = 'EC',
+    ),
+))
+
+# testSchema
+tests = Schema((
+
+    TestEnvironment(
+        'simple',
+        label = 'Simple',
+        description = 'Test without permutations',
+        test = SIMPLE_TEST,
+        semantic = WRAPPER_TEMPLATE,
+        lineNumberOffset = 0,
+        compiler = config.COMPILER,
+        interpreter = config.INTERPRETER,
+    ),
+
+    TestEnvironment(
+        'permutation',
+        label = 'Permutation',
+        description = 'Test with permutations',
+        test = PERM_TEST,
+        semantic = WRAPPER_TEMPLATE,
+        lineNumberOffset = 0,
+        compiler = config.COMPILER,
+        interpreter = config.INTERPRETER,
+    ),
+
+    TestEnvironment(
+        'predicate',
+        label = 'Predicate',
+        description = "Test the student's solution with the goal pred",
+        test = PRED_TEST,
+        semantic = WRAPPER_TEMPLATE,
+        lineNumberOffset = 0,
+        compiler = config.COMPILER,
+        interpreter = config.INTERPRETER,
+    ),
+))
+
 
 def non_null_str(s):
+    """
+    """
     return s and type(s) in (StringType, UnicodeType)
 
 class Prolog(AbstractProgrammingBackend):
@@ -29,9 +165,21 @@ class Prolog(AbstractProgrammingBackend):
 
     srcFileSuffix = '.pl'
 
-    schema = PrologConf.inputSchema
-    testSchema = PrologConf.tests
-    #version = '0.9'
+    schema = inputSchema
+    testSchema = tests
+
+    
+    def __init__(self, params, versionFile=__file__, logger = None):
+        """
+        This constructor is needed to reset the logging environment.
+        """
+        AbstractProgrammingBackend.__init__(self, params, versionFile)
+        # reset logger
+        if logger: 
+            self.log = logger
+        else:
+            self.log = log
+
 
     def cleanUpErrMsg(self, msg, path):
         if not path.endswith(os.path.sep):
@@ -57,7 +205,7 @@ class Prolog(AbstractProgrammingBackend):
         #result = (":- module('%s', []).\n\n" % PrologConf.NS_STUDENT) + src
         #cname = PrologConf.NS_STUDENT
         #return result, PrologConf.NS_STUDENT
-        return src, PrologConf.NS_STUDENT
+        return src, NS_STUDENT
 
 
     def _postProcessCheckSyntax(self, test, message):
@@ -98,7 +246,7 @@ class Prolog(AbstractProgrammingBackend):
 
         return ['X', 'Y'].
         """
-        raw = re.findall(PrologConf.VAR_NAME_RE, testData)
+        raw = re.findall(VAR_NAME_RE, testData)
         # remove duplicates but preserve order
         uniq = []
         for name in raw:
@@ -113,7 +261,7 @@ class Prolog(AbstractProgrammingBackend):
         Override this method if you need to reformat the wrapper code or 
         the student's submission. 
         """
-        return (":- module('%s', []).\n\n" % PrologConf.NS_STUDENT) + src
+        return (":- module('%s', []).\n\n" % NS_STUDENT) + src
 
     
     def _process_checkSemantics(self, job):
@@ -175,8 +323,8 @@ class Prolog(AbstractProgrammingBackend):
             files = {} #XXX not used
 
             for name, ns, source in \
-                    [('model',   PrologConf.NS_MODEL,   model),
-                     ('student', PrologConf.NS_STUDENT, submission)]:
+                    [('model',   NS_MODEL,   model),
+                     ('student', NS_STUDENT, submission)]:
                 # replace module name in the solution
                 source = (":- module('%s', []).\n\n" % ns) + source
 
@@ -233,7 +381,7 @@ class Prolog(AbstractProgrammingBackend):
                 try:
                     # write module for wrapper
                     wrapperModule = self._writeModule(
-                        PrologConf.CLASS_SEMANTIC_CHECK,
+                        CLASS_SEMANTIC_CHECK,
                         wrapper,
                         suffix=self.srcFileSuffix,
                         dir=job.getId(),
@@ -243,7 +391,7 @@ class Prolog(AbstractProgrammingBackend):
                     exitcode, result = self._runInterpreter(
                         interpreter, 
                         os.path.dirname(wrapperModule['file']),
-                        PrologConf.CLASS_SEMANTIC_CHECK + self.srcFileSuffix)
+                        CLASS_SEMANTIC_CHECK + self.srcFileSuffix)
 
                 except Exception, e:
                     msg = 'Internal error during semantic check: %s: %s' % \
@@ -299,4 +447,3 @@ class Prolog(AbstractProgrammingBackend):
 
         #return ([0, 1][solved], feedback)
         return BackendResult(solved, feedback)
-

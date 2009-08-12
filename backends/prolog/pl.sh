@@ -1,4 +1,4 @@
-#! /bin/ksh
+#! /bin/sh
 
 # The problem with the SWI Prolog interpreter is that it doesn't exit
 # with an error if a syntax error is encountered.  So we execute the
@@ -21,16 +21,7 @@
 # -s script
 #    Execute this script.
 
-if [ -n "$PL_HOME" -a -x "${PL_HOME}/bin/pl" ]; then
-	INTERPRETER="${PL_HOME}/bin/pl"
-else
-	INTERPRETER=${INTERPRETER:-"/opt/swiprolog/bin/pl"}
-fi
-if [ -x /usr/bin/newtask -a -n "$USE_RCTL" ]; then
-	OP=$(/usr/bin/pfexec /usr/bin/newtask -p Prolog -F ${INTERPRETER} -q -f none -t halt -s "$@" 2>&1)
-else
-	OP=$(${INTERPRETER} -q -f none -t halt -s "$@" 2>&1)
-fi
+OP=$(/opt/swiprolog/bin/pl -q -f none -t halt -s "$@" 2>&1)
 ERR=$?
 
 echo "$OP"
