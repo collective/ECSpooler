@@ -4,11 +4,10 @@
 # Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
-import sys
 import unittest
 import socket
 
-from backends import erlang,haskell,haskellqc,haskellext,haskellio,java,junit,python,scheme,prolog,cl,javare,keywords
+from backends import *
 
 from lib.data.BackendJob import BackendJob
 from lib.data.BackendResult import BackendResult
@@ -18,10 +17,9 @@ portRange = range(15061,16060)
 class BackendTestCase(unittest.TestCase):
     """
     """
-    #host = socket.getfqdn()
-    host = 'localhost'
+    host = socket.getfqdn()
     port = 15060
-    spooler = 'http://%s:%d' % (socket.getfqdn(), 15050)
+    spooler = 'http://%s:%d' % (host, 15050)
     auth = {"username":"demo", "password":"foobar"}
     
     def setUp(self):
@@ -61,9 +59,15 @@ class BackendTestCase(unittest.TestCase):
             params = self.params
             params.pop('spooler')
             params.pop('auth')
+
+            #print 'xxx: %s(params)' % self.backendClassName
             exec '%s(params)' % self.backendClassName
+
         except AssertionError, err:
             self.assertTrue('AssertionError raised: %s' % repr(err))
+        #except Exception, e:
+        #    import traceback
+        #    traceback.print_exc()
 
 
     def testValidInput(self):

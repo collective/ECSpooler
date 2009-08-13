@@ -76,7 +76,7 @@ class testPython(ProgrammingBackendTestCase):
     def testSemanticSuccess(self):
         """_manage_checkSemantic should return True for a correct program"""
         
-        self.jobdata['submission'] = 'def square(x): return (x * x)'
+        self.jobdata['submission'] = 'def square(x): return x * x'
 
         job = BackendJob(data=self.jobdata)
 

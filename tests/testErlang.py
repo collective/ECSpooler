@@ -4,7 +4,6 @@
 # Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
-import os, sys
 import unittest
 
 from backends.erlang import Erlang
@@ -14,6 +13,7 @@ from ProgrammingBackendTestCase import ProgrammingBackendTestCase
 class testErlang(ProgrammingBackendTestCase):
     """
     """
+    
     backendClassName = 'erlang.Erlang.Erlang'
 
     # -- individual tests -----------------------------------------------------

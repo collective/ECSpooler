@@ -4,7 +4,6 @@
 # Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
-import sys
 import unittest
 
 from backends.haskellio.HaskellIO import HaskellIO

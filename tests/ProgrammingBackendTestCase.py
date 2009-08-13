@@ -4,14 +4,9 @@
 # Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
-import sys
-import unittest
-import socket
-import random
+from backends import *
 
-from backends import erlang,haskell,haskellqc,haskellext,haskellio,java,junit,python,scheme,prolog,cl,javare,keywords
-
-from lib.data.BackendJob import BackendJob
+#from lib.data.BackendJob import BackendJob
 from lib.data.BackendResult import BackendResult
 
 from BackendTestCase import BackendTestCase

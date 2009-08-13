@@ -4,7 +4,6 @@
 # Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
-import sys
 import unittest
 
 from backends.junit import JUnit
@@ -190,6 +189,8 @@ public class Caesar
 
         # 2. lets do the semantic check
         result = backend._manage_checkSemantics(job)
+
+        #print job.getId()
 
         if result:
             self.assertEqual(result.getValue(), True, result.getMessage())
