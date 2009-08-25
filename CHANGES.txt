@@ -1,5 +1,14 @@
-# Changes in release 1.1 (planed for 2008-04-10)
+# Changes in release 1.1 (2009-08-25)
 
-- Spooler and backends now use separate log files (spooler.log and 
-  backend.log).  A third log file (event.lof) is written and contains
-  all messages.
+- The file structure for backends has been changed.  The new 
+  'config.py' contains the interpretor/compiler information only.  All 
+  other values are now part of the backend class file. 
+
+- Starting spooler and/or backends is now possible without a password
+  at the command line.  You can use the '-a' option with a file which
+  is used to lookup the password for the given user.  The file 
+  contains one 'user:password' entry per line.
+
+- Spooler and backends now use separate log files ('spooler.log' and 
+  'backend.log').  A third log file ('event.log') is written and 
+  contains all messages.

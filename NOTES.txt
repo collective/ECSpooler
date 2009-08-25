@@ -1,27 +1,46 @@
 <!-- -*- coding: utf-8 -*- -->
+(2009-05-23)
 
 Spooler
 
-  - manages backends and jobs (TestJob, TestResult)
+  - manages a queue of test jobs and several backends
   
-  - public methods (frontends): getStatus, getBackends, getBackendStatus, 
-    getBackendInputFields, getBackendTestFields, appendJob, popResult,
+  - public methods (used by frontends): 
   
-  - normal progress (frontend): 
+    - getStatus
+    
+    - getBackends
+    
+    - getBackendStatus, 
+    
+    - getBackendInputFields
+    
+    - getBackendTestFields
+    
+    - appendJob
+    
+    - getResult,
   
-     - get spooler handle
+  - normal progress: 
+  
+     - get s spooler handle
      
-     - append a job (call appendJob; see BackendJob for required 
-       key-value-pairs); you will get a job id
+     - append a job: use 'appendJob' (cf. 'BackendJob' for required 
+       key-value-pairs) which will return a a job ID
      
-     - get the result (call popResult with the job id; popResult returns a dictionary)
+     - get the result (used 'getResult' with the job ID; getResult 
+       returns a dictionary)
 
-  - public methods (backends): addBackend, removeBackend
+  - public methods (used by 'backendctl'): 
+  
+    - addBackend
+    
+    - removeBackend
 
 
 Backend
 
-  - make tests
+  - execute/process tests
 
   - attributes: id, name, version, input fields, test environments
   
