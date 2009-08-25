@@ -2,105 +2,98 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
+# Copyright (c) 2007-2009 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
-
+#
 """
 This module contains functions to start/stop the spooler or get status 
-information from the spooler.  __main__ reads the command lines 
+information from the spooler.  __main__ reads the command line 
 arguments and processes them.
 """
 
-import os, sys, time, signal, socket, xmlrpclib, getopt, tempfile
-import traceback, logging
+import os, sys, time, signal, socket, xmlrpclib, getopt
+import traceback
+import logging
 
 # add parent directory to the system path
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir))
+
 import config
 from lib.Spooler import Spooler
 
 # get logger
-config.initLogging()
-log = logging.getLogger('lib.Spooler')
+log = logging.getLogger('spoolerctl')
 
-def _startSpooler(host, port, pwdFile):
-    """
-    """
-    log.info("Starting spooler on %s port %d ..." % (host, port))
+# Run process as nobody
+try:
+    os.setuid(config.NOBODY_UID)
+except os.error, e:
+    log.warn("Cannot change uid: %s" % e)
+    print >> sys.stderr, "Cannot change uid:", e
 
-    spooler = Spooler(host, int(port), pwdFile)
-    pout, pin = os.pipe()
-    if spooler:
-        try:
-            if sys.platform in ['unixware7']:
-                cpid = os.fork1()
-            else:
-                cpid = os.fork()
-        except AttributeError, aerr:
-            log.warn('os.fork not defined - skipping.')
-            cpid = 0
-    else:
-        log.error('Spooler start failed. See log for more information.')
-        return 1
+
+def _startSpooler(port, pwdFile):
+    """
+    Starts the spooler process at localhost only.
+    """
     
+    host = socket.getfqdn()
+    
+    #log.info("Starting spooler on %s:%d..." % (host, port))
+    print "Starting spooler on %s:%d..." % (host, port)
+
+    try:
+        if sys.platform in ['unixware7']:
+            cpid = os.fork1()
+        else:
+            cpid = os.fork()
+    except AttributeError:
+        log.warn('os.fork not defined - skipping it.')
+        cpid = 0
+
     if cpid == 0:
-        try:
-            # child process
-            for handler in logging._handlerList:
-                if not isinstance(handler, logging.FileHandler):
-                    logging.getLogger('').removeHandler(handler)
-            __tmp = spooler.start(pout)		# blocks 'til shutdown
-            if __tmp:
-                log.error(__tmp)
-        except Exception, e:
-            os.write(pout,"FAILED");
+        # child process
+        #import Spooler
+
+        spooler = Spooler(host, int(port), pwdFile)
+        spooler.start()
     else:
         # parent process
-        log.info('spooler pid=%d' % cpid)
-        got = os.read(pin,6)
-        log.info('spooler ' + got)
-        if (got != "OK"):
-            try:
-                os.waitpid(cpid, 0)
-            except Exception, e:
-                pass
-            return 1
-        return 0
+        time.sleep(1)
+        print 'pid=%d' % cpid
 
-def _stopSpooler(host, port, auth):
+
+def _stopSpooler(port, auth):
     """
+    Stops a running spooler at localhost only.  We will get the PID
+    from the status information and then send a kill to this process.
     """
     try:
-        log.info("Stopping ECSpooler on %s:%d ..." % (host, port))
+        host = socket.getfqdn()
+        
+        #log.info("Stopping spooler on %s:%d..." % (host, port))
+        print "Stopping spooler on %s:%d..." % (host, port)
 
         spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
         pid = spooler.getStatus(auth)[1]['pid']
         
-        # TODO: THIS FLAW IS VERY DANGEROUS (if the remote host returns a pid
-        # which accidently matches a pid on the localhost)
-        # Actually the spooler should shutdown itself on message
-        if host == 'localhost':
-            try:
-                # stops the spooler sending kill -15 process-id
-                os.kill(pid, signal.SIGTERM)         
-            except AttributeError:
-                log.warn('os.kill and/or signal.SIGTERM not defined. '
-                          'Trying to stop spooler elsewhere.')
-            # FIXME:
-            #spooler.shutdown(auth)
-        else:
-            log.error("remote shutdown not supported")
+        try:
+            # stops the spooler sending kill -15 process-id
+            os.kill(pid, signal.SIGTERM)
+        except AttributeError:
+            log.warn('os.kill and/or signal.SIGTERM not defined. '
+                     'Trying to stop spooler elsewhere.')
 
     except Exception, e: 
-        log.warn("Unable to stop ECSpooler on %s:%d - %s:%s" %
-            (host, port, sys.exc_info()[0], e))
+        log.warn("Unable to stop ECSpooler on %s:%d - %s:%s" % (host, port, sys.exc_info()[0], e))
         log.debug(traceback.format_exc())
-        pass
+        print "Unable to stop ECSpooler on %s:%d - %s:%s" % (host, port, sys.exc_info()[0], e)
 
 
 def _getSpoolerStatus(host, port, auth):
     """
+    Returns status information from a running spooler
     """
     spooler = xmlrpclib.Server("http://%s:%s" % (host, port))
     return spooler.getStatus(auth)[1]
@@ -121,16 +114,7 @@ def usage():
 Usage:  spoolerctl [OPTION ...] {start|stop|restart|status}
 
 OPTIONs are:
-  -t dir          Directory to use for temporary files.  If not specified, the
-                  OS default TMPDIR will be used.
-                  Sets the environment variable TMPDIR to the given value.
-  -v dir          Directory where to store jobs and results.
-                  Default: INSTALLDIR/var/
-  -w dir          Direcotry to use as working directory.  Default: current
-                  working directory.
-  -L dir          Directory where to store logs.  Default: INSTALLDIR/log
-  -l loglevel     LogLevel to use: {FATAL|ERROR|WARN|INFO|DEBUG|NONE}. 
-  -H host         Hostname or IP to connect/bind to.  Default: localhost
+  -H host         Hostname or IP to connect to; for status command only.  Default: localhost
   -P port         Port to connect/bind to.  Default: 5050
   -u user         Name of the user required for authentication when executing 
                   stop|restart|status command
@@ -139,13 +123,14 @@ OPTIONs are:
   -a authfile     File to use to lookup the password for the given user.  The
                   file contains one 'user:password' entry per line.  This
                   option should be used instead of the -p option to avoid
-                  exposing the password to every user on the system (e.g. via
-                  ps -ef, pargs etc.).
+                  exposing the password to every user on the system (e.g., via
+                  ps -ef, pargs, etc.).
 """
 
 
 def authError(cmd):
-    log.error("ERROR: Command '%s' requires username and password." % cmd)
+    print "Command '%s' requires username and password." % cmd
+
 
 def getPassFromFile(file, user):
     """
@@ -164,8 +149,10 @@ def getPassFromFile(file, user):
         pwdFile = open(file, "r")
         lines = pwdFile.readlines()
         pwdFile.close()
+        
     except IOError, ioe:
-        cwlog.warn("WARNING: Error when reading file '%s': %s" % (file, ioe));
+        log.warn("Error reading file '%s': %s" % (file, ioe));
+        print "Error reading file '%s': %s" % (file, ioe)
         return None
 
     for line in lines:
@@ -182,10 +169,9 @@ def main():
     """
     """
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "l:t:w:v:L:H:P:u:p:a:h", 
-                     ["loglevel=", "tmpdir=", "workdir=", "vardir=", "logdir=",
-                      "host=", "port=", "user=", "password=", "authfile=",
-                      "help"])
+        opts, args = getopt.getopt(sys.argv[1:], "H:P:u:p:a:h", 
+                                   ["host=", "port=", "user=", "password=",
+                                    "authfile=", "help"])
     except getopt.GetoptError:
         # print help information and exit:
         usage()
@@ -196,8 +182,7 @@ def main():
     user = None
     password = None
     authfile = None
-    loglevel = None
-
+    
     for o, a in opts:
         if o in ("-h", "--help"):
             usage()
@@ -219,28 +204,10 @@ def main():
         if o in ("-p", "--password"):
             password = a
 
-        if o in ("-l", "--loglevel"):
-            loglevel = config.getLogLevel(a)
-
-        if o in ("-t", "--tmpdir"):
-            if not a == "default":
-                config.setTempDir(a)
-
-        if o in ("-L", "--logdir"):
-            if not a == "default":
-                config.setLogDir(a)
-
-        if o in ("-v", "--vardir"):
-            if not a == "default":
-                config.setDataDir(a)
-
-        if o in ("-w", "--workdir"):
-            if not a == "default":
-                config.setWorkingDir(a)
-
         if o in ("-a", "--authfile"):
             authfile = a
 
+    
     if len(args) == 0:
         usage()
         sys.exit(2)
@@ -248,74 +215,70 @@ def main():
     else:
         command = args[0]
         
-        # Run process as nobody if we are root
-        config.runAs(config.RUN_AS, config.RUN_AS_UID)
-        
-        if not host: host = 'localhost' #socket.getfqdn()
+        if not host: host = socket.getfqdn()
         if not port: port = 5050
-
+        
         if authfile and user:
             _pw = getPassFromFile(authfile, user)
             if _pw:
                 password = _pw
-            
-        pwdFile = os.path.join(os.path.dirname(__file__), '..', 'etc', 'passwd')
-        ret = 0       
+
+        pwdFile = os.path.join(os.path.dirname(__file__),
+                               '..', 'etc', 'passwd')
+        
         try:
             if command == 'start':
-                config.initLogging(loglevel, 'spooler')
-                ret = _startSpooler(host, port, pwdFile)
-    
-            elif not user or not password:
-                authError(command)
-                usage()
-                sys.exit(2)
+                _startSpooler(port, pwdFile)
+
             else:
-                auth = {"username":user, "password":password}
-        
-                if command == 'stop':
-                    _stopSpooler(host, port, auth)
-
-                elif command == 'restart':
-                    config.initLogging(loglevel, 'spooler')
-                    _stopSpooler(host, port, auth)
-                    time.sleep(3)
-                    ret = _startSpooler(host, port, pwdFile)
-
-                elif command == 'status':
-                    log.info(_getSpoolerStatus(host, port, auth))
-
-                elif command == 'rmbackend':
-                      if len(args) < 2:
-                            log.error('rmbackend needs a backend ID')
-                            sys.exit(2)
-                      log.info(_removeBackend(host, port, auth, args[1]))
-
-                else:
-                    log.error('Unknown command %s' % command)
+                if not user or not password:
+                    authError(command)
                     usage()
-                    ret = 99
+                    sys.exit(2)
+                else:
+                    auth = {"username":user, "password":password}
+    
+                    if command == 'stop':
+                        _stopSpooler(port, auth)
+                    elif command == 'restart':
+                        _stopSpooler(port, auth)
+                        time.sleep(3)
+                        _startSpooler(port, pwdFile)
+                    elif command == 'status':
+                        print _getSpoolerStatus(host, port, auth)
+
+                    elif command == 'rmbackend':
+                        if len(args) < 2:
+                            print 'rmbackend needs a backend ID'
+                            sys.exit(2)
+                        print _removeBackend(host, port, auth, args[1])
+    
+                    else:
+                        print 'Unknown command %s' % command
+                        usage()
+                        sys.exit(2)
 
         except (socket.error, xmlrpclib.Fault), exc:
-            ret = 99
-            log.debug(traceback.format_exc())
+            log.error("Server - %s: %s" % (sys.exc_info()[0], exc))
+            #log.debug(traceback.print_exc())
                 #print type(exc)     # the exception instance
                 #print exc.args      # arguments stored in .args
                 #print exc           # __str__ allows args to printed directly
                 #print sys.exc_info()[0]
-            log.error("Server - %s: %s" % (sys.exc_info()[0], exc))
+
+            print >> sys.stderr, "Server - %s: %s" % (sys.exc_info()[0], exc)
 
         except Exception, e:
-            ret = 99
-            log.debug(traceback.format_exc())
+            log.error("%s: %s" % (sys.exc_info()[0], e))
+            #log.debug(traceback.print_exc())
                 #print type(e)     # the exception instance
                 #print e.args      # arguments stored in .args
                 #print e           # __str__ allows args to printed directly
                 #print sys.exc_info()[0]
-            log.error("%s: %s" % (sys.exc_info()[0], e))
+            print >> sys.stderr, "%s: %s" % (sys.exc_info()[0], e)
 
-        return ret
 
 # -- Main ----------------------------------------------------------------------
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
+            
