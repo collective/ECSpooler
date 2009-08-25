@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
-import glob,os,os.path,string
+import glob
+#import os, os.path, string
 from distutils.core import setup
 
 DESCRIPTION = """\
