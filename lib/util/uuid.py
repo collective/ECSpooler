@@ -341,7 +341,8 @@ def _netbios_getnode():
 # If ctypes is available, use it to find system routines for UUID generation.
 _uuid_generate_random = _uuid_generate_time = _UuidCreate = None
 try:
-    import ctypes, ctypes.util
+    import ctypes
+    #import ctypes.util
     _buffer = ctypes.create_string_buffer(16)
 
     # The uuid_generate_* routines are provided by libuuid on at least
