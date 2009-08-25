@@ -7,8 +7,18 @@
 
 # -- some hepler methods ------------------------------------------------------
 
-import os, sys, time, random, md5, socket, tempfile
-import logging, traceback
+import os 
+import time
+import random
+import md5
+import socket
+import tempfile
+import logging
+import traceback
+
+# create logger with "lib.Spooler"
+log = logging.getLogger('lib.Spooler')
+
 
 def getUniqueModuleName(prefix=''):
     """ 
@@ -55,7 +65,7 @@ def writeFile(content, filename, encoding='utf-8'):
         return 1
     except Exception:
         # FIXME: return error message or through a special exception
-        logging.error(traceback.format_exc())
+        log.error(traceback.format_exc())
         return 0
 
 
@@ -88,7 +98,7 @@ def delDir(path):
         return 1
         
     except Exception, e:
-        logging.error(traceback.format_exc())
+        log.error(traceback.format_exc())
         # FIXME: return error message
         return e
 

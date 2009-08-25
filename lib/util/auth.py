@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007-2009 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
+#
 import md5
 
 from types import StringType, UnicodeType, DictionaryType
-import logging, md5, shelve, time
+import logging, shelve, time
+
+# create logger with 'lib.Spooler'
+log = logging.getLogger('lib.Spooler')
 
 try:
     import crypt
@@ -59,7 +63,7 @@ class UserAuth(AuthorizationBackend):
             self.crypt = crypt.crypt
         else:
             self.crypt = lambda x, y: x
-            logging.warn('Module crypt not found - using cleartext passwords!')
+            log.warn('Module crypt not found - using cleartext passwords!')
 
     def test(self, args, level):
         """
@@ -74,7 +78,7 @@ class UserAuth(AuthorizationBackend):
             password = args.get("password")
 
             if level > REQUIRES_ROOT and username != ROOT_USER:
-                logging.warn("Authorization failed: Root privileges " +
+                log.warn("Authorization failed: Root privileges " +
                              "required for level %d operation" % level)
                 return False
         
@@ -87,7 +91,7 @@ class UserAuth(AuthorizationBackend):
             return self.authorize(username, password)
 
         except AssertionError, err:
-            logging.info("Authorization failed: %s" % err)
+            log.info("Authorization failed: %s" % err)
             return False
 
     def authorize(self, username, password):
@@ -146,8 +150,8 @@ class UserAuthMD5(AuthorizationBackend):
             password = args.get("password")
 
             if level > REQUIRES_ROOT and username != ROOT_USER:
-                logging.warn("Authorization failed for %s: Root privileges " +
-                             "required for level %d operation" % (username,level))
+                log.warn("Authorization failed for %s: Root privileges " +
+                         "required for level %d operation" % (username, level))
                 return False
         
             # do some parameter testing
@@ -159,7 +163,7 @@ class UserAuthMD5(AuthorizationBackend):
             return self.authorize(username, password)
 
         except AssertionError, err:
-            logging.info("Authorization failed: %s" % err)
+            log.info("Authorization failed: %s" % err)
             return False
 
 
@@ -171,7 +175,7 @@ class UserAuthMD5(AuthorizationBackend):
                self.db[username] == md5.md5(password).hexdigest()
 
         if not ans:
-            logging.warn('Wrong password. Waiting %d seconds to prevent ' 
+            log.warn('Wrong password. Waiting %d seconds to prevent ' 
                          'dictionary attacks' % self._userAuthFailSleep)
             time.sleep(self._userAuthFailSleep)
 
@@ -195,8 +199,8 @@ class UserAuthMD5(AuthorizationBackend):
             lines = pwdFile.readlines()
             pwdFile.close()
         except IOError, ioe:
-            logging.error(ioe)
-            logging.warn('No user accounts available.')
+            log.error(ioe)
+            log.warn('No user accounts available.')
 
         for line in lines:
             
@@ -206,7 +210,7 @@ class UserAuthMD5(AuthorizationBackend):
             if line.find(":") != -1:
                 username = line[0:line.find(":")].strip()
                 usrdb[username] = line[line.find(":")+1:].strip()
-                #logging.debug("Added user '%s'" % username)
+                #log.debug("Added user '%s'" % username)
 
         
         return usrdb
@@ -228,5 +232,5 @@ if __name__ == '__main__':
     uamd5 = UserAuthMD5(join(dirname(__file__), '..', '..', 'etc', 'passwd'))
     print uamd5.authorize('test', 'SuPPe')
     print uamd5.authorize('demo', 'foobar')
-    import sys
-    print md5.md5(sys.argv[1]).hexdigest()
+    
+    print md5.md5('Asdf,.').hexdigest()
