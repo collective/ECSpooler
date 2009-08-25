@@ -7,14 +7,138 @@
 import sys, os, re
 import logging
 
+from os.path import join, dirname
 from types import StringTypes
 
 # local imports
-from backends.scheme.SchemeConf import SchemeConf
-
-from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
-#from lib.AbstractProgrammingBackend import EX_OK
+from lib.data.BackendResult import BackendResult
+from lib.util.BackendSchema import InputField
+from lib.util.BackendSchema import RepeatField
+from lib.util.BackendSchema import Schema
+from lib.util.BackendSchema import TestEnvironment
+
+from backends.scheme import config
+
+# enable logging
+log = logging.getLogger('backends.scheme')
+
+# load Scheme function to do a simple test
+try:
+    simpleTest = file(join(dirname(__file__), 'simpleTest.scm'), 'r').read()
+except IOError, ioe:
+    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    simpleTest = ''
+
+# load Haskell function to do a test which allows permutation of list elems
+try:
+    permTest = file(join(dirname(__file__), 'permTest.scm'), 'r').read()
+except IOError, ioe:
+    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    permTest = ''
+        
+    
+SYNTAX_TEMPLATE = \
+""";; import SICP streams
+(require (file "%s")) 
+
+
+
+;; -------------------------------------------------------------------
+${SOURCE}
+;; -------------------------------------------------------------------
+""" % config.STREAM_LIB_PATH
+
+SEMANTIC_TEMPLATE = \
+"""(module ${MODULE} mzscheme
+(require (file "%s")) ;; import SICP streams
+
+(define (main) ${testData})
+
+;; -------------------------------------------------------------------
+${SOURCE}
+;; -------------------------------------------------------------------
+
+;; helper functions
+${helpFunctions}
+
+(provide main))
+""" % config.STREAM_LIB_PATH
+
+
+WRAPPER_TEMPLATE = \
+""";; required modules
+(require (prefix model. (file "model.scm")))
+(require (prefix student. (file "student.scm")))
+
+;; test function
+${testFunction}
+
+;; print test results
+(let-values (((ms ss) (values (model.main) (student.main))))
+  (printf "isEqual=~s;;expected=~s;;received=~s" (test ms ss) ms ss))
+"""
+
+# input schema
+inputSchema = Schema((
+
+    InputField(
+        'modelSolution', 
+        required = True, 
+        label = 'Model solution',
+        description = 'Enter a model solution.',
+        i18n_domain = 'EC',
+    ),
+    
+    InputField(
+        'helpFunctions', 
+        label = 'Help functions',
+        description = 'Enter help functions if needed.',
+        i18n_domain = 'EC',
+    ),
+
+    RepeatField(
+        'testData', 
+        #accessor = # must return a list; default is one element per line
+        required = True, 
+        label = 'Test data',
+        description = 'Enter one or more function calls. '+ 
+                    'A function call consists of the ' + 
+                    'function name (given in the exercise directives) ' + 
+                    'and test data as parameters of this funtion, e.g, '+
+                    "tally 'a '(a b c 1 2 3 b c a)"+
+                    'Each function call must be written in a single line.',
+        i18n_domain = 'EC',
+    ),
+))
+
+# testSchema
+tests = Schema((
+
+    TestEnvironment(
+        'simple',
+        label = 'Simple',
+        description = 'Exact matching results are allowed.',
+        test = simpleTest,
+        syntax = SYNTAX_TEMPLATE,
+        semantic = WRAPPER_TEMPLATE,
+        lineNumberOffset = 6,
+        compiler = config.INTERPRETER,
+        interpreter = config.INTERPRETER,
+    ),
+
+    TestEnvironment(
+        'permutation',
+        label = 'Permutation',
+        description = 'Permutations are allowed.',
+        test = permTest,
+        syntax = SYNTAX_TEMPLATE,
+        semantic = WRAPPER_TEMPLATE,
+        lineNumberOffset = 6,
+        compiler = config.INTERPRETER,
+        interpreter = config.INTERPRETER,
+    ),
+))
 
 class Scheme(AbstractProgrammingBackend):
     """
@@ -24,12 +148,22 @@ class Scheme(AbstractProgrammingBackend):
     
     id = 'scheme'
     name = 'Scheme'
-    #version = '1.1'
 
     srcFileSuffix = '.scm'
 
-    schema = SchemeConf.inputSchema
-    testSchema = SchemeConf.tests
+    schema = inputSchema
+    testSchema = tests
+
+    def __init__(self, params, versionFile=__file__, logger = None):
+        """
+        This constructor is needed to reset the logging environment.
+        """
+        AbstractProgrammingBackend.__init__(self, params, versionFile)
+        # reset logger
+        if logger: 
+            self.log = logger
+        else:
+            self.log = log
 
     # -- syntax check ---------------------------------------------------------
     def _preProcessCheckSyntax(self, test, src, **kwargs):
@@ -122,10 +256,10 @@ class Scheme(AbstractProgrammingBackend):
 
         # prepare source code for model and student' solution which will be
         # stored in seperate files as modules
-        modelSrc = re.sub('\$\{SOURCE}', model, SchemeConf.semanticCheckTemplate)
+        modelSrc = re.sub('\$\{SOURCE}', model, SEMANTIC_TEMPLATE)
         modelSrc = re.sub('\$\{MODULE}', 'model', modelSrc)
         
-        studentSrc = re.sub('\$\{SOURCE}', submission, SchemeConf.semanticCheckTemplate)
+        studentSrc = re.sub('\$\{SOURCE}', submission, SEMANTIC_TEMPLATE)
         studentSrc = re.sub('\$\{MODULE}', 'student', studentSrc)
 
         # define return values

@@ -9,8 +9,8 @@ Description
   Therefore the backend compares the output of a program with the 
   output of a model solution for a set of test data.
   
-  The HaskellIO backend is derived from Haskell backend and should be 
-  used for testing I/O code in Haskell.
+  The HaskellIO backend is derived from the Haskell backend and 
+  should be used for testing I/O code in Haskell.
 
 Prerequisites
 
@@ -90,14 +90,18 @@ Quick Start
   
   * Model solution::
  
-    square x = x * x
-    
+    import IO
+ 
+    sumInts :: FilePath -> IO String
+    printFile path = catch (do cnt <- readFile path
+                         return (show cnt))
+                     ) 
+                     (\_ -> return ("No such file"))
+                             
   * Test data (one test call per line)::
   
-    square 0
-    square 2
-    square 3
-
+    printFile "/tmp/foobar.txt"
+    printFile "/tmp/123.txt"
     
   The HaskellIO backend currently supports three compare modes:
   
@@ -126,7 +130,7 @@ License
   The HaskellIO backend is licensed under the
   "GPL":http://opensource.org/licenses/gpl-license.
 
-  Copyright © 2008 Otto-von-Guericke-Universität Magdeburg
+  Copyright © 2007 Otto-von-Guericke-Universität Magdeburg
 
   The HaskellIO backend is free software; you can redistribute it 
   and/or modify it under the terms of the GNU General Public License as

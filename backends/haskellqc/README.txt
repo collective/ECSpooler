@@ -79,10 +79,10 @@ Quick Start
   like to add/change users and passwords.
  
   Testing a Haskell program with the Haskell QuickCheck backend 
-  requires at least one QuickCheck property, e.g.::  
+  requires at least one QuickCheck property, e.g.,::  
   
-    TODO:
-    prop_
+    prop_RevRev xs = reverse (rev xs) == xs
+      where types = xs::[Int]
 
 
 Support
@@ -94,14 +94,14 @@ Support
 Credits
 
   The Haskell QuickCheck backend was written by "Mario 
-  Amelung":http://wdok.cs.uni-magdeburg.de/Members/amelung.
+  Amelung":mailto:mario.amelung@gmx.de.
   
 License
 
   The Haskell QuickCheck backend is licensed under the
   "GPL":http://opensource.org/licenses/gpl-license.
 
-  Copyright © 2008 Otto-von-Guericke-Universität Magdeburg
+  Copyright © 2007,2008 Otto-von-Guericke-Universität Magdeburg
 
   The Haskell QuickCheck backend is free software; you can redistribute 
   it and/or modify it under the terms of the GNU General Public License 

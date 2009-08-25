@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
+# Copyright (c) 2007-2009 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
 
@@ -9,14 +9,109 @@ import sys, os, re
 import logging
 
 from types import StringType, UnicodeType
+from os.path import join, dirname
 
 # local imports
-from backends.python.PythonConf import PythonConf
-
-from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
 from lib.AbstractProgrammingBackend import EX_OK
+from lib.data.BackendResult import BackendResult
+from lib.util.BackendSchema import InputField
+from lib.util.BackendSchema import RepeatField
+from lib.util.BackendSchema import Schema
+from lib.util.BackendSchema import TestEnvironment
 
+from backends.python import config
+
+# enable logging
+log = logging.getLogger('backends.python')
+
+# load Haskell function to do a simple test
+try:
+    simpleTest = file(join(dirname(__file__), 'simpleTest.py'), 'r').read()
+except IOError, ioe:
+    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    simpleTest = ''
+
+# load Haskell function to do a test which allows permutation of list elems
+try:
+    permTest = file(join(dirname(__file__), 'permTest.py'), 'r').read()
+except IOError, ioe:
+    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    permTest = ''
+
+WRAPPER_TEMPLATE = \
+"""import sys
+import Model
+import Student
+
+${helpFunctions}
+
+# must be named 'test'
+${testFunction}
+
+o1 = Model.${testData}
+o2 = Student.${testData}
+
+print >> sys.stdout, \"isEqual=\" + str(test(o1, o2)) + \";;expected=\" + str(o1) + \";;received=\" + str(o2)
+"""
+
+# input schema
+inputSchema = Schema((
+
+    InputField(
+        'modelSolution', 
+        required = True, 
+        label = 'Model solution',
+        description = 'Enter a model solution.',
+        i18n_domain = 'EC',
+    ),
+    
+    InputField(
+        'helpFunctions', 
+        label = 'Help functions',
+        description = 'Enter help functions if needed.',
+        i18n_domain = 'EC',
+    ),
+
+
+    RepeatField(
+        'testData', 
+        #accessor = # must return a list; default is one element per line
+        required = True, 
+        label = 'Test data',
+        
+        description = 'Enter one or more function calls. '+ 
+                    'A function call consists of the ' + 
+                    'function name (given in the exercise directives) ' + 
+                    'and test data as parameters of this funtion. '+
+                    'Each function call must be written in a single line.',
+        i18n_domain = 'EC',
+    ),
+))
+
+# testSchema
+tests = Schema((
+
+    TestEnvironment(
+        'simple',
+        label = 'Simple',
+        description = 'Simple test; only exact result are allowed.',
+        test = simpleTest,
+        semantic = WRAPPER_TEMPLATE,
+        interpreter = config.INTERPRETER,
+    ),
+
+    TestEnvironment(
+        'permutation',
+        label = 'Permutation',
+        description = 'Permutations are allowed.',
+        test = permTest,
+        semantic = WRAPPER_TEMPLATE,
+        interpreter = config.INTERPRETER,
+    ),
+))
+    
+    
 class Python(AbstractProgrammingBackend):
     """
     Backend for checking Python programs. This class is inherited 
@@ -25,12 +120,23 @@ class Python(AbstractProgrammingBackend):
     
     id = 'python'
     name = 'Python'
-    #version = '1.0'
 
     srcFileSuffix = '.py'
 
-    schema = PythonConf.inputSchema
-    testSchema = PythonConf.tests
+    schema = inputSchema
+    testSchema = tests
+
+
+    def __init__(self, params, versionFile=__file__, logger = None):
+        """
+        This constructor is needed to reset the logging environment.
+        """
+        AbstractProgrammingBackend.__init__(self, params, versionFile)
+        # reset logger
+        if logger: 
+            self.log = logger
+        else:
+            self.log = log
 
 
     def _postProcessCheckSyntax(self, test, message):

@@ -22,7 +22,7 @@ from lib.util.BackendSchema import TestEnvironment
 from backends.prolog import config
 
 # enable logging
-log = logging.getLogger('backends.haskell')
+log = logging.getLogger('backends.prolog')
 
 # The packages that the model and student solution will be put in
 NS_MODEL   = 'model'

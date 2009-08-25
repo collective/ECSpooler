@@ -9,13 +9,146 @@ import logging
 import random
 
 from types import StringTypes
+from os.path import join, dirname
 
 # local imports
-from backends.cl.ClConf import ClConf
-
-from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
-#from lib.AbstractProgrammingBackend import EX_OK
+from lib.data.BackendResult import BackendResult
+from lib.util.BackendSchema import InputField
+from lib.util.BackendSchema import RepeatField
+from lib.util.BackendSchema import Schema
+from lib.util.BackendSchema import TestEnvironment
+
+from backends.cl import config
+
+# enable logging
+log = logging.getLogger('backends.cl')
+
+# The placeholder for the names of the packages that the model and
+# student solution will be put in
+NS_MODEL = 'modelPackage'
+NS_STUDENT = 'studentPackage'
+
+# load Cl function to do a simple test
+try:
+    simpleTest = file(join(dirname(__file__), 'simpleTest.lisp'), 'r').read()
+except IOError, ioe:
+    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    simpleTest = ''
+
+# load Cl function to do a test which allows permutation of list elems
+#     try:
+#         permTest = file(join(dirname(__file__), 'permTest.lisp'), 'r').read()
+#     except IOError, ioe:
+#         logging.warn('%s: %s' % (sys.exc_info()[0], ioe))
+#         permTest = ''
+        
+SYNTAX_TEMPLATE = \
+"""
+;; -------------------------------------------------------------------
+${SOURCE}
+;; -------------------------------------------------------------------
+"""
+
+SEMANTIC_TEMPLATE = \
+"""
+;; helper functions
+${helpFunctions}
+
+;; -------------------------------------------------------------------
+${SOURCE}
+;; -------------------------------------------------------------------
+
+(defun main ()
+  (progn
+    ${testData}))
+"""
+
+WRAPPER_TEMPLATE = \
+'''
+;; load the model and the student packages
+(load "${%s}.lisp") ; student package
+(defparameter ${%s} (main))
+
+(load "${%s}.lisp") ; model package
+(defparameter ${%s} (main))
+
+;; test function
+${testFunction}
+
+;; print test results
+(format t "isEqual=~a;;expected=~a;;received=~a~%%"
+        (test ${%s} ${%s}) ; model, student
+        ${%s}  ; model
+        ${%s}) ; student
+''' % (NS_STUDENT, NS_STUDENT,
+       NS_MODEL, NS_MODEL,
+       NS_MODEL, NS_STUDENT,   # form (test ...)
+       NS_MODEL,
+       NS_STUDENT,
+       )
+
+# input schema
+inputSchema = Schema((
+
+    InputField(
+        'modelSolution', 
+        required = True, 
+        label = 'Model solution',
+        description = 'Enter a model solution.',
+        i18n_domain = 'EC',
+    ),
+    
+    InputField(
+        'helpFunctions', 
+        label = 'Helper functions',
+        description = 'Enter helper functions if needed.',
+        i18n_domain = 'EC',
+    ),
+
+    RepeatField(
+        'testData', 
+        #accessor = # must return a list; default is one element per line
+        required = True, 
+        label = 'Test data',
+        description = 'Enter one or more function calls. '+ 
+                    'A function call consists of the ' + 
+                    'function name (given in the exercise directives) ' + 
+                    'and test data as parameters of this funtion, e.g, '+
+                    "tally 'a '(a b c 1 2 3 b c a)"+
+                    'Each function call must be written in a single line.',
+        i18n_domain = 'EC',
+    ),
+))
+
+# testSchema
+tests = Schema((
+
+    TestEnvironment(
+        'simple',
+        label = 'Simple',
+        description = 'Exact matching results are allowed.',
+        test = simpleTest,
+        syntax = SYNTAX_TEMPLATE,
+        semantic = WRAPPER_TEMPLATE,
+        lineNumberOffset = 6,
+        compiler = config.INTERPRETER,
+        interpreter = config.INTERPRETER,
+    ),
+
+#    TestEnvironment(
+#        'permutation',
+#        label = 'Permutation',
+#        description = 'Permutations are allowed.',
+#        test = permTest,
+#        syntax = SYNTAX_TEMPLATE,
+#        semantic = WRAPPER_TEMPLATE,
+#        lineNumberOffset = 6,
+#        compiler = config.INTERPRETER,
+#        interpreter = config.INTERPRETER,
+#    ),
+))
+    
 
 class Cl(AbstractProgrammingBackend):
     """
@@ -29,8 +162,21 @@ class Cl(AbstractProgrammingBackend):
 
     srcFileSuffix = '.lisp'
 
-    schema = ClConf.inputSchema
-    testSchema = ClConf.tests
+    schema = inputSchema
+    testSchema = tests
+
+    
+    def __init__(self, params, versionFile=__file__, logger = None):
+        """
+        This constructor is needed to reset the logging environment.
+        """
+        AbstractProgrammingBackend.__init__(self, params, versionFile)
+        # reset logger
+        if logger: 
+            self.log = logger
+        else:
+            self.log = log
+
 
     # -- syntax check ---------------------------------------------------------
     def _preProcessCheckSyntax(self, test, src, **kwargs):
@@ -139,10 +285,10 @@ class Cl(AbstractProgrammingBackend):
 
         # prepare source code for model and student' solution which will be
         # stored in seperate files as modules
-        modelSrc = re.sub(r'\$\{SOURCE\}', model, ClConf.semanticCheckTemplate)
+        modelSrc = re.sub(r'\$\{SOURCE\}', model, SEMANTIC_TEMPLATE)
         modelSrc = re.sub(r'\$\{MODULE\}', PKG_MODEL, modelSrc)
         
-        studentSrc = re.sub(r'\$\{SOURCE\}', submission, ClConf.semanticCheckTemplate)
+        studentSrc = re.sub(r'\$\{SOURCE\}', submission, SEMANTIC_TEMPLATE)
         studentSrc = re.sub(r'\$\{MODULE\}', PKG_STUDENT, studentSrc)
 
         #logging.debug('modelSrc: %s\n' % modelSrc)
@@ -179,8 +325,8 @@ class Cl(AbstractProgrammingBackend):
             wrapper = re.sub(r'\$\{testFunction\}', test.test, wrapper)
 
             # replace package names
-            for (k, n) in ((ClConf.NS_MODEL,	PKG_MODEL),
-                           (ClConf.NS_STUDENT,	PKG_STUDENT)):
+            for (k, n) in ((NS_MODEL,	PKG_MODEL),
+                           (NS_STUDENT,	PKG_STUDENT)):
                 wrapper = re.sub(r'\$\{%s\}' % k, n, wrapper)
 
             # remove all remaining placeholders

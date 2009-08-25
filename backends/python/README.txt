@@ -112,17 +112,17 @@ Credits
   
 License
 
-  The Haskell backend is licensed under the
+  The Python backend is licensed under the
   "GPL":http://opensource.org/licenses/gpl-license.
 
   Copyright © 2007 Otto-von-Guericke-Universität Magdeburg
 
-  The Haskell backend is free software; you can redistribute it and/or
+  The Python backend is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License as
   published by the Free Software Foundation; either version 2 of the
   License, or (at your option) any later version.
 
-  The Haskell backend is distributed in the hope that it will be
+  The Python backend is distributed in the hope that it will be
   useful, but WITHOUT ANY WARRANTY; without even the implied warranty
   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   General Public License for more details.

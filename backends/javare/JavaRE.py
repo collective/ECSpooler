@@ -11,22 +11,104 @@ import tempfile
 from urlparse import urlparse
 
 from types import StringType, UnicodeType
+from os.path import join, dirname
 
 # local imports
-from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend, EX_OK
+from lib.data.BackendResult import BackendResult
+from lib.util.BackendSchema import InputField
+from lib.util.BackendSchema import RepeatField
+from lib.util.BackendSchema import Schema
+from lib.util.BackendSchema import TestEnvironment
 
-from backends.javare.JavaREConf import JavaREConf
+from backends.javare import config
+
+# enable logging
+log = logging.getLogger('backends.javare')
+
+
+# The name of the wrapper class that performs the syntactic check
+CLASS_SYNTACTIC_CHECK = 'SyntacticCheck'
+
+# The name of the wrapper class that performs the semantic check
+CLASS_SEMANTIC_CHECK = 'SemanticCheck'
+
+# load Java function to do a simple test
+try:
+    findFirstGroup0 = file(join(dirname(__file__),
+                           'findFirstGroup0.java'), 'r').read()
+except IOError:
+    findFirstGroup0 = ''
+
+WRAPPER_TEMPLATE = file(join(dirname(__file__),
+                            CLASS_SEMANTIC_CHECK + '.java'),
+                       'r').read()
+
+SYNTAX_TEMPLATE = file(join(dirname(__file__),
+                                CLASS_SYNTACTIC_CHECK + '.java'),
+                           'r').read()
+
+# input schema
+inputSchema = Schema((
+
+    InputField(
+        'modelSolution', 
+        required = True, 
+        label = 'Model solution',
+        description = 'Enter a model solution.',
+        i18n_domain = 'EC',
+    ),
+    
+    InputField(
+        'helpFunctions', 
+        label = 'Help functions',
+        description = 'Enter help functions if needed.',
+        i18n_domain = 'EC',
+    ),
+
+    RepeatField(
+        'testData', 
+        #accessor = # must return a list; default is one element per line
+        required = True, 
+        label = 'Test data',
+        description = 'Enter one or more function calls. '+ 
+                    'A function call consists of the ' + 
+                    'function name (given in the exercise directives) ' + 
+                    'and test data as parameters of this funtion. '+
+                    'Each function call must be written in a single line.',
+        i18n_domain = 'EC',
+    ),
+))
+
+# testSchema
+tests = Schema((
+
+    TestEnvironment(
+        'findFirstGroup0',
+        label = 'Find first, group 0',
+        description = 'Compare group 0 of the first match',
+        test = findFirstGroup0,
+        semantic = WRAPPER_TEMPLATE,
+        syntax = SYNTAX_TEMPLATE,
+        lineNumberOffset = 0,
+        compiler = config.COMPILER,
+        interpreter = config.INTERPRETER,
+    ),
+))
+
+#STRING_RE = re.compile(r'"(?:[^"\n\r\\]+|(?:\\.)+)*"')
+STRING_RE = re.compile(r'^"([^"\n\r]|(\\"))+"$')
 
 def non_null_str(s):
+    """
+    """
     return s and type(s) in (StringType, UnicodeType)
 
-#string_re = re.compile(r'"(?:[^"\n\r\\]+|(?:\\.)+)*"')
-string_re = re.compile(r'^"([^"\n\r]|(\\"))+"$')
-
 def string_p(s):
+    """
+    """
     #logging.debug('(2): %s' % s)
-    ret = string_re.match(s)
+    ret = STRING_RE.match(s)
     #logging.debug('(2a): %s' % repr(ret))
     return ret
 
@@ -68,9 +150,20 @@ class JavaRE(AbstractProgrammingBackend):
 
     srcFileSuffix = '.java'
 
-    schema = JavaREConf.inputSchema
-    testSchema = JavaREConf.tests
-    #version = '0.1'
+    schema = inputSchema
+    testSchema = tests
+
+
+    def __init__(self, params, versionFile=__file__, logger = None):
+        """
+        This constructor is needed to reset the logging environment.
+        """
+        AbstractProgrammingBackend.__init__(self, params, versionFile)
+        # reset logger
+        if logger: 
+            self.log = logger
+        else:
+            self.log = log
 
 
     def download(self, url):
@@ -124,8 +217,7 @@ class JavaRE(AbstractProgrammingBackend):
         # FIXME: Compiling the program is one thing, but to be able to
         # tell whether the pattern can be compiled we'd have to run
         # the program, too.
-        return (test.syntax % src[1:-1],
-                JavaREConf.CLASS_SYNTACTIC_CHECK)
+        return (test.syntax % src[1:-1], CLASS_SYNTACTIC_CHECK)
 
 
     def _postProcessCheckSyntax(self, test, message):
@@ -242,7 +334,7 @@ class JavaRE(AbstractProgrammingBackend):
             try:
                 # write module for wrapper
                 wrapperModule = self._writeModule(
-                    JavaREConf.CLASS_SEMANTIC_CHECK,
+                    CLASS_SEMANTIC_CHECK,
                     wrapper, 
                     suffix=self.srcFileSuffix,
                     dir=job.getId(),
@@ -317,7 +409,7 @@ class JavaRE(AbstractProgrammingBackend):
                     exitcode, result = self._runInterpreter(
                         test.interpreter,
                         os.path.dirname(wrapperModule['file']),
-                        JavaREConf.CLASS_SEMANTIC_CHECK,
+                        CLASS_SEMANTIC_CHECK,
                         args=(modelSolutionU, studentSolutionU, fn,))
 
                 except Exception, e:

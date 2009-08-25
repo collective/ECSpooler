@@ -4,17 +4,163 @@
 # Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
+
+################################################################################
+#                                Changelog                                     #
+################################################################################
+#
+# 16.04.2009, chbauman:
+#       substituted all occurences of '.hs' with srcFileSuffix
+# 30.04.2009, chbauman:
+#       using replace instead of expensive re.sub operation in
+#       _preProcessCheckSyntax.
+#       replaced re.sub with replace whereever possible.
+
+
 import sys, os, re
 import logging
 
+from os.path import join, dirname
 from types import StringTypes
 
 # local imports
-from backends.haskell.HaskellConf import HaskellConf
+from backends.haskell import config
 
 from lib.data.BackendResult import BackendResult
+from lib.util.BackendSchema import InputField
+from lib.util.BackendSchema import RepeatField
+from lib.util.BackendSchema import Schema
+from lib.util.BackendSchema import TestEnvironment
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
 from lib.AbstractProgrammingBackend import EX_OK
+
+# enable logging
+log = logging.getLogger('backends.haskell')
+
+# load Haskell function to do a simple test
+try:
+    simpleTest = file(join(dirname(__file__), 'simpleTest.hs'), 'r').read()
+except IOError, ioe:
+    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    simpleTest = ''
+
+# load Haskell function to do a test which allows permutation of list elems
+try:
+    permTest = file(join(dirname(__file__), 'permTest.hs'), 'r').read()
+except IOError, ioe:
+    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    permTest = ''
+
+# load Haskell function to do a test which allows tolerance
+try:
+    toleranceTest = file(join(dirname(__file__), 'toleranceTest.hs'), 'r').read()
+except IOError, ioe:
+    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    permTest = ''
+
+WRAPPER_TEMPLATE = \
+"""module Main where
+import Model
+import Student
+
+${helpFunctions}
+
+-- must be named 'haskell_backend_internal_equality_test'
+${testFunction}
+
+main = putStr(\"isEqual=\" ++ show(haskell_backend_internal_equality_test (o1) (o2)) ++ \";;expected=\" ++ show(o1) ++ \";;received=\" ++ show(o2))
+    where
+        o1 = Model.${testData}
+        o2 = Student.${testData}
+"""
+
+SYNTAX_TEMPLATE = \
+"""module Main where
+
+${SOURCE}
+   
+main = putStr(\"\")
+"""
+
+GENERIC_TEMPLATE = \
+"""module %s where
+%s
+"""
+
+# input schema
+inputSchema = Schema((
+
+    InputField(
+        'modelSolution', 
+        required = True, 
+        label = 'Model solution',
+        description = 'Enter a model solution.',
+        i18n_domain = 'EC',
+    ),
+    
+    InputField(
+        'helpFunctions', 
+        label = 'Help functions',
+        description = 'Enter help functions if needed.',
+        i18n_domain = 'EC',
+    ),
+
+    RepeatField(
+        'testData', 
+        #accessor = # must return a list; default is one element per line
+        required = True, 
+        label = 'Test data',
+        description = 'Enter one or more function calls. '+ 
+                    'A function call consists of the ' + 
+                    'function name (given in the exercise directives) ' + 
+                    'and test data as parameters of this funtion. '+
+                    'Each function call must be written in a single line.',
+        i18n_domain = 'EC',
+    ),
+))
+
+# testSchema
+tests = Schema((
+
+    TestEnvironment(
+        'simple',
+        label = 'Simple',
+        description = 'Exact matching results are allowed.',
+        test = simpleTest,
+        syntax = SYNTAX_TEMPLATE,
+        semantic = WRAPPER_TEMPLATE,
+        lineNumberOffset = 2,
+        compiler = config.INTERPRETER,
+        interpreter = config.INTERPRETER,
+    ),
+
+    TestEnvironment(
+        'permutation',
+        label = 'Permutation',
+        description = 'Permutations are allowed.',
+        test = permTest,
+        syntax = SYNTAX_TEMPLATE,
+        semantic = WRAPPER_TEMPLATE,
+        lineNumberOffset = 2,
+        compiler = config.INTERPRETER,
+        interpreter = config.INTERPRETER,
+    ),
+
+    TestEnvironment(
+        'tolerance',
+        label = 'Tolerance',
+        description = 'Tolerance of 1/10^15 in result values is allowed.',
+        test = toleranceTest,
+        syntax = SYNTAX_TEMPLATE,
+        semantic = WRAPPER_TEMPLATE,
+        lineNumberOffset = 2,
+        compiler = config.INTERPRETER,
+        interpreter = config.INTERPRETER,
+    ),
+))
+
+#runhugsRegEx = 'Type checking\n?|Parsing\n?|[Parsing]*[Dependency analysis]*[Type checking]*[Compiling]*\x08 *'
+RUNHUGS_RE = re.compile(r'Type checking\n?|Parsing\n?|[Parsing]*[Dependency analysis]*[Type checking]*[Compiling]*\x08 *')
 
 class Haskell(AbstractProgrammingBackend):
     """
@@ -27,8 +173,18 @@ class Haskell(AbstractProgrammingBackend):
 
     srcFileSuffix = '.hs'
 
-    schema = HaskellConf.inputSchema
-    testSchema = HaskellConf.tests
+    schema = inputSchema
+    testSchema = tests
+    
+    def __init__(self, params, versionFile=__file__, logger = None):
+        """
+        This constructor is needed to reset the logging environment.
+        """
+        if not logger: 
+            logger = log
+
+        AbstractProgrammingBackend.__init__(self, params, versionFile, logger)
+
 
     def _preProcessCheckSyntax(self, test, src, **kwargs):
         """
@@ -43,7 +199,8 @@ class Haskell(AbstractProgrammingBackend):
         result = ''
         
         if test.syntax:
-            result = re.sub('\$\{SOURCE\}', src, test.syntax)
+            #result = re.sub('\$\{SOURCE\}', src, test.syntax)
+            result = test.syntax.replace('${SOURCE}', src)
             
         else:
             result = src
@@ -74,8 +231,11 @@ class Haskell(AbstractProgrammingBackend):
         
         @param: message:
         """
-        result = re.sub('isEqual=', '', message)
-        result = re.sub('/.*/ECSpooler/backends/haskell/', '', result)
+        #result = re.sub('isEqual=', '', message)
+        #result = re.sub('/.*/ECSpooler/backends/haskell/', '', result)
+        
+        result = message.replace('isEqual=', '')
+        result = result.replace('/.*/ECSpooler/backends/haskell/', '')
 
         return result
     
@@ -93,7 +253,7 @@ class Haskell(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -108,7 +268,7 @@ class Haskell(AbstractProgrammingBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -123,8 +283,8 @@ class Haskell(AbstractProgrammingBackend):
         assert submission and type(submission) in StringTypes, \
             "Semantic check requires valid 'student solution' (%s)" % submission
 
-        model = HaskellConf.genericModulTemplate % ('Model', model)
-        submission = HaskellConf.genericModulTemplate % ('Student', submission)
+        model = GENERIC_TEMPLATE % ('Model', model)
+        submission = GENERIC_TEMPLATE % ('Student', submission)
 
         # define return values
         feedback = BackendResult.UNKNOWN
@@ -135,15 +295,14 @@ class Haskell(AbstractProgrammingBackend):
 
             if not solved: break
 
-            logging.debug('Running semantic check with test: %s' % 
-                          test.getName())
+            log.debug('Running semantic check with test: %s' % test.getName())
 
             # get the interpreter
             interpreter = test.interpreter
            
             # write model solution and students' solution to a file
-            self._writeModule('Model', model, '.hs', job.getId(), test.encoding)
-            self._writeModule('Student', submission, '.hs', job.getId(), test.encoding)
+            self._writeModule('Model', model, self.srcFileSuffix, job.getId(), test.encoding)
+            self._writeModule('Student', submission, self.srcFileSuffix, job.getId(), test.encoding)
 
             # get wrapper code
             src = test.semantic
@@ -153,15 +312,18 @@ class Haskell(AbstractProgrammingBackend):
             for field in self.schema.filterFields(type='InputField'):
                 if job.has_key(field.getName()):
                     repl = job[field.getName()]
-                    src = re.sub('\$\{%s\}' % field.getName(), repl, src)
+                    #src = re.sub('\$\{%s\}' % field.getName(), repl, src)
+                    src = src.replace('${%s}' % field.getName(), repl)
 
             # set test function
-            src = re.sub('\$\{testFunction\}', test.test, src)
+            #src = re.sub('\$\{testFunction\}', test.test, src)
+            src = src.replace('${testFunction}', test.test)
 
             # run with all test data
             for t in testdata:
                 # and now add repeatable data values
-                wrapper = re.sub('\$\{%s\}' % repeatField.getName(), t, src)
+                #wrapper = re.sub('\$\{%s\}' % repeatField.getName(), t, src)
+                wrapper = src.replace('${%s}' % repeatField.getName(), t)
         
                 # remove all remaining placeholders
                 wrapper = re.sub('\$\{.*\}', '', wrapper)
@@ -182,13 +344,13 @@ class Haskell(AbstractProgrammingBackend):
 
                     # remove all special characters written by runhugs
                     #result = re.sub(HaskellConf.runhugsRegEx, '', result)
-                    result = HaskellConf.RUNHUGS_RE.sub('', result)  
+                    result = RUNHUGS_RE.sub('', result)  
         
                 except Exception, e:
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    logging.error(msg)
+                    log.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured
@@ -204,7 +366,7 @@ class Haskell(AbstractProgrammingBackend):
                         
                 # has the students' solution passed this test?
                 else:
-                    #logging.debug(result)
+                    #log.debug(result)
                     
                     msgItems = result.split(';;')
                     

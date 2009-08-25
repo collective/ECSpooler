@@ -5,24 +5,182 @@
 #
 # This file is part of ECSpooler.
 
-import sys, os, re, time, traceback
+import sys, os, re, time
 import logging
 
 from types import StringType, UnicodeType
+from os.path import join, dirname
 
 # local imports
-from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend, EX_OK
+from lib.data.BackendResult import BackendResult
+from lib.util.BackendSchema import InputField
+from lib.util.BackendSchema import RepeatField
+from lib.util.BackendSchema import Schema
+from lib.util.BackendSchema import TestEnvironment
 
-from JavaConf import JavaConf
+from backends.java import config
+
+# enable logging
+log = logging.getLogger('backends.java')
+
+
+# The packages that the model and student solution will be put in
+NS_MODEL = 'ModelPackage'
+NS_STUDENT = 'StudentPackage'
+
+# The name of the wrapper class that performs the semantic check
+CLASS_SEMANTIC_CHECK = 'SemanticCheck'
+
+# load Java function to do a simple test
+try:
+    simpleTest = file(join(dirname(__file__), 'simpleTest.java'), 'r').read()
+except IOError:
+    simpleTest = ''
+
+# load Java function to do a test which allows permutation of list elems
+#try:
+#    permTest = file('permTest.java', 'r').read()
+#except IOError:
+#    permTest = ''
+
+WRAPPER_TEMPLATE = \
+'''
+public class %s
+{
+    private static Object isArray(Object o)
+    {
+        if (o.getClass().isArray())
+        {
+            java.util.LinkedList<Object> list = new java.util.LinkedList<Object>();
+
+            for (int i = 0; i < java.lang.reflect.Array.getLength(o); i++)
+            {
+                list.add(java.lang.reflect.Array.get(o, i));
+            }
+            
+            return list;
+        }
+        return o;
+    }
+
+    ${helpFunctions}
+
+    ${testFunction}
+    
+    public static void main(String[] argv)
+    {
+        Object  exp = ${model_testData};
+        Object  rec = ${student_testData};
+        
+        exp = isArray(exp);
+        rec = isArray(rec);
+        
+        Boolean eql = new Boolean(test(exp, rec));
+        
+        System.out.println("isEqual=" + eql.toString()
+                           + ";;expected=" + exp.toString()
+                           + ";;received=" + rec.toString());
+    }
+}
+''' % (CLASS_SEMANTIC_CHECK)
+
+# input schema
+inputSchema = Schema((
+
+    InputField(
+        'modelSolution', 
+        required = True, 
+        label = 'Model solution',
+        description = 'Enter model solution.  A model solution ' + 
+                      'is a Java class which implements methods ' +
+                      'to resolve the given assignment.',
+        i18n_domain = 'EC',
+    ),
+    
+    InputField(
+        'helpFunctions', 
+        label = 'Help functions',
+        description = 'Enter help functions if needed.  A help function ' + 
+                      'can be used, e.g., to calculate values for testing ' +
+                      'or as a parameter in a test call.',
+        i18n_domain = 'EC',
+    ),
+
+    RepeatField(
+        'testData', 
+        #accessor = # must return a list; default is one element per line
+        required = True, 
+        label = 'Test data',
+        description = 'Enter one or more test calls.  A test call is ' + 
+                    'just a Java method call with appropriate parameters, ' +
+                    'e.g., new MyTest().(3, 2, 5).' +
+                    'The Java class name and metod names are normally ' +
+                    'given in the assignment directives.' +
+                    'Each test call must be written in a single line.',
+        i18n_domain = 'EC',
+    ),
+))
+
+# testSchema
+tests = Schema((
+
+    TestEnvironment(
+        'simple',
+        label = 'Simple',
+        description = 'Test without permutations',
+        test = simpleTest,
+        semantic = WRAPPER_TEMPLATE,
+        lineNumberOffset = 2,
+        compiler = config.COMPILER,
+        interpreter = config.INTERPRETER,
+    ),
+
+#         TestEnvironment(
+#             'permutation',
+#             label = 'Permutation',
+#             description = 'Test with permutations',
+#             test = permTest,
+#             semantic = WRAPPER_TEMPLATE,
+#             lineNumberOffset = 2,
+#             compiler = config.COMPILER,
+#             interpreter = config.INTERPRETER,
+#         ),
+))
+
+# The regular expression to extract the name of the *public* class
+# from a piece of source.
+#
+# The grammar at <http://cobase-www.cs.ucla.edu/pub/javacc/java1.4.jj>
+# says this:
+#
+# void ClassDeclaration() :
+#     {}
+#     {
+#         ( "abstract" | "final" | "public" | "strictfp")*
+#         UnmodifiedClassDeclaration()
+#     }
+#
+# void UnmodifiedClassDeclaration() :
+#     {}
+#     {
+#         "class" <IDENTIFIER> [ "extends" Name() ]
+#                              [ "implements" NameList() ]
+#         ClassBody()
+#     }
+CLASS_NAME_RE = re.compile(r'^\s*(?:public\s+(?:(?:abstract|final|public|strictfp)\s+)*)+\s*class\s+(?P<name>[a-zA-Z_]\w*)', re.MULTILINE)
+
 
 def non_null_str(s):
+    """
+    """
     return s and type(s) in (StringType, UnicodeType)
+
 
 class Java(AbstractProgrammingBackend):
     """
-    A simple checker class for checking Haskell programs by comparing
-    student and model solution on given test data.
+    A simple backend for testing Java programs by comparing
+    student and model solution on a given set of test data.
     """
     
     id = 'java'
@@ -30,16 +188,27 @@ class Java(AbstractProgrammingBackend):
 
     srcFileSuffix = '.java'
 
-    schema = JavaConf.inputSchema
-    testSchema = JavaConf.tests
-    #version = '0.9'
+    schema = inputSchema
+    testSchema = tests
+
+    def __init__(self, params, versionFile=__file__, logger = None):
+        """
+        This constructor is needed to reset the logging environment.
+        """
+        AbstractProgrammingBackend.__init__(self, params, versionFile)
+        # reset logger
+        if logger: 
+            self.log = logger
+        else:
+            self.log = log
+
 
     def getClassName(self, src):
         """
         Extract the class name from the source code snippet [src]
         """
         
-        m = JavaConf.CLASS_NAME_RE.search(src)
+        m = CLASS_NAME_RE.search(src)
 
         assert m is not None, \
                 'Name of the public class could not be ' \
@@ -57,7 +226,7 @@ class Java(AbstractProgrammingBackend):
         @return: modified source code and new module name
         """
         
-        result = ("package %s;\n\n" % JavaConf.NS_STUDENT) + src
+        result = ("package %s;\n\n" % NS_STUDENT) + src
         cname = self.getClassName(src)
         return result, cname
 
@@ -71,14 +240,12 @@ class Java(AbstractProgrammingBackend):
         matches = re.findall('(^.*%s:(\d+))' % 'java', message, re.MULTILINE)
 
         # replace each filename and line number
-        try:
-            for match in matches:
-                message = re.sub(match[0], 
-                                 'line: %d' % (int(match[1]) - test.lineNumberOffset), 
-                                 message, 
-                                 1)
-        except Exception, e:
-            logging.error(traceback.format_exc())
+        for match in matches:
+            message = re.sub(match[0], 
+                             'line: %d' % (int(match[1]) - test.lineNumberOffset), 
+                             message, 
+                             1)
+
         return message
                       
 
@@ -89,7 +256,7 @@ class Java(AbstractProgrammingBackend):
         Override this method if you need to reformat the wrapper code or 
         the student's submission. 
         """                                  
-        return ("package %s;\n\n" % JavaConf.NS_STUDENT) + src
+        return ("package %s;\n\n" % NS_STUDENT) + src
 
     
     def _process_checkSemantics(self, job):
@@ -152,14 +319,14 @@ class Java(AbstractProgrammingBackend):
             compiled = {}
             
             try:
-                for sol in [('model',   JavaConf.NS_MODEL,   model),
-                            ('student', JavaConf.NS_STUDENT, submission)]:
+                for sol in [('model',   NS_MODEL,   model),
+                            ('student', NS_STUDENT, submission)]:
                     name, ns, source = sol
-                    # FIXME: move the 're.sub' code to _preProcessCheckSyntax
+
                     # replace module name in the solution
                     source = ("package %s;\n\n" % ns) + source
     
-                    # write solution to a file
+                    # write 'solution' to a file
                     dir=os.path.join(job.getId(), ns)
                     cname = self.getClassName(source)
                     compiled[name+'Class'] = cname
@@ -186,7 +353,7 @@ class Java(AbstractProgrammingBackend):
                 return BackendResult(-230, msg)
 
             model   = compiled['model']
-            student = compiled['student']
+            #student = compiled['student']
             
             # get the interpreter
             interpreter = test.interpreter
@@ -214,8 +381,8 @@ class Java(AbstractProgrammingBackend):
                 tStudent = None
                 wrapper = src
                 rfn = repeatField.getName()
-                for (k, ns) in (('model',   JavaConf.NS_MODEL),
-                                ('student', JavaConf.NS_STUDENT)):
+                for (k, ns) in (('model',   NS_MODEL),
+                                ('student', NS_STUDENT)):
                     # substitute the class name in the test data with
                     # the actual, package-qualified class name
                     realClass = "%s.%s" % (ns, compiled['%sClass' % k])
@@ -242,7 +409,7 @@ class Java(AbstractProgrammingBackend):
                 try:
                     # write module for wrapper
                     wrapperModule = self._writeModule(
-                        JavaConf.CLASS_SEMANTIC_CHECK,
+                        CLASS_SEMANTIC_CHECK,
                         wrapper, 
                         suffix=self.srcFileSuffix,
                         dir=job.getId(),
@@ -261,7 +428,7 @@ class Java(AbstractProgrammingBackend):
                     exitcode, result = self._runInterpreter(
                         interpreter, 
                         os.path.dirname(wrapperModule['file']),
-                        JavaConf.CLASS_SEMANTIC_CHECK)
+                        CLASS_SEMANTIC_CHECK)
 
                 except Exception, e:
                     msg = 'Internal error during semantic check: %s: %s' % \

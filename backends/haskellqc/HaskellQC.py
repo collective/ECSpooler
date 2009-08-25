@@ -4,18 +4,103 @@
 # Copyright (c) 2007 Otto-von-Guericke-University, Magdeburg
 #
 # This file is part of ECSpooler.
-import sys, os, re
+
+################################################################################
+#                                Changelog                                     #
+################################################################################
+#
+# 20.03.2009, chbauman:
+#       version 1.1
+#       using self.srcFileSuffix instead of hard-coded '.hs'
+#       preventing multiple result output
+# 24.03.2009, chbauman:
+#       refactored variable 't' to 'propertyTest'
+#       using HaskellQCConf.FAILED_TEST_MESSAGE and PASSED_ALL_TESTS_MESSAGE
+#       improved feedback (corporate design)
+
+import sys, os, re, logging
 
 from types import StringTypes
 
 # local imports
 from backends.haskell.Haskell import Haskell
-from backends.haskellqc.HaskellQCConf import HaskellQCConf
+from backends.haskell.Haskell import SYNTAX_TEMPLATE
+from backends.haskell.Haskell import GENERIC_TEMPLATE
+from backends.haskell.Haskell import RUNHUGS_RE
+from backends.haskellqc import config
 
+from lib.AbstractProgrammingBackend import EX_OK
 from lib.data.BackendJob import BackendJob
 from lib.data.BackendResult import BackendResult
-from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
-from lib.AbstractProgrammingBackend import EX_OK
+from lib.util.BackendSchema import TestEnvironment
+from lib.util.BackendSchema import InputField
+from lib.util.BackendSchema import Schema
+
+# enable logging
+log = logging.getLogger('backends.haskellqc')
+
+# regex to get all property names
+PROPERTIES_RE = re.compile(r'(?P<name>prop_[A-Z,a-z,0-9]+\w*)')
+
+# regex to substitute 'prop_' placeholder with the property name
+PROP_RE = re.compile(r'\$\{prop_\}')
+ 
+    # regex to identify failed tests
+FAILED_RE_KEY = 'params'
+FAILED_RE = re.compile(r'(?<=\stests:\n)(?P<%s>.*)(\n)' % FAILED_RE_KEY, re.DOTALL)
+PASSED_RE = re.compile(r'OK, (passed \d+ tests?)')
+
+FAILED_TESTS_MESSAGE = 'Your submission failed.'
+PASSED_ALL_TESTS_MESSAGE = 'Your submission passed all tests.'
+
+# template for Haskell module containing all QuickCheck properties     
+PROPS_TEMPLATE = \
+"""
+module Properties where
+import QuickCheck -- e.g. for conditional properties
+import Student
+
+%s
+"""
+
+# template for wrapper code
+WRAPPER_TEMPLATE = \
+"""
+module Main where
+import QuickCheck
+import Properties
+
+main :: IO ()
+--main = quickCheck ${prop_}
+main = verboseCheck ${prop_} 
+"""
+
+# input schema
+inputSchema = Schema((
+    InputField(
+        'properties', 
+        required = True, 
+        label = 'QuickCheck properties',
+        description = 'Enter one or more QuickCheck properties ' +
+                      '(cf. <http://www.cs.chalmers.se/~rjmh/QuickCheck/>).',
+        i18n_domain = 'EC',
+    ),
+))
+
+# test environments
+testEnvs = Schema((
+    TestEnvironment(
+        'default',
+        label = 'Default',
+        description = 'Default using QuickCheck.',
+        #test = '',
+        syntax = SYNTAX_TEMPLATE,
+        semantic = WRAPPER_TEMPLATE,
+        lineNumberOffset = 2,
+        compiler = config.INTERPRETER,
+        interpreter = config.INTERPRETER,
+    ),
+))
 
 class HaskellQC(Haskell):
     """
@@ -24,10 +109,15 @@ class HaskellQC(Haskell):
         
     id = 'haskellqc'
     name = 'Haskell QuickCheck'
-    #version = '1.0'
+    version = '1.1'
     
-    schema = HaskellQCConf.inputSchema
-    testSchema = HaskellQCConf.tests
+    schema = inputSchema
+    testSchema = testEnvs
+
+    def __init__(self, params, versionFile=__file__):
+        """
+        """
+        Haskell.__init__(self, params, versionFile, log)
 
 
     def _postProcessCheckSemantic(self, test, message):
@@ -37,9 +127,6 @@ class HaskellQC(Haskell):
         @param: test:
         @param: message:
         """
-        result = message
-        
-        #result = re.sub('isEqual=', '', message)
         result = re.sub('/.*/ECSpooler/backends/haskellqc/', '', message)
 
         return result
@@ -49,6 +136,7 @@ class HaskellQC(Haskell):
         """
         @return: a BackendResult object with result code and value
         """
+        
         # test for available test specs
         testSpecs = self._getTests(job)
 
@@ -70,18 +158,26 @@ class HaskellQC(Haskell):
         testdata = None
         
         if properties:
-            testdata = HaskellQCConf.PROPERTIES_RE.findall(properties)
+            testdata = PROPERTIES_RE.findall(properties)
+            
+            # If a student submitted a function declaration additionally to its
+            # definition, testdata will contain multiple occurrences of the same
+            # function name, which causes this backend to output the results
+            # multiple times, too. By 'setifying' testdata we'll get an array
+            # of unique entries.
+            testdata = list(set(testdata))
 
         if (not testdata) or (len(testdata) == 0):
             msg = 'No QuickCheck propeties defined.'
             self.log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
-        submission = HaskellQCConf.genericModulTemplate % ('Student', submission)
-        properties = HaskellQCConf.propsTemplate % (properties)
+        submission = GENERIC_TEMPLATE % ('Student', submission)
+        properties = PROPS_TEMPLATE % (properties)
 
         # define return values
         feedback = BackendResult.UNKNOWN
+        reason = BackendResult.UNKNOWN
         solved = True
 
         # run selected test specifications
@@ -96,13 +192,13 @@ class HaskellQC(Haskell):
             interpreter = test.interpreter
            
             # write submission and propeties to files
-            self._writeModule('Student', submission, '.hs', job.getId(), test.encoding)
-            self._writeModule('Properties', properties, '.hs', job.getId(), test.encoding)
+            self._writeModule('Student', submission, self.srcFileSuffix, job.getId(), test.encoding)
+            self._writeModule('Properties', properties, self.srcFileSuffix, job.getId(), test.encoding)
 
             # run with all test data
-            for t in testdata:
+            for propertyTest in testdata:
                 # add property name
-                wrapper = HaskellQCConf.PROP_RE.sub(t, test.semantic)
+                wrapper = PROP_RE.sub(propertyTest, test.semantic)
                 
                 # execute wrapper code in haskell interpreter
                 try:
@@ -119,7 +215,7 @@ class HaskellQC(Haskell):
                                     os.path.basename(wrapperModule['file']))
 
                     # remove all special characters written by runhugs 
-                    result = HaskellQCConf.RUNHUGS_RE.sub('', result)
+                    result = RUNHUGS_RE.sub('', result)
         
                 except Exception, e:
                     msg = 'Internal error during semantic check: %s: %s' % \
@@ -134,7 +230,7 @@ class HaskellQC(Haskell):
                     result = "\nYour submission failed. Test " \
                              "case was: '%s' (%s)" \
                              "\n\n Received result: %s"\
-                             % (t, test.getName(), 
+                             % (propertyTest, test.getName(), 
                                 self._postProcessCheckSemantic(test, result))
 
                     return BackendResult(False, result)
@@ -142,31 +238,28 @@ class HaskellQC(Haskell):
                 # has the students' solution passed this test?
                 else:
                     #self.log.debug(result)
-                    failed = HaskellQCConf.FAILED_RE.findall(result)
-                    passed = HaskellQCConf.PASSED_RE.findall(result)
+                    failed = FAILED_RE.search(result)
+                    #passed = PASSED_RE.search(result)
                     
-                    #if len(passed) != 0:
-                    if passed:
-                        feedback += "\nYour submission %s (%s)." \
-                            % (''.join(passed), t)
-                        # go to next property
-                        
-                    #elif failed != None:
-                    elif failed:
-                        #failed_data_str = ''
-                        
-                        #for d in failed_data:
-                        #    failed_data_str += d + ' ';
-                    
-                        feedback = '\nYour submission failed. Test case was: %s (%s)' \
-                            % (''.join(failed), t)
-                        
+                    # only consider errornous submissions
+                    if failed:
+                        # store the reason
+                        reason = failed.group(FAILED_RE_KEY)
                         solved = False                    
                         break # means: end testing right now
                     # end elif
                 #end else                    
             # end inner for loop
         #end out for loop 
+        
+        # does student's submission have all teacher-defined properties?
+        if solved:
+            # Yes -> Show that all tests were passed.
+            feedback = PASSED_ALL_TESTS_MESSAGE
+        else:
+            # No -> Show that submission failed.
+            feedback = \
+            '%s\n\nParameters were: %s.' % (FAILED_TESTS_MESSAGE, reason.replace('\n', ', '))
 
         # TODO: i18n
         feedback = feedback

@@ -1,17 +1,47 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
+# Copyright (c) 2007-2009 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
-import sys, os, re
 import logging
-
-from types import StringTypes
 
 # local imports
 from backends.haskell.Haskell import Haskell
-from backends.haskellio.HaskellIOConf import HaskellIOConf
+from backends.haskell.Haskell import tests
+
+from backends.haskellio import config
+
+# enable logging
+log = logging.getLogger('backends.haskellio')
+
+# set a modified wrapper code for the semantic check
+WRAPPER_TEMPLATE = \
+"""module Main where
+import Model
+import Student
+
+${helpFunctions}
+
+${testFunction}
+
+o1 = Model.${testData}
+o2 = Student.${testData}
+
+main = do v1 <- o1
+          v2 <- o2
+          putStr("isEqual=" ++ show(haskell_backend_internal_equality_test (v1) (v2)) ++ ";;expected=" ++ show(v1) ++ ";;received=" ++ show(v2))
+"""
+
+# modify schema for testing           
+testEnvs = tests.copy()
+
+testEnvs['simple'].semantic = WRAPPER_TEMPLATE
+testEnvs['permutation'].semantic = WRAPPER_TEMPLATE
+testEnvs['simple'].compiler = config.INTERPRETER,
+testEnvs['permutation'].compiler = config.INTERPRETER,
+testEnvs['simple'].interpreter = config.INTERPRETER,
+testEnvs['permutation'].interpreter = config.INTERPRETER,
 
 class HaskellIO(Haskell):
     """
@@ -20,6 +50,10 @@ class HaskellIO(Haskell):
     
     id = 'haskell-io'
     name = 'Haskell I/O'
-    #version = '1.0'
+    testSchema = testEnvs
+    
 
-    testSchema = HaskellIOConf.tests
+    def __init__(self, params, versionFile=__file__):
+        """
+        """
+        Haskell.__init__(self, params, versionFile, log)

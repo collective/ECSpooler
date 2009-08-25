@@ -5,6 +5,4 @@
 #
 # This file is part of ECSpooler.
 
-#subpackages
-
-#classes
+# Define all properties used by backend Keywords.

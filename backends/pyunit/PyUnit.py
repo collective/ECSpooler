@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id$
+# $Id:PyUnit.py 1199 2009-08-12 12:53:59Z amelung $
 #
 # Copyright (c) 2009 Mario Amelung and Christian Baumann
 #
@@ -19,6 +19,9 @@ from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
+
+# enable logging
+log = logging.getLogger('backends.pyunit')
 
 WRAPPER_MODULE = \
 """# -*- coding: utf-8 -*-
@@ -83,6 +86,7 @@ testEnvs = Schema((
 RE_CLASSNAME = re.compile('(?<=^class\s).+?(?=:|\()', re.M)
 RE_OK = re.compile('^Ran\s\d+.*OK', re.M | re.DOTALL)
 
+
 class PyUnit(AbstractProgrammingBackend):
     """
     Backend for testing Python programs using PyUnit.
@@ -96,6 +100,17 @@ class PyUnit(AbstractProgrammingBackend):
     schema = inputSchema
     testSchema = testEnvs
 
+
+    def __init__(self, params, versionFile=__file__, logger = None):
+        """
+        This constructor is needed to reset the logging environment.
+        """
+        AbstractProgrammingBackend.__init__(self, params, versionFile)
+        # reset logger
+        if logger: 
+            self.log = logger
+        else:
+            self.log = log
 
     def _postProcessCheckSyntax(self, test, message):
         """

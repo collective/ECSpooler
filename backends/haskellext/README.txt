@@ -9,8 +9,9 @@ Description
   Therefore the backend compares the output of a program with the 
   output of a model solution for a set of test data.
   
-  The HaskellExt backend is derived from Haskell backend and should be 
-  used if you TODO:
+  The HaskellExt backend is derived from the Haskell backend and 
+  should be used if a test data call doesn't start with the function 
+  which should be tested (see the example below).  
 
 Prerequisites
 
@@ -90,13 +91,14 @@ Quick Start
   
   * Model solution::
  
-    square x = x * x
+    infiniteOddNumbers :: Int -> [Int]
+    infiniteOddNumbers startFrom = [ x | x <- [startFrom ..], odd x]
     
   * Test data (one test call per line)::
   
-    square 0
-    square 2
-    square 3
+    take 10 (infiniteOddNumbers 0) 
+    take 10 (infiniteOddNumbers 3) 
+    take 10 (infiniteOddNumbers (-5)) 
 
     
   The HaskellExt backend currently supports three compare modes:
@@ -126,7 +128,7 @@ License
   The HaskellExt backend is licensed under the
   "GPL":http://opensource.org/licenses/gpl-license.
 
-  Copyright © 2008 Otto-von-Guericke-Universität Magdeburg
+  Copyright © 2007 Otto-von-Guericke-Universität Magdeburg
 
   The HaskellExt backend is free software; you can redistribute it 
   and/or modify it under the terms of the GNU General Public License as

@@ -9,14 +9,108 @@ import sys, os, re
 import logging
 
 from types import StringType, UnicodeType
+from os.path import join, dirname
 
 # local imports
-from backends.erlang.ErlangConf import ErlangConf
-
-from lib.data.BackendResult import BackendResult
-
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
 from lib.AbstractProgrammingBackend import EX_OK
+from lib.data.BackendResult import BackendResult
+from lib.util.BackendSchema import InputField
+from lib.util.BackendSchema import RepeatField
+from lib.util.BackendSchema import Schema
+from lib.util.BackendSchema import TestEnvironment
+
+from backends.erlang import config
+
+# enable logging
+log = logging.getLogger('backends.erlang')
+
+# load source for simple testing
+try:
+    simpleTest = file(join(dirname(__file__), 'simpleTest.erl'), 'r').read()
+except IOError, ioe:
+    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    simpleTest = ''
+
+# load source for testing permutations
+try:
+    permTest = file(join(dirname(__file__), 'permTest.erl'), 'r').read()
+except IOError, ioe:
+    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    permTest = ''
+
+
+# wrapper code (TEMPLATE_SEMANTIC)
+WRAPPER_TEMPLATE = \
+"""-module(wrapper).
+-export([start/0]).
+
+${helpFunctions}
+
+${testFunction}
+
+o1() -> model:${testData}.
+o2() -> student:${testData}.
+
+start() -> io:fwrite("isEqual=~w;;expected=~w;;received=~w", [test(o1(), o2()), o1(), o2()]).
+"""
+# input schema
+inputSchema = Schema((
+
+    InputField(
+        'modelSolution', 
+        required = True, 
+        label = 'Model solution',
+        description = 'Enter a model solution.',
+        i18n_domain = 'EC',
+    ),
+    
+    InputField(
+        'helpFunctions', 
+        label = 'Help functions',
+        description = 'Enter help functions if needed.',
+        i18n_domain = 'EC',
+    ),
+
+    RepeatField(
+        'testData', 
+        #accessor = # must return a list; default is one element per line
+        required = True, 
+        label = 'Test data',
+        description = 'Enter one or more function calls. '+ 
+                    'A function call consists of the ' + 
+                    'function name (given in the exercise directives) ' + 
+                    'and test data as parameters of this funtion. '+
+                    'Each function call must be written in a single line.',
+        i18n_domain = 'EC',
+    ),
+))
+
+# testSchema
+tests = Schema((
+
+    TestEnvironment(
+        'simple',
+        label = 'Simple',
+        description = 'Test without permutations',
+        test = simpleTest,
+        semantic = WRAPPER_TEMPLATE,
+        #lineNumberOffset = 2,
+        compiler = config.COMPILER,
+        interpreter = config.INTERPRETER,
+    ),
+
+    TestEnvironment(
+        'permutation',
+        label = 'Permutation',
+        description = 'Test with permutations',
+        test = permTest,
+        semantic = WRAPPER_TEMPLATE,
+        #lineNumberOffset = 2,
+        compiler = config.COMPILER,
+        interpreter = config.INTERPRETER,
+    ),
+))
 
 
 class Erlang(AbstractProgrammingBackend):
@@ -30,9 +124,19 @@ class Erlang(AbstractProgrammingBackend):
 
     srcFileSuffix = '.erl'
 
-    schema = ErlangConf.inputSchema
-    testSchema = ErlangConf.tests
-    #version = '1.0'
+    schema = inputSchema
+    testSchema = tests
+    
+    def __init__(self, params, versionFile=__file__, logger = None):
+        """
+        This constructor is needed to reset the logging environment.
+        """
+        AbstractProgrammingBackend.__init__(self, params, versionFile)
+        # reset logger
+        if logger: 
+            self.log = logger
+        else:
+            self.log = log
 
     # -- check syntax ---------------------------------------------------------
     def _preProcessCheckSyntax(self, test, src, **kwargs):
@@ -45,12 +149,6 @@ class Erlang(AbstractProgrammingBackend):
 
         result = re.sub('-module\((.*)\)\.', '-module(student).', 
                         src)
-        # erlexec needs env var HOME to be set
-        if not os.getenv('HOME'):
-            # since we don't know the location of test files yet ...
-            os.environ['HOME'] = os.getenv('TMPDIR')
-            logging.debug("Setting HOME for erlexec to " + os.environ['HOME'])
- 
 
         return result, 'student'
 
@@ -144,6 +242,7 @@ class Erlang(AbstractProgrammingBackend):
                 model = self._writeModule('model', model, 
                                           self.srcFileSuffix, job.getId(),
                                           test.encoding)
+    
                 # compile model solution
                 exitcode, result = self._runInterpreter(compiler, 
                                                  os.path.dirname(model['file']),
@@ -171,8 +270,7 @@ class Erlang(AbstractProgrammingBackend):
             except AssertionError, err:
                 msg = 'Internal error during semantic check: %s: %s' % \
                       (sys.exc_info()[0], err)
-                logging.debug(traceback.format_exc())
-                logging.error(mmsg)
+                logging.error(msg)
                 return BackendResult(-230, msg)
 
            
@@ -226,7 +324,7 @@ class Erlang(AbstractProgrammingBackend):
                 except Exception, e:
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
-                    logging.debug(traceback.format_exc())
+                                  
                     logging.error(msg)
                     return BackendResult(-230, msg)
 

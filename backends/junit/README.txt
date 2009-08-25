@@ -115,7 +115,9 @@ Support
 
 Credits
 
-  The JUnit backend was written by "Christian Baumann" and "Julia Preuße".
+  The JUnit backend was written by 
+  "Christian Baumann":mailto:christian.baumann@teleos-web.de and 
+  "Julia Preuße".
   
 License
 

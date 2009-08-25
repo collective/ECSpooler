@@ -1,33 +1,88 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007-2009 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 
 from __future__ import division
 
-import sys, re
-import logging
+import sys, re, logging
 
 from types import StringType, UnicodeType
 
 # local imports
 from lib.AbstractBackend import AbstractBackend
 from lib.data.BackendResult import BackendResult
-from backends.keywords.KeywordsConf import KeywordsConf
+from lib.util.BackendSchema import InputField
+from lib.util.BackendSchema import RepeatField
+from lib.util.BackendSchema import Schema
+from lib.util.BackendSchema import TestEnvironment
+
+#from backends.keywords import config
+
+# set the logging environment
+log = logging.getLogger('backends.keywords')
+
+# input schema
+inputSchema = Schema((
+    InputField(
+        'inverted',
+        format = 'boolean',
+        label = 'Inverted matching',
+        description = 'Invert the sense of matching, i.e., ' +
+                      'the keywords must not appear in the text and '
+                      'matches result in a lower score.',
+        i18n_domain = 'EC',
+    ),
+    RepeatField(
+        'keywords',
+        #accessor = # must return a list; default is one element per line
+        required = True, 
+        label = 'Keywords',
+        description = 'Enter one or more keywords/regexps. '+ 
+                      'One keyword/regexp per line.',
+        i18n_domain = 'EC',
+    ),
+))
+
+# test environsments
+tests = Schema((
+    TestEnvironment(
+        'keywords',
+        label = 'Keywords',
+        description = 'Exact matching of keywords.',
+    ),
+    TestEnvironment(
+        'regexp',
+        label = 'Regular Expressions',
+        description = 'Regexp matching.',
+    ),
+))
 
 class Keywords(AbstractBackend):
     """
-    TODO:
+    The keywords backends was designed to give an example of how
+    simple a backend can be implemented.  This backend checks wether
+    or not a given number of keywords is used within a student's 
+    submission.  Therefore regulare expressions will be created and
+    executed.  The result is a numeric value between 0 and 100 percent; 
+    depending on how many keywords were actually found.  As an 
+    altenative teachers can also define regular expressions which will
+    be executed with the student's submission.
     """
     
     id = 'keywords'
     name =  'Keywords'
-    schema = KeywordsConf.inputSchema
-    testSchema = KeywordsConf.tests
-    #version = '1.0'
+    schema = inputSchema
+    testSchema = tests
     
+    def __init__(self, params, versionFile=__file__):
+        """
+        """
+        AbstractBackend.__init__(self, params, versionFile, log)
+
+
     # -- internal methods used by subclasses ----------------------------------
     def _process_execute(self, job):
         """
@@ -40,31 +95,32 @@ class Keywords(AbstractBackend):
         """
 
         try:
-            logging.info('Executing tests (%s)' % job.getId())
+            log.info('Executing tests (%s)' % job.getId())
             result = self._process_doTests(job)
         
         except Exception, e:
             msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
-            logging.error(msg)
-            #logging.error(traceback.format_exc())
+            log.error(msg)
+            #log.error(traceback.format_exc())
             result = BackendResult(-200, msg)
 
-        #logging.debug('Returning result: %s' % repr(result))
+        #log.debug('Returning result: %s' % repr(result))
         return result
 
     # -- run tests ------------------------------------------------------------
     def _process_doTests(self, job):
         """
-        TODO:
+        For each keyowrd given by the teacher a regular expression
+        will be created and executed with the student's submission. 
         
-        @return: a BackendResult object with result value and message
+        @return: a BackendResult object
         """
         # test for available test specs
         testSpecs = self._getTests(job)
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -79,7 +135,7 @@ class Keywords(AbstractBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -100,7 +156,7 @@ class Keywords(AbstractBackend):
 
         # run selected tests (e.g., "simple", cf. schema definition)
         for test in testSpecs:
-            logging.debug('Running test: %s' % test.getName())
+            log.debug('Running test: %s' % test.getName())
 
             # run with all test data
             for t in testdata:
@@ -117,7 +173,7 @@ class Keywords(AbstractBackend):
                     msg = 'Internal error during test: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    logging.error(msg)
+                    log.error(msg)
                     return BackendResult(-215, msg)
             # end inner for loop
         #end outer for loop 
@@ -131,3 +187,4 @@ class Keywords(AbstractBackend):
         feedback = '''\nYour automatically determined score: %d of 100.''' % solved
 
         return BackendResult(solved, feedback)
+

@@ -48,7 +48,7 @@ Security
   shell scripts 'backends/javare/javac' and 
   'backends/javare/java+systrace' to your system environment and also 
   edit the variables *compiler* and *interpreter* in 
-  'backends/javare/JavaConf.py'
+  'backends/javare/config.py'
   
   Please be aware of the risks if you are *not* able to deal with the 
   configuration issues.
@@ -106,22 +106,22 @@ Support
 
 Credits
 
-  The Java backend was written by "Wolfram  
-  Fenske":mailto:wfenske@cs.uni-magdeburg.de.
+  The JavaRE backend was written by "Wolfram  
+  Fenske":mailto:wfenske@eudemonia-solutions.de.
   
 License
 
-  The Java backend is licensed under the
+  The JavaRE backend is licensed under the
   "GPL":http://opensource.org/licenses/gpl-license.
 
   Copyright © 2007 Otto-von-Guericke-Universität Magdeburg
 
-  The Java backend is free software; you can redistribute it and/or 
+  The JavaRE backend is free software; you can redistribute it and/or 
   modify it under the terms of the GNU General Public License as
   published by the Free Software Foundation; either version 2 of the
   License, or (at your option) any later version.
 
-  The Java backend is distributed in the hope that it will be
+  The JavaRE backend is distributed in the hope that it will be
   useful, but WITHOUT ANY WARRANTY; without even the implied warranty
   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   General Public License for more details.

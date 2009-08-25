@@ -1,5 +1,7 @@
-# Changes in release 1.1 (2008-04-11)
+# Changes in release 1.1 (2008-mm-dd)
 
 - The backends HaskellExt and HaskellIO are no longer part of the 
   Haskell backend.  You can now download and install them as separate 
   backends.
+
+-

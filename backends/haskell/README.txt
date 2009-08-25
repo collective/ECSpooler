@@ -123,7 +123,7 @@ Support
 Credits
 
   The Haskell backend was written by "Mario 
-  Amelung":http://wdok.cs.uni-magdeburg.de/Members/amelung.
+  Amelung":mailto:mario.amelung@gmx.de.
   
 License
 

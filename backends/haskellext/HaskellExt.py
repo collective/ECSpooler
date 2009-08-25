@@ -5,18 +5,71 @@
 #
 # This file is part of ECSpooler.
 
+################################################################################
+#                                Changelog                                     #
+################################################################################
+#
+# 30.04.2009, chbauman:
+#       replaced re.sub with replace whereever possible.
+
 import sys, os, re
 import logging
 
 from types import StringTypes
 
-# local imports
-from backends.haskell.Haskell import Haskell
-from HaskellExtConf import HaskellExtConf
-
 from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import EX_OK
 
+# local imports
+from backends.haskell.Haskell import Haskell
+from backends.haskell.Haskell import inputSchema
+from backends.haskell.Haskell import tests
+from backends.haskell.Haskell import SYNTAX_TEMPLATE
+from backends.haskell.Haskell import RUNHUGS_RE
+
+from backends.haskellext import config
+
+# enable logging
+log = logging.getLogger('backends.haskellext')
+
+semanticCheckTemplate = \
+"""module ${MODULE} where
+
+${SOURCE}
+
+main = ${testData}
+"""
+    
+wrapperTemplate = \
+"""module Main where
+import Model
+import Student
+
+${testFunction}
+
+o1 = Model.main
+o2 = Student.main
+
+main = putStr(\"isEqual=\" ++ show(haskell_backend_internal_equality_test (o1) (o2)) ++ \";;expected=\" ++ show(o1) ++ \";;received=\" ++ show(o2))
+"""
+
+# use inputSchema of backend Haskel and modify it
+inputSchema = inputSchema.copy()
+inputSchema.delField('helpFunctions')
+
+# use testSchema of backend Haskell and modify it
+testSchema = tests.copy()
+
+testSchema['simple'].compiler = config.INTERPRETER
+testSchema['simple'].interpreter = config.INTERPRETER
+testSchema['simple'].syntax = SYNTAX_TEMPLATE
+testSchema['simple'].semantic = wrapperTemplate
+
+testSchema['permutation'].compiler = config.INTERPRETER
+testSchema['permutation'].interpreter = config.INTERPRETER
+testSchema['permutation'].syntax = SYNTAX_TEMPLATE
+testSchema['permutation'].semantic = wrapperTemplate
+    
 class HaskellExt(Haskell):
     """
     An alternative backend to the Haskell backend. 
@@ -31,10 +84,14 @@ class HaskellExt(Haskell):
     
     id = 'haskellext'
     name = 'Haskell (extended)'
-    #version = '1.0'
 
-    schema = HaskellExtConf.inputSchema
-    testSchema = HaskellExtConf.testSchema
+    schema = inputSchema
+    testSchema = testSchema
+
+    def __init__(self, params, versionFile=__file__):
+        """
+        """
+        Haskell.__init__(self, params, versionFile, log)
 
     def _process_checkSemantics(self, job):
         """
@@ -80,11 +137,17 @@ class HaskellExt(Haskell):
         #model = TEMPLATE_DEFAULT_MODULE % ('Model', model)
         #submission = TEMPLATE_DEFAULT_MODULE % ('Student', submission)
 
-        model = re.sub('\$\{SOURCE}', model, HaskellExtConf.semanticCheckTemplate)
-        model = re.sub('\$\{MODULE}', 'Model', model)
+        #model = re.sub('\$\{SOURCE}', model, HaskellExtConf.semanticCheckTemplate)
+        #model = re.sub('\$\{MODULE}', 'Model', model)
+        # 
+        #submission = re.sub('\$\{SOURCE}', submission, HaskellExtConf.semanticCheckTemplate)
+        #submission = re.sub('\$\{MODULE}', 'Student', submission)
         
-        submission = re.sub('\$\{SOURCE}', submission, HaskellExtConf.semanticCheckTemplate)
-        submission = re.sub('\$\{MODULE}', 'Student', submission)
+        model = semanticCheckTemplate.replace('${SOURCE}', model)
+        model = model.replace('${MODULE}', 'Model')
+        
+        submission = semanticCheckTemplate.replace('${SOURCE}', submission)
+        submission = submission.replace('${MODULE}', 'Student')
 
         # define return values
         feedback = BackendResult.UNKNOWN
@@ -109,11 +172,13 @@ class HaskellExt(Haskell):
             for field in self.schema.filterFields(type='InputField'):
                 if job.has_key(field.getName()):
                     repl = job[field.getName()]
-                    wrapper = re.sub('\$\{%s\}' % field.getName(), 
-                                        repl, wrapper)
+                    #wrapper = re.sub('\$\{%s\}' % field.getName(), 
+                    #                    repl, wrapper)
+                    wrapper = wrapper.replace('${%s}' % field.getName(), repl)
 
             # set test function in wrapper code
-            wrapper = re.sub('\$\{testFunction\}', test.test, wrapper)
+            #wrapper = re.sub('\$\{testFunction\}', test.test, wrapper)
+            wrapper = wrapper.replace('${testFunction}', test.test)
 
             # remove all remaining placeholders
             wrapperSrc = re.sub('\$\{.*\}', '', wrapper)
@@ -121,10 +186,12 @@ class HaskellExt(Haskell):
             # run with all test data
             for t in testdata:
                 # set testdata in model and students' code
-                modelSrc = re.sub('\$\{%s\}' % repeatField.getName(), t, 
-                                  model)
-                studentSrc = re.sub('\$\{%s\}' % repeatField.getName(), t, 
-                                    submission)
+                #modelSrc = re.sub('\$\{%s\}' % repeatField.getName(), t, 
+                #                  model)
+                #studentSrc = re.sub('\$\{%s\}' % repeatField.getName(), t, 
+                #                    submission)
+                modelSrc = model.replace('${%s}' % repeatField.getName(), t)
+                studentSrc = submission.replace('${%s}' % repeatField.getName(), t)
                 
                 try:
                     # 1st write model solution
@@ -148,16 +215,15 @@ class HaskellExt(Haskell):
                                                       test.encoding)
 
                     #logging.debug('xxx: %s' % os.path.dirname(wrapperModule['file']))
-
+                    
                     exitcode, result = \
                         self._runInterpreter(interpreter, 
                             os.path.dirname(wrapperModule['file']),
                             os.path.basename(wrapperModule['file']))
-
     
                     # remove all special characters written by runhugs/haskell
                     #result = re.sub(HaskellExtConf.runhugsRegEx, '', result)
-                    result = HaskellExtConf.RUNHUGS_RE.sub('', result) 
+                    result = RUNHUGS_RE.sub('', result) 
         
                 except Exception, e:
                     msg = 'Internal error during semantic check: %s: %s' % \

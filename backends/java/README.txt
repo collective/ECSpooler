@@ -49,7 +49,7 @@ Security
   If you are using "systrace":http://www.systrace.org/, adjust the 
   shell scripts 'backends/java/javac' and 'backends/java/java+systrace' 
   to your system environment and also edit the variables *compiler* and 
-  *interpreter* in 'backends/java/JavaConf.py'
+  *interpreter* in 'backends/java/config.py'
   
   Please be aware of the risks if you are *not* able to deal with the 
   configuration issues.
@@ -113,7 +113,7 @@ Support
 Credits
 
   The Java backend was written by "Mario 
-  Amelung":http://wdok.cs.uni-magdeburg.de/Members/amelung.
+  Amelung":mailto:mario.amelung@gmx.de.
   
 License
 
