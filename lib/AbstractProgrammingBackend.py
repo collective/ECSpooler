@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007-2009 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 
@@ -202,10 +202,12 @@ class AbstractProgrammingBackend(AbstractBackend):
         @param: src
         @return: source and module name if needed
         """
+        
         result = ''
         
         if test.syntax:
-            result = re.sub('\$\{SOURCE\}', src, test.syntax)
+            #result = re.sub('\$\{SOURCE\}', src, test.syntax)
+            result = test.syntax.replace('${SOURCE}', src)
             
         else:
             result = src
@@ -227,7 +229,7 @@ class AbstractProgrammingBackend(AbstractBackend):
     def _manage_checkSemantics(self, job):
         """
         """
-        return self._process_checkSemantics(job)    
+        return self._process_checkSemantics(job)
 
 
     def _process_checkSemantics(self, job):
@@ -273,17 +275,17 @@ class AbstractProgrammingBackend(AbstractBackend):
         if not name:
             name = utils.getUniqueModuleName()
             
-#        self.log.debug('%s' % tempfile.gettempdir())
-#        self.log.debug('%s' % dir)
-#        self.log.debug('%s' % name)
-#        self.log.debug('%s' % suffix)
+        #self.log.debug('%s' % tempfile.gettempdir())
+        #self.log.debug('%s' % dir)
+        #self.log.debug('%s' % name)
+        #self.log.debug('%s' % suffix)
         
         # get file name
         fName = os.path.join(tempfile.gettempdir(), dir, name + suffix)
         
         # write file
         utils.writeFile(source, fName, encoding)
-        os.chmod(os.path.dirname(fName), 01777)
+        #os.chmod(os.path.dirname(fName), 01777)
         
         # get modul name
         #mName = os.path.basename(fName).replace(suffix, '')
@@ -359,13 +361,10 @@ class AbstractProgrammingBackend(AbstractBackend):
 
         # end interruptProcess
 
-        native_rctl = os.getenv('USE_RCTL')
-        if not native_rctl:
-            timer = threading.Timer(self.PROCESS_WAIT_TIME, interruptProcess)
-            timer.start()
+        timer = threading.Timer(self.PROCESS_WAIT_TIME, interruptProcess)
+        timer.start()
         exitcode = handle.wait()
-        if not native_rctl:
-            timer.cancel()
+        timer.cancel()
 
 
         if exitcode == SIGTERM:

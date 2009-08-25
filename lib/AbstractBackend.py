@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007-2009 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
+#
 import traceback
 
 import sys, os, threading, signal
 import socket, xmlrpclib
-import logging
 
 from os.path import join, dirname, abspath
 from types import StringTypes, DictionaryType
@@ -35,17 +35,16 @@ class AbstractBackend(AbstractServer):
     schema = None
     testSchema = None
     version = ''
+    log = None
     
-    def __init__(self, params, versionFile=__file__):
+    def __init__(self, params, versionFile=__file__, logger=None):
         """
         @params dict with all parameters which must be set for a backend
         """
         AbstractServer.__init__(self, 
                                 params.get('host', None), 
-                                params.get('port', None))
-        
-        # reset logger
-        self.log = logging.getLogger('lib.AbstractBackend')
+                                params.get('port', None),
+                                logger)
         
         try:
             # set version from backend's version.txt
@@ -152,10 +151,10 @@ class AbstractBackend(AbstractServer):
             spooler.removeBackend(self.auth, self.id)
 
         except socket.error, serr:
-            self.log.error("Socket error: %s (%s)" % (serr, self.spooler))
+            self.log.warn("Socket error: %s (%s)" % (serr, self.spooler))
 
         except xmlrpclib.Fault, err:
-            self.log.error("XMLRPC error: %s (%s)" % (err, self.spooler,))
+            self.log.warn("XMLRPC error: %s (%s)" % (err, self.spooler,))
 
 
     def shutdown(self, auth):
@@ -168,6 +167,8 @@ class AbstractBackend(AbstractServer):
         if not self._authenticate(auth):
             return (-210, self.ERROR_AUTH_FAILED)
         
+        self.log.debug("Calling 'self._stop(%s, %s)'" % (signal.SIGTERM, None))
+ 
         # start a new thread to stop the backend but let this method some time
         # to return a value to the spooler or other calling client
         sT = threading.Timer(0.5, self._stop, (signal.SIGTERM, None))
