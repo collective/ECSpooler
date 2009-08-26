@@ -59,8 +59,8 @@ class AbstractServer:
         self.host = host
         self.port = port
         
-        self.log.info('host: %s' % host)
-        self.log.info('port: %d' % port)
+        #self.log.info('host: %s' % host)
+        #self.log.info('port: %d' % port)
 
         self._serverThread = None
 
