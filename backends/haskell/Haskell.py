@@ -34,7 +34,7 @@ from lib.util.BackendSchema import TestEnvironment
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
 from lib.AbstractProgrammingBackend import EX_OK
 
-# enable logging
+# define default logging
 log = logging.getLogger('backends.haskell')
 
 # load Haskell function to do a simple test
@@ -180,8 +180,7 @@ class Haskell(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        if not logger: 
-            logger = log
+        if not logger: logger = log
 
         AbstractProgrammingBackend.__init__(self, params, versionFile, logger)
 
@@ -253,7 +252,7 @@ class Haskell(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            self.log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -268,7 +267,7 @@ class Haskell(AbstractProgrammingBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            self.log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -295,7 +294,7 @@ class Haskell(AbstractProgrammingBackend):
 
             if not solved: break
 
-            log.debug('Running semantic check with test: %s' % test.getName())
+            self.log.debug('Running semantic check with test: %s' % test.getName())
 
             # get the interpreter
             interpreter = test.interpreter
@@ -350,7 +349,7 @@ class Haskell(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    log.error(msg)
+                    self.log.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured

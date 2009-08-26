@@ -105,7 +105,7 @@ class HaskellExt(Haskell):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -120,7 +120,7 @@ class HaskellExt(Haskell):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -158,8 +158,7 @@ class HaskellExt(Haskell):
 
             if not solved: break
 
-            logging.debug('Running semantic check with test: %s' % 
-                          test.getName())
+            log.debug('Running semantic check with test: %s' % test.getName())
 
             # set the interpreter
             interpreter = test.interpreter
@@ -214,7 +213,7 @@ class HaskellExt(Haskell):
                                                       job.getId(),
                                                       test.encoding)
 
-                    #logging.debug('xxx: %s' % os.path.dirname(wrapperModule['file']))
+                    #log.debug('xxx: %s' % os.path.dirname(wrapperModule['file']))
                     
                     exitcode, result = \
                         self._runInterpreter(interpreter, 
@@ -229,7 +228,7 @@ class HaskellExt(Haskell):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    logging.error(msg)
+                    log.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured
@@ -244,7 +243,7 @@ class HaskellExt(Haskell):
                         
                 # has the students' solution passed this tests?
                 else:
-                    #logging.debug(result)
+                    #log.debug(result)
                     
                     msgItems = result.split(';;')
                     

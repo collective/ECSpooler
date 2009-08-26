@@ -166,16 +166,11 @@ class Cl(AbstractProgrammingBackend):
     testSchema = tests
 
     
-    def __init__(self, params, versionFile=__file__, logger = None):
+    def __init__(self, params, versionFile=__file__):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile)
-        # reset logger
-        if logger: 
-            self.log = logger
-        else:
-            self.log = log
+        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
 
 
     # -- syntax check ---------------------------------------------------------
@@ -252,7 +247,7 @@ class Cl(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -267,7 +262,7 @@ class Cl(AbstractProgrammingBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -291,8 +286,8 @@ class Cl(AbstractProgrammingBackend):
         studentSrc = re.sub(r'\$\{SOURCE\}', submission, SEMANTIC_TEMPLATE)
         studentSrc = re.sub(r'\$\{MODULE\}', PKG_STUDENT, studentSrc)
 
-        #logging.debug('modelSrc: %s\n' % modelSrc)
-        #logging.debug('studentSrc: %s\n' % studentSrc)
+        #log.debug('modelSrc: %s\n' % modelSrc)
+        #log.debug('studentSrc: %s\n' % studentSrc)
 
         # define return values
         feedback = BackendResult.UNKNOWN
@@ -303,8 +298,7 @@ class Cl(AbstractProgrammingBackend):
 
             if not solved: break
 
-            logging.debug('Running semantic check with test: %s' % 
-                          test.getName())
+            log.debug('Running semantic check with test: %s' % test.getName())
 
             # get the interpreter
             interpreter = test.interpreter
@@ -332,7 +326,7 @@ class Cl(AbstractProgrammingBackend):
             # remove all remaining placeholders
             wrapper = re.sub(r'\$\{.*\}', '', wrapper)
 
-            #logging.debug('wrapper: %s\n' % wrapper)
+            #log.debug('wrapper: %s\n' % wrapper)
 
             # run with all test data
             for t in testdata:
@@ -372,7 +366,7 @@ class Cl(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    logging.error(msg)
+                    log.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured
@@ -386,7 +380,7 @@ class Cl(AbstractProgrammingBackend):
                         
                 # has the students' solution passed this tests?
                 else:
-                    #logging.debug('result: %s' % result)
+                    #log.debug('result: %s' % result)
                     
                     msgItems = result.split(';;')
                     
@@ -394,9 +388,9 @@ class Cl(AbstractProgrammingBackend):
                     expected = msgItems[1].split('=')[1]
                     received = msgItems[2].split('=')[1]
                     
-                    #logging.debug('isEqual: %s' % isEqual)
-                    #logging.debug('expected: %s' % expected)
-                    #logging.debug('received: %s' % received)
+                    #log.debug('isEqual: %s' % isEqual)
+                    #log.debug('expected: %s' % expected)
+                    #log.debug('received: %s' % received)
                     
                     if isEqual != 'T':
                         # TODO: i18n

@@ -127,16 +127,11 @@ class Erlang(AbstractProgrammingBackend):
     schema = inputSchema
     testSchema = tests
     
-    def __init__(self, params, versionFile=__file__, logger = None):
+    def __init__(self, params, versionFile=__file__):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile)
-        # reset logger
-        if logger: 
-            self.log = logger
-        else:
-            self.log = log
+        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
 
     # -- check syntax ---------------------------------------------------------
     def _preProcessCheckSyntax(self, test, src, **kwargs):
@@ -185,7 +180,7 @@ class Erlang(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -200,7 +195,7 @@ class Erlang(AbstractProgrammingBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -226,8 +221,7 @@ class Erlang(AbstractProgrammingBackend):
 
             if not solved: break
 
-            logging.debug('Running semantic check with test: %s' % 
-                          test.getName())
+            log.debug('Running semantic check with test: %s' % test.getName())
 
             # get the compiler
             compiler = test.compiler
@@ -270,7 +264,7 @@ class Erlang(AbstractProgrammingBackend):
             except AssertionError, err:
                 msg = 'Internal error during semantic check: %s: %s' % \
                       (sys.exc_info()[0], err)
-                logging.error(msg)
+                log.error(msg)
                 return BackendResult(-230, msg)
 
            
@@ -325,7 +319,7 @@ class Erlang(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    logging.error(msg)
+                    log.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured
@@ -339,7 +333,7 @@ class Erlang(AbstractProgrammingBackend):
                         
                 # has the students' solution passed this tests?
                 else:
-                    #logging.debug(result)
+                    #log.debug(result)
 
                     match = re.search('^isEqual=.*$', result, re.M)
                     result = match.group()
