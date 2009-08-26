@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 def test(list1, list2):
     """
     Returns True if list1 is a permutation of list2
