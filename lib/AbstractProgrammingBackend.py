@@ -141,6 +141,10 @@ class AbstractProgrammingBackend(AbstractBackend):
         # get the compiler or if not available the interpreter
         compiler = testSpec.compiler or testSpec.interpreter
         
+        #self.log.debug("testSpec.compiler: %s" % repr(testSpec.compiler))
+        #self.log.debug("testSpec.interpreter: %s" % repr(testSpec.interpreter))
+        #self.log.debug("compiler: %s" % repr(compiler))
+        
         if compiler:
             try:
                 # test term (e.g., student's source code)
@@ -338,7 +342,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         commandLine.append(fName)
         commandLine.extend(args_encoded)
         
-        self.log.debug('commandLine: %s' % commandLine)
+        #self.log.debug('commandLine: %s' % commandLine)
 
         """
         # Popen4 will provide both stdout and stderr on handle.fromchild
