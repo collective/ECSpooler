@@ -38,10 +38,10 @@ testEnvs = tests.copy()
 
 testEnvs['simple'].semantic = WRAPPER_TEMPLATE
 testEnvs['permutation'].semantic = WRAPPER_TEMPLATE
-testEnvs['simple'].compiler = config.INTERPRETER,
-testEnvs['permutation'].compiler = config.INTERPRETER,
-testEnvs['simple'].interpreter = config.INTERPRETER,
-testEnvs['permutation'].interpreter = config.INTERPRETER,
+testEnvs['simple'].compiler = config.INTERPRETER
+testEnvs['permutation'].compiler = config.INTERPRETER
+testEnvs['simple'].interpreter = config.INTERPRETER
+testEnvs['permutation'].interpreter = config.INTERPRETER
 
 class HaskellIO(Haskell):
     """
