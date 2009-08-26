@@ -4,6 +4,7 @@
 # Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
+
 import sys, os, re
 import logging
 
@@ -154,16 +155,12 @@ class Scheme(AbstractProgrammingBackend):
     schema = inputSchema
     testSchema = tests
 
-    def __init__(self, params, versionFile=__file__, logger = None):
+    def __init__(self, params, versionFile=__file__):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile)
-        # reset logger
-        if logger: 
-            self.log = logger
-        else:
-            self.log = log
+        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
+
 
     # -- syntax check ---------------------------------------------------------
     def _preProcessCheckSyntax(self, test, src, **kwargs):
@@ -189,7 +186,7 @@ class Scheme(AbstractProgrammingBackend):
             # find line number in result
             matches = re.findall('%s:(\d+)' % self.srcFileSuffix, message)
     
-            #logging.debug("xxx: %s" % matches)
+            #log.debug("xxx: %s" % matches)
 
             if matches:
                 # set line number minus x lines and return
@@ -198,7 +195,7 @@ class Scheme(AbstractProgrammingBackend):
                               message)
             
         except Exception, e:
-            logging.warn('%s: %s' % (sys.exc_info()[0], e))
+            log.warn('%s: %s' % (sys.exc_info()[0], e))
 
         return message
 
@@ -223,7 +220,7 @@ class Scheme(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -238,7 +235,7 @@ class Scheme(AbstractProgrammingBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -271,7 +268,7 @@ class Scheme(AbstractProgrammingBackend):
 
             if not solved: break
 
-            logging.debug('Running semantic check with test: %s' % 
+            log.debug('Running semantic check with test: %s' % 
                           test.getName())
 
             # get the interpreter
@@ -333,7 +330,7 @@ class Scheme(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    logging.error(msg)
+                    log.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured
@@ -347,7 +344,7 @@ class Scheme(AbstractProgrammingBackend):
                         
                 # has the students' solution passed this tests?
                 else:
-                    #logging.debug('result: %s' % result)
+                    #log.debug('result: %s' % result)
                     
                     msgItems = result.split(';;')
                     
@@ -355,9 +352,9 @@ class Scheme(AbstractProgrammingBackend):
                     expected = msgItems[1].split('=')[1]
                     received = msgItems[2].split('=')[1]
                     
-                    #logging.debug('isEqual: %s' % isEqual)
-                    #logging.debug('expected: %s' % expected)
-                    #logging.debug('received: %s' % received)
+                    #log.debug('isEqual: %s' % isEqual)
+                    #log.debug('expected: %s' % expected)
+                    #log.debug('received: %s' % received)
                     
                     if isEqual.lower() != '#t':
                         # TODO: i18n

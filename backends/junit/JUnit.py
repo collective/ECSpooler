@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+# $Id$
+#
+# Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
+#
+# This file is part of ECSpooler.
+#
 ################################################################################
 #                                Changelog                                     #
 ################################################################################
@@ -35,10 +42,10 @@ from os.path import join
 from lib.data.BackendResult import BackendResult
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend, EX_OK
 
-#Import Config-File
+# import config file
 from backends.junit import config
 
-# enable logging
+# define default logging
 log = logging.getLogger('backends.junit')
 
 ## Regular expressions to extract certain information
@@ -97,7 +104,14 @@ class JUnit(AbstractProgrammingBackend):
     # updated (minus line_offset).
     line_offset = 0
     
-    
+#--------  Constructor  --------------------------------------------------------
+    def __init__(self, params, versionFile=__file__):
+        """
+        This constructor is needed to set the logging environment.
+        """
+        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
+
+
 #--------  Methods for modifying incomming source code  ------------------------
     def getClassName(self, source):
         """
@@ -273,11 +287,12 @@ class JUnit(AbstractProgrammingBackend):
                 except AssertionError, ae:
                     return BackendResult(False, str(ae))
 
-                logging.info('Running syntax check with test: %s' % 
-                    testSpec.getName())
+                log.info('Running syntax check with test: %s' % testSpec.getName())
                     
                 # guarantee that the submission will be put in folder NS_STUDENT
                 folder = join(jobId, config.NS_STUDENT)
+                
+                #logging.debug('xxx: %s' % folder)
                 
                 module = self._writeModule(
                     mName,
@@ -286,6 +301,8 @@ class JUnit(AbstractProgrammingBackend):
                     folder,
                     testSpec.encoding)
                 
+                #logging.debug('xxx: %s' % module)
+
                 exitcode, result = \
                     self._runInterpreter(
                         compiler,
@@ -293,17 +310,17 @@ class JUnit(AbstractProgrammingBackend):
                         os.path.basename(module['file']),
                         config.CLASSPATH_SETTINGS)
                     
-                logging.debug('exitcode: %s' % repr(exitcode))
-                logging.debug('result: %s' % repr(result))
+                #logging.debug('exitcode: %s' % repr(exitcode))
+                #logging.debug('result: %s' % repr(result))
                 
             except Exception, e:
                 msg = 'Internal error during syntax check: %s: %s' % \
                     (sys.exc_info()[0], e)
                               
-                logging.error(msg)
+                log.error(msg)
                 return BackendResult(-220, msg)
             
-            logging.debug('exitcode: %s' % repr(-exitcode))
+            log.debug('exitcode: %s' % repr(-exitcode))
     
             # consider exit code
             if exitcode != EX_OK:
@@ -315,7 +332,7 @@ class JUnit(AbstractProgrammingBackend):
             msg = 'No compiler/interpreter defined (test spec: %s).' \
                 % testSpec.getName()
 
-            logging.error(msg)
+            log.error(msg)
             return BackendResult(-221, msg)
 
         # everything seems to be ok
@@ -348,7 +365,7 @@ class JUnit(AbstractProgrammingBackend):
         tests = self._getTests(job)
         if len(tests) == 0:
             message = 'No test specification selected.'
-            logging.warn('%s, %s' % (message, job.getId()))
+            log.warn('%s, %s' % (message, job.getId()))
             return BackendResult(-217, message)
         test = tests[0]
         
@@ -356,7 +373,7 @@ class JUnit(AbstractProgrammingBackend):
             submissionClassName = self.getClassName(submission)
         except AssertionError, ae:
             message = str(ae)
-            logging.warn('%s, %s' % (message, job.getId()))
+            log.warn('%s, %s' % (message, job.getId()))
             return BackendResult(-230, message)
             
 
@@ -414,7 +431,7 @@ class JUnit(AbstractProgrammingBackend):
             message = 'Internal error during semantic check: %s: %s' % \
                 (sys.exc_info()[0], e)
                 
-            logging.error(message)
+            log.error(message)
             msg = re.sub(config.METHOD_NOT_FOUND_RE, "", message)
             
             return BackendResult(-230, msg)

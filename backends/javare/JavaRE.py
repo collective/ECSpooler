@@ -107,9 +107,9 @@ def non_null_str(s):
 def string_p(s):
     """
     """
-    #logging.debug('(2): %s' % s)
+    #log.debug('(2): %s' % s)
     ret = STRING_RE.match(s)
-    #logging.debug('(2a): %s' % repr(ret))
+    #log.debug('(2a): %s' % repr(ret))
     return ret
 
 class JavaRE(AbstractProgrammingBackend):
@@ -154,19 +154,17 @@ class JavaRE(AbstractProgrammingBackend):
     testSchema = tests
 
 
-    def __init__(self, params, versionFile=__file__, logger = None):
+    def __init__(self, params, versionFile=__file__):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile)
-        # reset logger
-        if logger: 
-            self.log = logger
-        else:
-            self.log = log
+        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
 
 
     def download(self, url):
+        """
+        Download the content/file from the given URL.
+        """
         parts		= urlparse(url)
         prot		= parts[0]
         host_and_port	= parts[1]
@@ -204,15 +202,15 @@ class JavaRE(AbstractProgrammingBackend):
         
         src = src.strip()
         
-        #logging.debug('xxx: here we are in _preProcessCheckSyntax')
-        #logging.debug('(1): %s ' % src)
+        #log.debug('xxx: here we are in _preProcessCheckSyntax')
+        #log.debug('(1): %s ' % src)
 
         # FIXME: It'd be nice to be able to throw a 'SyntaxError' or
         # someething here.  We'd have to modify
         # AbstractProgrammingBackend._preProcessCheckSyntax for that.
         assert string_p(src), "Not a string: %s" % repr(src)[1:-1]
         
-        #logging.debug('(3): %s ' % src)
+        #log.debug('(3): %s ' % src)
 
         # FIXME: Compiling the program is one thing, but to be able to
         # tell whether the pattern can be compiled we'd have to run
@@ -257,7 +255,7 @@ class JavaRE(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -272,7 +270,7 @@ class JavaRE(AbstractProgrammingBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -311,8 +309,7 @@ class JavaRE(AbstractProgrammingBackend):
 
             if not solved: break
 
-            logging.debug('Running semantic check with test: %s' % 
-                          test.getName())
+            log.debug('Running semantic check with test: %s' % test.getName())
 
             # 4.1. set wrapper source
             src = test.semantic
@@ -353,7 +350,7 @@ class JavaRE(AbstractProgrammingBackend):
                 msg = 'Internal error during semantic check: %s: %s' % \
                       (sys.exc_info()[0], e)
                               
-                logging.error(msg)
+                log.error(msg)
                 return BackendResult(-230, msg)
 
             # 4.4. run with all test data
@@ -371,7 +368,7 @@ class JavaRE(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
 
-                    logging.error(msg)
+                    log.error(msg)
                     return BackendResult(-230, msg)
 
                 # write the test data to a file
@@ -400,7 +397,7 @@ class JavaRE(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
 
-                    logging.error(msg)
+                    log.error(msg)
                     return BackendResult(-230, msg)
 
                 # execute wrapper
@@ -416,13 +413,13 @@ class JavaRE(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    logging.error(msg)
+                    log.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured
                 if exitcode != EX_OK:
                     
-                    logging.debug('exitcode: %s' % repr(exitcode))
+                    log.debug('exitcode: %s' % repr(exitcode))
                     
                     result = "\nYour submission failed. Test " \
                              "case was: '%s' (%s)" \
@@ -433,7 +430,7 @@ class JavaRE(AbstractProgrammingBackend):
                         
                 # has the student's solution passed this tests?
                 else:
-                    logging.debug(result)
+                    log.debug(result)
                     
                     msgItems = result.split(';;', 2)
                     

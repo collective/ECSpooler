@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2007 Otto-von-Guericke-University, Magdeburg
+# Copyright (c) 2007-2009 Otto-von-Guericke-University, Magdeburg
 #
 # This file is part of ECSpooler.
 
@@ -142,7 +142,7 @@ class HaskellQC(Haskell):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            self.log.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # get student's submission and QuickCheck properties
@@ -169,7 +169,7 @@ class HaskellQC(Haskell):
 
         if (not testdata) or (len(testdata) == 0):
             msg = 'No QuickCheck propeties defined.'
-            self.log.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
         submission = GENERIC_TEMPLATE % ('Student', submission)
@@ -185,8 +185,7 @@ class HaskellQC(Haskell):
 
             if not solved: break
 
-            self.log.debug('Running semantic check with test: %s' % 
-                          test.getName())
+            log.debug('Running semantic check with test: %s' % test.getName())
 
             # get the interpreter
             interpreter = test.interpreter
@@ -221,7 +220,7 @@ class HaskellQC(Haskell):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    self.log.error(msg)
+                    log.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured
@@ -237,7 +236,7 @@ class HaskellQC(Haskell):
                         
                 # has the students' solution passed this test?
                 else:
-                    #self.log.debug(result)
+                    #log.debug(result)
                     failed = FAILED_RE.search(result)
                     #passed = PASSED_RE.search(result)
                     

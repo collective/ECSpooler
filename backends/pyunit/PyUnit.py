@@ -101,16 +101,12 @@ class PyUnit(AbstractProgrammingBackend):
     testSchema = testEnvs
 
 
-    def __init__(self, params, versionFile=__file__, logger = None):
+    def __init__(self, params, versionFile=__file__):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile)
-        # reset logger
-        if logger: 
-            self.log = logger
-        else:
-            self.log = log
+        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
+
 
     def _postProcessCheckSyntax(self, test, message):
         """
@@ -131,7 +127,7 @@ class PyUnit(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # get additional imports
@@ -156,7 +152,7 @@ class PyUnit(AbstractProgrammingBackend):
         # run selected test specifications
         for test in self._getTests(job):
 
-            logging.debug('Running semantic check with test: %s' % 
+            log.debug('Running semantic check with test: %s' % 
                           test.getName())
 
             # get the interpreter
@@ -187,7 +183,7 @@ class PyUnit(AbstractProgrammingBackend):
                                                   job.getId(),
                                                   test.encoding)
                 
-                print os.path.dirname(wrapperModule['file'])
+                #print os.path.dirname(wrapperModule['file'])
 
                 exitcode, result = \
                     self._runInterpreter(interpreter,
@@ -198,7 +194,7 @@ class PyUnit(AbstractProgrammingBackend):
                 msg = 'Internal error during semantic check: %s: %s' % \
                       (sys.exc_info()[0], e)
                               
-                logging.error(msg)
+                log.error(msg)
                 return BackendResult(-230, msg)
 
             # an error occured

@@ -178,9 +178,13 @@ class Keywords(AbstractBackend):
             # end inner for loop
         #end outer for loop 
 
+        # int/int -> float requires division from __future__!
+        #solved = int(round(matches/len(testdata) * 100))
+        solved = 0
+        if (len(testdata)) != 0:
+            solved = int(round(matches/len(testdata) * 100))
+
         inverted = job['inverted']
-        # int/int -> float requires division from future!
-        solved = int(round(matches/len(testdata) * 100))
         if inverted:
             solved = 100 - solved
 
@@ -188,3 +192,15 @@ class Keywords(AbstractBackend):
 
         return BackendResult(solved, feedback)
 
+# -- some testing -------------------------------------------------------------
+if __name__ == "__main__":
+    """
+    """
+    matches = 0
+    lenTestdata = 0
+
+    solved = 0
+    if (lenTestdata) != 0:
+        solved = int(round(matches/lenTestdata * 100))
+    
+    print "solved:", solved

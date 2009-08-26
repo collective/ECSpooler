@@ -169,16 +169,11 @@ class Prolog(AbstractProgrammingBackend):
     testSchema = tests
 
     
-    def __init__(self, params, versionFile=__file__, logger = None):
+    def __init__(self, params, versionFile=__file__):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile)
-        # reset logger
-        if logger: 
-            self.log = logger
-        else:
-            self.log = log
+        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
 
 
     def cleanUpErrMsg(self, msg, path):
@@ -276,7 +271,7 @@ class Prolog(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -291,7 +286,7 @@ class Prolog(AbstractProgrammingBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            logging.warn('%s, %s' % (msg, job.getId()))
+            log.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -316,7 +311,7 @@ class Prolog(AbstractProgrammingBackend):
 
             if not solved: break
 
-            logging.debug('Running semantic check with test: %s' % 
+            log.debug('Running semantic check with test: %s' % 
                           test.getName())
 
             # write solution to a file
@@ -375,7 +370,7 @@ class Prolog(AbstractProgrammingBackend):
         
                 # remove all remaining placeholders
                 wrapper = re.sub(r'\$\{[^\}]*\}', '', wrapper)
-                #logging.debug('WRAPPER IS:\n%s' % wrapper)
+                #log.debug('WRAPPER IS:\n%s' % wrapper)
 
                 # write and execute wrapper
                 try:
@@ -397,7 +392,7 @@ class Prolog(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    logging.error(msg)
+                    log.error(msg)
                     #return (0, msg)
                     return BackendResult(-230, msg)
 
@@ -405,7 +400,7 @@ class Prolog(AbstractProgrammingBackend):
                 if exitcode != EX_OK:
                     path = os.path.dirname(wrapperModule['file'])
 
-                    #logging.error("ORIGINAL: %s" % result)
+                    #log.error("ORIGINAL: %s" % result)
                     
                     result = self.cleanUpErrMsg(result, path)
                     result = "\nYour submission failed. Test " \
@@ -418,7 +413,7 @@ class Prolog(AbstractProgrammingBackend):
                         
                 # has the students' solution passed this tests?
                 else:
-                    logging.debug(result)
+                    log.debug(result)
                     
                     msgItems = result.split(';;')
                     
