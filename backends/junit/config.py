@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+# $Id$
+#
+# Copyright (c) 2007 Otto-von-Guericke-Universität, Magdeburg
+#
+# This file is part of ECSpooler.
+#
 ################################################################################
 #                                Changelog                                     #
 ################################################################################
@@ -32,10 +39,10 @@ from lib.util.BackendSchema import TestEnvironment
 
 # Properties used by backend JUnit.
 
-compiler = join(abspath(dirname(__file__)), 'javac')
-#compiler = join(abspath(dirname(__file__)), 'javac.sh')
-interpreter = join(abspath(dirname(__file__)), 'java+systrace')
-#interpreter = join(abspath(dirname(__file__)), 'java.sh')
+#compiler = join(abspath(dirname(__file__)), 'javac')
+compiler = join(abspath(dirname(__file__)), 'javac.sh')
+#interpreter = join(abspath(dirname(__file__)), 'java+systrace')
+interpreter = join(abspath(dirname(__file__)), 'java.sh')
  
 """   
 trc = os.getenv('EC_TRACE')
