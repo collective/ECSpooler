@@ -130,7 +130,7 @@ class Spooler(AbstractServer):
         # just unregister it and perhaps send a message to the backend to
         # give a hint to free resources/unbind
         for backend in backends.itervalues():
-             self._callBackend(backend['url'], 'shutdown')
+            self._callBackend(backend['url'], 'shutdown')
              
         # wait a moment so that backends have enough time to unregister 
         time.sleep(0.5)
