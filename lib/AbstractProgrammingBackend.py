@@ -8,9 +8,10 @@
 from types import BooleanType
 from types import UnicodeType
 
-import sys, os, re, popen2, tempfile, threading, signal, traceback
+#import sys, os, re, popen2, tempfile, threading, signal, traceback
+import sys, os, subprocess, tempfile, threading, signal, traceback
+
 import shutil
-#import logging
 
 from lib.AbstractBackend import AbstractBackend
 from lib.util import utils
@@ -337,17 +338,34 @@ class AbstractProgrammingBackend(AbstractBackend):
         commandLine.append(fName)
         commandLine.extend(args_encoded)
         
-        #self.log.debug('commandLine: %s' % commandLine)
-        
+        self.log.debug('commandLine: %s' % commandLine)
+
+        """
         # Popen4 will provide both stdout and stderr on handle.fromchild
         handle = popen2.Popen4(commandLine)
         self.log.info('Started %s %s in %s with PID %d' % (command,
                                                           fName,
                                                           dir,
                                                           handle.pid))
-        handle.tochild.close()
+        """
+        # Popen in will provide both stdout and stderr on handle.fromchild
+        handle = subprocess.Popen(commandLine, shell = False, close_fds = True,
+                                  stdin = subprocess.PIPE,
+                                  stdout = subprocess.PIPE,
+                                  stderr = subprocess.STDOUT)
+
+        self.log.info('Started %s %s in %s with PID %d' % (command,
+                                                          fName,
+                                                          dir,
+                                                          handle.pid))
+
+        handle.fromchild = handle.stdout
+        handle.tochild = handle.stdin
+        handle.childerr = handle.stderr
+
         # we don't expect to send on stdin; instead we just wait for the 
         # process to end, or kill it.
+        handle.tochild.close()
 
         def interruptProcess():
             self.log.debug('Killing %s %s: %d -> %i' %
@@ -358,7 +376,6 @@ class AbstractProgrammingBackend(AbstractBackend):
             except AttributeError:
                 # we will do nothing in this case
                 pass
-
         # end interruptProcess
 
         timer = threading.Timer(self.PROCESS_WAIT_TIME, interruptProcess)
