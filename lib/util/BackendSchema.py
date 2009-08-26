@@ -7,7 +7,11 @@
 
 from types import ListType, TupleType, StringType
 from copy import copy, deepcopy
-from md5 import md5
+
+try:
+    import hashlib
+except ImportError:
+    import md5 as hashlib
 
 _field_count = 0
 _test_count = 0
@@ -494,7 +498,8 @@ class BasicSchema(Schemata):
     def signature(self):
         """
         """
-        return md5(self.toString()).digest()
+        #return md5(self.toString()).digest()
+        return hashlib(self.toString()).digest()
 
 
 #    def replaceField(self, name, field):

@@ -7,20 +7,21 @@
 #
 import os
 import random
-import md5
 import threading
 import signal
 import time
-#import socket
-#import xmlrpclib
 import logging
 
 from types import IntType, StringTypes
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
-# local imports
-#import config
+try:
+    import hashlib
+except ImportError:
+    import md5 as hashlib
 
+# local imports
+import config
 
 class AbstractServer:
     """
@@ -39,11 +40,12 @@ class AbstractServer:
         if logger:
             self.log = logger
         else:
-            self.log = logging.getLogger('')
+            self.log = logging.getLogger(config.PROJECTNAME)
         
         # set server identification
         self._srvId = \
-            md5.md5(repr(random.Random().random())).hexdigest()
+            hashlib.md5(repr(random.Random().random())).hexdigest()
+
 
         self._className = self.__class__.__name__
         
@@ -57,8 +59,8 @@ class AbstractServer:
         self.host = host
         self.port = port
         
-        #self.log.info('host: %s' % host)
-        #self.log.info('port: %d' % port)
+        self.log.info('host: %s' % host)
+        self.log.info('port: %d' % port)
 
         self._serverThread = None
 

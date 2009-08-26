@@ -10,11 +10,15 @@
 import os 
 import time
 import random
-import md5
 import socket
 import tempfile
 import logging
 import traceback
+
+try:
+    import hashlib
+except ImportError:
+    import md5 as hashlib
 
 # create logger with "lib.Spooler"
 log = logging.getLogger('lib.Spooler')
@@ -118,7 +122,8 @@ def uuid(*args):
         a = random.random() * 100000000000000000L
   
     data = str(t) + ' ' + str(r) + ' ' + str(a) + ' ' + str(args)
-    data = md5.md5(data).hexdigest()
+    #data = md5.md5(data).hexdigest()
+    data = hashlib.md5(data).hexdigest()
     return data
 
 

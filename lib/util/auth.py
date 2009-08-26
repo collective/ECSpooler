@@ -5,18 +5,21 @@
 #
 # This file is part of ECSpooler.
 #
-import md5
+#import md5
 
 from types import StringType, UnicodeType, DictionaryType
 import logging, shelve, time
-
-# create logger with 'lib.Spooler'
-log = logging.getLogger('lib.Spooler')
 
 try:
     import crypt
 except ImportError, ierr:
     crypt = None
+    
+try:
+    import hashlib
+except ImportError:
+    import md5 as hashlib
+
     
 # authorization levels
 SHUTDOWN         = 9
@@ -30,6 +33,9 @@ GET_BACKEND_INFO = 1
 
 ROOT_USER        = 'root'
 REQUIRES_ROOT    = 5 # Operations with a higher level require root privilege
+
+# create default logger
+log = logging.getLogger('lib.Spooler')
 
 class AuthorizationBackend:
     """
@@ -172,7 +178,7 @@ class UserAuthMD5(AuthorizationBackend):
         @return: True if username and password are correct, otherwise False
         """
         ans = self.db.has_key(username) and \
-               self.db[username] == md5.md5(password).hexdigest()
+               self.db[username] == hashlib.md5(password).hexdigest()
 
         if not ans:
             log.warn('Wrong password. Waiting %d seconds to prevent ' 
@@ -233,4 +239,5 @@ if __name__ == '__main__':
     print uamd5.authorize('test', 'SuPPe')
     print uamd5.authorize('demo', 'foobar')
     
-    print md5.md5('Asdf,.').hexdigest()
+    #print md5.md5('Asdf,.').hexdigest()
+    print hashlib.md5('Asdf,.').hexdigest()
