@@ -16,7 +16,6 @@
 #       _preProcessCheckSyntax.
 #       replaced re.sub with replace whereever possible.
 
-
 import sys, os, re
 import logging
 
@@ -211,16 +210,20 @@ class Haskell(AbstractProgrammingBackend):
         """
         @see: AbtractSimpleBackend._postProcessCheckSyntax
         """
+        # take care of hexadecimal Unicode escape sequences sent to stdout
+        # or stderr
+        msg = message.decode('unicode_escape')
+        
         # find line number in result
-        matches = re.findall('%s":(\d+)' % self.srcFileSuffix, message)
+        matches = re.findall('%s":(\d+)' % self.srcFileSuffix, msg)
         
         if len(matches):
             # set line number minus x lines and return
             return re.sub('".*%s":(\d+)'  % self.srcFileSuffix, 
-                          'line: %d' % (int(matches[0])-test.lineNumberOffset), 
-                          message)
+                          'line: %d' % (int(matches[0]) - test.lineNumberOffset), 
+                          msg)
         else:
-            return message
+            return msg
         
 
     def _postProcessCheckSemantic(self, test, message):
