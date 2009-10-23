@@ -81,7 +81,8 @@ class AbstractProgrammingBackend(AbstractBackend):
                     self.log.info('Invoking semantic check (%s)' % job.getId())
                     result = self._manage_checkSemantics(job)
             
-                self.log.debug('Result from semantic check: %s' % result.getData())
+                    self.log.debug('Result from semantic check: %s' % result.getData())
+                # end if
             # end if
 
         except Exception, e:
@@ -401,10 +402,11 @@ class AbstractProgrammingBackend(AbstractBackend):
         exitcode = handle.poll()
         response = buf
         
+        #self.log.debug('exitcode: %s' % repr(exitcode))
+        #self.log.debug('response: %s' % repr(response))
+        
         result = ''.join(response)
 
-        #self.log.debug('exitcode: %s' % repr(exitcode))
-        #self.log.debug('buffer: %s' % repr(response))
 
         # removing files will be done in _cleanup
         return exitcode, result
