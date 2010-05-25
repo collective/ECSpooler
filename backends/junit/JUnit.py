@@ -32,7 +32,11 @@
 # 30.04.2009, chbauman:
 #       replaced re.sub whenever possible
 # 12.07.2009, amelung:
-#       renamed JUnitConf to config; mved some settings from config to this file
+#       renamed JUnitConf to config; moved some settings from config to this file
+# 16.05.2010, chbauman:
+#       New Regular Expression for finding closed multiline comments.
+#       grantValidPackage handles commented package declarations more gracefully, now.
+#       Some minor formattings.
 
 import sys, os, re
 import logging
@@ -71,7 +75,10 @@ javaClassDeclaration = '%s\s+class\s+(?P<className>%s)(%s)?\s*(%s)?\s*(%s)?\s*%s
 CLASS_NAME_RE = re.compile(javaClassDeclaration)
 
 # Determines the student's chosen package
-PACKAGE_NAME_RE = re.compile('package\s+(?P<packageName>[a-z]+\w*);')
+PACKAGE_NAME_RE = re.compile('^\s*package\s+(?P<packageName>[a-z]+\w*);')
+
+# Finds closed multiline comments (flags indicate multiline and dotall matchings)
+CLOSED_MULTILINE_COMMENTS_RE = re.compile('/\*.+?\*/', re.M | re.S)
     
 # Finds all import declarations excluding packages java.*
 IMPORT_NAME_NOT_JAVA_RE = re.compile('import\s+(?!java\.)(?P<name>.*);')
@@ -92,7 +99,7 @@ class JUnit(AbstractProgrammingBackend):
     
     id = 'junit'
     name = 'JUnit'
-    version = '1.1'
+    version = '1.2'
 
     schema = config.inputSchema
     testSchema = config.tests
@@ -147,13 +154,22 @@ class JUnit(AbstractProgrammingBackend):
         If yes, it will be overwritten with a new declaration.
         If not, a new package declaration will be written.
         
+        Note, that this method ignores invalid package declarations inside of comments by excluding
+        lines containing multiline comments in the search string completely and by forcing a package
+        declaration to not be inside of a single line comment.  
+        
         @param source: Java source code.
         @return: source with valid package declaration.
         """
-        matcher = PACKAGE_NAME_RE.search(source)
+
+        # Temporarily remove all multiline closed comments:
+        noMultilineCommentSource = re.sub(CLOSED_MULTILINE_COMMENTS_RE, '', source)
+        
+        # Try to find a proper package declaration
+        matcher = PACKAGE_NAME_RE.search(noMultilineCommentSource)
         
         if matcher is not None:
-            # source has a package declaration -> replace it!
+            # We found a package declaration -> replace it!
             return re.sub('package\s+.*;',
                 'package %s;' % config.NS_STUDENT,
                 source)
@@ -168,7 +184,8 @@ class JUnit(AbstractProgrammingBackend):
     def getLibInImportPos(self, libName, importDecl):
         """
         Searches in importDecl for libName and returns the right-most position.
-        Since we are working on Java import declarations, we have to search for libName preceeded by space or a dot and followed by a dot or nothing.
+        Since we are working on Java import declarations, we have to search for libName preceeded by
+        space or a dot and followed by a dot or nothing.
         
         @param libName: Name of library that shall be searched
         @param importDecl: A Java import declaration libName will be searched in.
