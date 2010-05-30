@@ -28,6 +28,8 @@
 #       extended wrapperTemplate: possibility to exclude certain classes from
 #       Failure trace printing
 #       shorter, propably more general RE for FAILURE_TRACE_RE
+# 28.05.2010, chbauman:
+#       Formatted Java code in wrapper template.
 
 import os, re
 from os.path import join, dirname, abspath
@@ -145,7 +147,7 @@ ${unitTests}
             System.out.println("%s");
             System.exit(0);
         }else{
-        	Failure failure = result.getFailures().get(0);
+        	  Failure failure = result.getFailures().get(0);
             System.out.println(failure.toString());
             
             // Filter out AssertionErrors and ComparisonFailures,
