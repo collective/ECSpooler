@@ -5,6 +5,9 @@
 \usepackage{caption}
 \usepackage{listings}
 \usepackage{textcomp}
+
+\usepackage[bookmarks=true, bookmarksopen=true, bookmarksnumbered=true, colorlinks=true, linkcolor=black, anchorcolor=black, citecolor=black, filecolor=black, menucolor=black, urlcolor=black]{hyperref}
+
 \renewcommand{\familydefault}{\sfdefault}
 \newcommand{\anf}[1]{\glqq{}#1\grqq{}}
 \title{XML Handbuch}
@@ -24,9 +27,10 @@
 	  \item ECSpooler
 	  \item XML-Backend
 	\end{itemize}
-	Nachdem alle Komponenten wie in den beiliegenden Anleitungen installiert wurden, können Sie das Backend verwenden, indem Sie unter \texttt{Konfiguration} $\rightarrow$ \texttt{Auto Assessment Settings} den verfügbaren (\texttt{Available}) Backends \anf{\texttt{XML (\textit{Version})}} den gewählten (\texttt{Selected}) hinzufügen (vgl. Abbildung \ref{fig:addingXMLBackend}).
+	Nachdem alle Komponenten, wie in den beiliegenden Anleitungen, installiert wurden, können Sie das Backend verwenden, indem Sie unter \texttt{Konfiguration} $\rightarrow$ \texttt{Auto Assessment Settings} den verfügbaren (\texttt{Available}) Backends \anf{\texttt{XML (\textit{Version})}} den gewählten (\texttt{Selected}) hinzufügen (vgl. Abbildung \ref{fig:addingXMLBackend}).
 	
   \begin{center}
+    \captionsetup{type=figure}
 	  \includegraphics[width=1\textwidth]{images/AddingXMLBackend.png}
 	  \captionof{figure}{Hinzufügen des XML-Backends.}
 	  \label{fig:addingXMLBackend}
@@ -37,6 +41,7 @@
 	  
 	  \subsection{Erstellen eines EC-Ordners}
 	    \begin{center}
+        \captionsetup{type=figure}
 	      \includegraphics[width=0.5\textwidth]{images/AddingECFolder.png}
 	      \captionof{figure}{Anlegen eines EC-Ordners.}
 	      \label{fig:addingECFolder}
@@ -47,6 +52,7 @@
       
       Es wird ein Titel, gefolgt von einer kurzen Beschreibung und optionalen Hinweisen angegeben. Durch einen Klick auf \anf{\texttt{Speichern}} werden die Eingaben bestätigt und ein neuer Ordner angelegt, in den automatisch gewechselt wird.
       \begin{center}
+        \captionsetup{type=figure}
 	      \includegraphics[scale=0.5]{images/Save.png}
 	      \captionof{figure}{Speichern.}
 	      \label{fig:save}
@@ -54,6 +60,7 @@
 	  
 	  \subsection{Erstellen einer Aufgabe}
 	  \begin{center}
+        \captionsetup{type=figure}
 	    \includegraphics[width=0.50\textwidth]{images/AddingECAAB.png}
 	    \captionof{figure}{Hinzufügen einer Auto Assesment Box.}
 	    \label{fig:ecaab}
@@ -73,6 +80,7 @@
   	  \subsubsection{Wohlgeformtheit}
   	  Um die Einreichung auf Wohlgeformtheit zu testen, aktiviert man die Checkbox \anf{\texttt{Test form}} (siehe Abbildung \ref{fig:form}).
   	  \begin{center}
+        \captionsetup{type=figure}
 	      \includegraphics[width=0.50\textwidth]{images/Form.png}
 	      \captionof{figure}{Checkbox zum aktivieren des Testens auf Wohlgeformtheit.}
 	      \label{fig:form}
@@ -81,8 +89,9 @@
   	  \subsubsection{DTD Validation}
   	  Um eine studentische Einreichung gegen eine DTD validieren zu lassen, benötigt das Backend eine hinterlegte DTD, die Sie im Feld \anf{\texttt{DTD}} (vgl. Abbildung \ref{fig:dtd}) angeben können.
   	  
-  	  Studenten steht es frei ihre lokale DTD nach eigenem Wunsch zu benennen. Das XML-Backend erkennt den lokalen DTD Namen und ersetzt ihn mit der serverseitig gespeicherten DTD.
+  	  Studenten steht es frei, ihre lokale DTD nach eigenem Wunsch zu benennen. Das XML-Backend erkennt den lokalen DTD Namen und ersetzt ihn mit der serverseitig gespeicherten DTD.
   	  \begin{center}
+        \captionsetup{type=figure}
 	      \includegraphics[width=0.75\textwidth]{images/DTD.png}
 	      \captionof{figure}{Eingabefeld für eine DTD.}
 	      \label{fig:dtd}
@@ -90,9 +99,10 @@
   	  Beachten Sie, dass jede Eingabe in diesem Feld dazu führt, dass eine DTD Validation ausgeführt wird. Allein wenn dieses Feld leer ist, wird die DTD Validation übersprungen.
   	  
   	  \subsubsection{XPath-Anfragen}
-  	  Das XML-Backend ist in der Lage XPath 2.0 Anfragen an eine studentische Einreichung zu stellen und diese mit einer Musterlösung zu vergleichen. Dazu hinterlegt man im Feld \anf{\texttt{Model solution}} (vgl. Abbildung \ref{fig:model}) die Modelllösung und im Feld \anf{\texttt{XPath statements}} (vgl. Abbildung\ref{fig:xpath}) zeilenweise XPath-Ausdrücke.
+  	  Das XML-Backend ist in der Lage XPath 2.0 Anfragen an eine studentische Einreichung zu stellen und diese mit einer Musterlösung zu vergleichen. Dazu hinterlegt man im Feld \anf{\texttt{Model solution}} (vgl. Abbildung \ref{fig:model}) die Modelllösung und im Feld \anf{\texttt{XPath statements}} (vgl. Abbildung \ref{fig:xpath}) zeilenweise XPath-Ausdrücke.
   	  
   	  \begin{center}
+        \captionsetup{type=figure}
 	      \includegraphics[width=0.75\textwidth]{images/Model.png}
 	      \captionof{figure}{Eingabefeld für die Modelllösung.}
 	      \label{fig:model}
@@ -101,11 +111,12 @@
       Um als Lehrender die Dokumente in den XPath-Ausdrücken referenzieren zu können, wird die Variable \anf{\texttt{\$\{DOC\}}} verwendet, die intern in die tatsächlichen Dokumentennamen übersetzt wird.
 
       \begin{center}
+        \captionsetup{type=figure}
 	      \includegraphics[width=0.75\textwidth]{images/XPath.png}
 	      \captionof{figure}{Eingabefeld für XPath Ausdrücke.}
 	      \label{fig:xpath}
       \end{center}
-      Sind sowohl eine Modelllösung als auch XPath-Ausdrücke angegeben, wird automatisch ein XQuery-Programm generiert, dass die Anfragen an die Musterlösung und die studentische Einreichung stellt und die Ergebnisse dieser vergleicht.
+      Sind sowohl eine Modelllösung als auch XPath-Ausdrücke angegeben, wird automatisch ein XQuery-Programm generiert, das die Anfragen an die Musterlösung und die studentische Einreichung stellt und die Ergebnisse dieser vergleicht.
   	  
 	\section{Beispiele}
 	  Die folgenden Beispiele geben einen kurzen Einblick in die Funktionsweise des XML-Backends.
@@ -132,11 +143,12 @@ ${DOC}/hallo
   	  Die Einreichung
   	  \begin{lstlisting}[language=XML, captionpos=b, frame=tlRB, caption={Nicht wohlgeformte Einreichung.}]
 <?xml version="1.0" standalone="no"?>
-<!DOCTYPE hallo SYSTEM "myVeryOwn.dtd">
+<!DOCTYPE hallo SYSTEM "myLocal.dtd">
 <hallo>Hallo Welt!</hallo
 \end{lstlisting}
   	  führt zu der in Abbildung \ref{fig:notWellformed} dargestellten Rückmeldung.
   	  \begin{center}
+        \captionsetup{type=figure}
 	      \includegraphics[width=0.75\textwidth]{images/notWellformed.png}
 	      \captionof{figure}{Rückmeldung einer nicht wohlgeformten Einreichung.}
 	      \label{fig:notWellformed}
@@ -146,11 +158,12 @@ ${DOC}/hallo
   	  Die Einreichung
   	  \begin{lstlisting}[language=XML, captionpos=b, frame=tlRB, caption={Nicht valide Einreichung.}]
 <?xml version="1.0" standalone="no"?>
-<!DOCTYPE hallo SYSTEM "myVeryOwn.dtd">
+<!DOCTYPE hallo SYSTEM "myLocal.dtd">
 <hola>Hallo Welt!</hola>
 \end{lstlisting}
   	  führt zu der in Abbildung \ref{fig:notValid} dargestellten Rückmeldung.
   	  \begin{center}
+        \captionsetup{type=figure}
 	      \includegraphics[width=0.8\textwidth]{images/notValid.png}
 	      \captionof{figure}{Rückmeldung einer nicht validen Einreichung.}
 	      \label{fig:notValid}
@@ -160,11 +173,12 @@ ${DOC}/hallo
   	  Die fehlerfreie Einreichung
   	  \begin{lstlisting}[language=XML, captionpos=b, frame=tlRB, caption={Fehlerfreie Einreichung}]
 <?xml version="1.0" standalone="no"?>
-<!DOCTYPE hallo SYSTEM "myVeryOwn.dtd">
+<!DOCTYPE hallo SYSTEM "myLocal.dtd">
 <hallo>Hallo Welt!</hallo>
 \end{lstlisting}
   	  führt zu der in Abbildung \ref{fig:passed} dargestellten Rückmeldung.
   	  \begin{center}
+        \captionsetup{type=figure}
 	      \includegraphics[width=0.8\textwidth]{images/passed.png}
 	      \captionof{figure}{Rückmeldung im Falle einer fehlerfreien Einreichung.}
 	      \label{fig:passed}
