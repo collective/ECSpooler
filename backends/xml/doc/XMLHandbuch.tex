@@ -15,6 +15,10 @@
 \date{\today}
 
 \begin{document}
+  \maketitle
+  
+  \newpage
+  
   \tableofcontents
   
   \newpage
@@ -167,6 +171,21 @@ ${DOC}/hallo
 	      \includegraphics[width=0.8\textwidth]{images/notValid.png}
 	      \captionof{figure}{Rückmeldung einer nicht validen Einreichung.}
 	      \label{fig:notValid}
+      \end{center}
+      
+      \subsubsection{Dokumentunterschiede}
+      Die Einreichung
+  	  \begin{lstlisting}[language=XML, captionpos=b, frame=tlRB, caption={Beispiel für eine semantisch falsche XML-Datei.}]
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE hallo SYSTEM "myLocal.dtd">
+<hallo>Guten Tag Welt!</hallo>
+\end{lstlisting}
+      ist wohlgeformt und lässt sich gegen die hinterlegte DTD validieren. Allerdings sind die Textdaten innerhalb des \texttt{hallo}-Tags in der Einreichung von denen in der Modelllösung verschieden, was zu einer in Abbildung \ref{fig:notSameDocument} dargestellten Rückmeldung führt.
+  	  \begin{center}
+        \captionsetup{type=figure}
+	      \includegraphics[width=1\textwidth]{images/notSameDocument.png}
+	      \captionof{figure}{Rückmeldung bei Unterschieden in den verglichenen XML-Dateien nach einer XPath-Anfrage.}
+	      \label{fig:notSameDocument}
       \end{center}
   	  
   	  \subsubsection{Fehlerfreie Einreichung}
