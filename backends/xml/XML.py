@@ -13,6 +13,7 @@
 #        Fixed typo, removed unnecessary imports.
 #        Added comments to functions.
 #        Ensuring that the model solution imports the correct DTD in _xPathCheck.
+#        More detailed comment on the testSequence.
 
 import sys, os, re
 import logging
@@ -344,6 +345,10 @@ class XML(AbstractProgrammingBackend):
                     return BackendResult(-216, msg)
                 
                 # Create the test sequence:
+                # This sequence compares all node-sets resulting from querying the defined XPath
+                # statements on both XML files indicating the test number. This number will later be
+                # used to determine which, if any, test failed, so that the user gets an appropriate
+                # feedback.
                 testSequence = ', '.join(['concat(%s = %s, "%s")' % (test.replace('${DOC}', modelSelector), test.replace('${DOC}', submissionSelector), testData.index(test)) for test in testData])
                 
                 # Write the XQuery file and the model solution, as well as the submission:
