@@ -19,7 +19,7 @@ Prerequisites
 
   * "Python":http://python.org/
   
-  * "xmllint":
+  * "xmllint":http://www.xmlsoft.org/index.html
     
   * "ECSpooler":http://wdok.cs.uni-magdeburg.de/software/ecspooler
   
@@ -33,10 +33,10 @@ Installation
   * Unzip this archive under the 'backends' directory of your 
     ECSpooler installation (for example '/opt/ESpooler/backends/').  
     
-  * Adjust values for INTERPRTER and OPTIONS in the script
-    'backends/XML/xml.sh' to your system environemnt.
+  * Adjust values for INTERPRETER and OPTIONS in the script
+    'backends/XML/xmllint.sh' and 'backends/XML/saxon.sh' to your system environemnt.
     
-  * Make sure that the script 'backends/XML/xml.sh' is
+  * Make sure that the scripts 'backends/XML/xmllint.sh' and 'backends/XML/saxon.sh' are
     executable.
 
 Security
@@ -79,32 +79,33 @@ Quick Start
   password file ('etc/passwd') containing a user "root" with default
   password "bazquux".  See the ECSpooler documentation if you would
   like to add/change users and passwords.
- ##################################################################################
-  Testing a XML program with the XML backend requires a model 
-  solution and a set of test data, e.g.,  
-  
-  * Model solution::
- 
-    square x = x * x
-    
-  * Test data (one test call per line)::
-  
-    square 0
-    square 2
-    square 3
 
-    
-  The XML backend currently supports three compare modes:
+  Testing a XML program with the XML backend is very easy.
+  Have a look at the documentation in 'backends/XML/doc/XMLHandbuch.pdf' (german only) for a
+  detailed instruction.
   
-  * simple - the results of the student and model solutions for same
-    test data must be equal
+  If you want to check whether a submission is
+    - well-formed, simply check the checkbox 'Test form'.
+    - valid, provide the text field 'DTD' with a DTD.
+    - equivalent to a model solution by using XPath expressions, simply provide the text fields
+      'Model solution' and 'XPath statements' with a model XML file and linewise XPath expressions,
+      respectively.
+      
+  You can try these values (omit the quotation marks):
+    - Test form: Checked
     
-  * permutation - accept student solution if the returned list is a 
-    permutation of the result from the model solution
-  
-  * tolerance - result of student and model solution must be equal to
-    15 positions after decimal point
- ##################################################################################
+    - DTD:
+    "<!ELEMENT hallo (#PCDATA)>"
+    
+    - Model solution: 
+    "<?xml version="1.0" standalone="no"?>
+    <!DOCTYPE hallo SYSTEM "dtd.dtd">
+    <hallo>Hallo Welt!</hallo>"
+    
+    - XPath expressions:
+    "count(${DOC})
+    ${DOC}/hallo"
+
 Support
 
   For questions and discussions about backends, please join the
