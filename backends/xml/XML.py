@@ -12,6 +12,7 @@
 # 16.06.2010, chbauman:
 #        Fixed typo, removed unnecessary imports.
 #        Added comments to functions.
+#        Ensuring that the model solution imports the correct DTD in _xPathCheck.
 
 import sys, os, re
 import logging
@@ -347,7 +348,7 @@ class XML(AbstractProgrammingBackend):
                 
                 # Write the XQuery file and the model solution, as well as the submission:
                 xqlWrapperModule = self._writeModule('xqlWrapper', xqlWrapperTemplate % testSequence, self.xqlFileSuffix, job.getId())
-                modelSolution = self._writeModule('modelSolution', job['modelSolution'], self.srcFileSuffix, job.getId())
+                modelSolution = self._writeXML('modelSolution', job['modelSolution'], self.srcFileSuffix, job.getId(), dtdName)
                 
                 # Eventually write the submission:
                 if not self.submissionModule:
