@@ -9,20 +9,19 @@
 #                                Changelog                                     #
 ################################################################################
 #
-# 16.04.2009, chbauman:
-#       
+# 16.06.2010, chbauman:
+#        Fixed typo, removed unnecessary imports.
+#        Added comments to functions.
 
-import sys, os, re, tempfile
+import sys, os, re
 import logging
 
-from os.path import join, dirname
-from types import StringTypes, UnicodeType
+from types import UnicodeType
 
 # local imports
 from backends.xml import config
 
 from lib.data.BackendResult import BackendResult
-from lib.util import utils
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
 from lib.util.BackendSchema import Schema
@@ -46,17 +45,16 @@ xqlWrapperTemplate = \
 let %s := doc("modelSolution.xml")
 let %s := doc("submission.xml")
 
-(: :)
+(: return-part sequence automatically inserted by the XML backend :)
 return (%s)
 ''' % (modelSelector, submissionSelector, '%s')
 
 # input schema
 inputSchema = Schema((
-
     InputField(
         "wellFormed",
         format = "boolean",
-        label = "Test form.",
+        label = "Test form",
         description = "If checked, the student's submission will be tested for well-formedness.",
         i18n_domain = "EC",
     ),
@@ -89,7 +87,6 @@ inputSchema = Schema((
 
 # testSchema
 tests = Schema((
-                
     TestEnvironment(
         'default',
         label = 'Default',
@@ -148,6 +145,8 @@ class XML(AbstractProgrammingBackend):
     
     def _process_doTests(self, job):
         """
+        This function is used to delegate the processing tasks.
+        It is responsible for clearing old feedbacks.
         """
         
         # Clear global variables:
@@ -194,6 +193,10 @@ class XML(AbstractProgrammingBackend):
     
     def _writeXML(self, name, content, suffix, id, dtdName='dtd'):
         """
+        Uses _writeModule to write an XML file, replacing all DOCTYPE declarations using SYSTEM that
+        are not inside of comments.
+        
+        @return: Dictionary with keys module and file
         """
         
         # We have to ensure to replace all DOCTYPE declarations using SYSTEM that are not inside
@@ -206,6 +209,14 @@ class XML(AbstractProgrammingBackend):
         
     def _wellFormedCheck(self, job):
         """
+        This function checks whether the submission is well-formed, if the InputField 'wellFormed'
+        is checked (because it is a boolean field and rendered as a check box).
+        
+        @return: If job['wellFormed'] is checked and the submission is well-formed, nothing will be
+        returned, but a message will be appended to self.feedback.
+        If job['wellFormed'] is checked and the submission is not well-formed, a false BackendResult
+        will be returned.
+        If job['wellFormed'] is not checked, nothing will be returned.
         """
         
         wellFormedCheck = job['wellFormed']
@@ -247,6 +258,13 @@ class XML(AbstractProgrammingBackend):
     
     def _validationCheck(self, job):
         """
+        This function checks whether the submission can be validated against a given DTD.
+        
+        @return: If job['dtd'] is not empty and the submission can successfully be validated against
+        the DTD, nothing will be returned, but a message will be appended to self.feedback.
+        If job['dtd'] is not empty and the submission cannot successfully be validated against the
+        DTD, a false BackendResult will be returned.
+        If job['dtd'] is empty, nothing will be returned.
         """
         
         # Check if the InputField for the DTD is non-empty. If it is, proceed, otherwise return.
@@ -292,6 +310,15 @@ class XML(AbstractProgrammingBackend):
     
     def _xPathCheck(self, job):
         """
+        This function checks whether the submission returns the same node sets requested by a XPath
+        expression, as a model solution.
+        
+        @return: If both job['modelSolution'] and job['xpath'] are not empty and all stated XPath
+        expressions return the same node sets in both files, nothing will be returned, but a message
+        will be appended to self.feedback.
+        If both job['modelSolution'] and job['xpath'] are not empty and a XPath expression does not
+        return the same node sets in both files, a false BackendResult will be returned.
+        If either job['modelSolution'] or job['xpath'] is empty, nothing will be returned.
         """
         
         modelSolution = job['modelSolution']
