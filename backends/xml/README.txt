@@ -115,6 +115,8 @@ Support
 Credits
 
   The XML backend was written by "Christian Baumann":mailto:christian.baumann@st.ovgu.de.
+  The saxon XSLT and XQuery processor was originally developed by Michael Kay. See 
+  'backends/xml/bin/saxon' for further information.
   
 License
 
