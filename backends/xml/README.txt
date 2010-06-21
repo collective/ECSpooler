@@ -123,7 +123,7 @@ License
   The XML backend is licensed under the
   "GPL":http://opensource.org/licenses/gpl-license.
 
-  Copyright © 2007 Otto-von-Guericke-Universität Magdeburg
+  Copyright © 2010 Otto-von-Guericke-Universität Magdeburg
 
   The XML backend is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License as
