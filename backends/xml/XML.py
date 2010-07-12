@@ -14,6 +14,9 @@
 #        Added comments to functions.
 #        Ensuring that the model solution imports the correct DTD in _xPathCheck.
 #        More detailed comment on the testSequence.
+# 12.07.2010, chbauman:
+#        Additional InputField 'verbose' to enable and disable verbose output, i.e. XML fragments.
+#        Corrected spelling
 
 import sys, os, re
 import logging
@@ -83,6 +86,15 @@ inputSchema = Schema((
         label = "XPath statements",
         description = "Enter a list of XPath statements the student's submission should be " +
                       "automatically tested with.",
+        i18n_domain = "EC",
+    ),
+    
+    InputField(
+        "verbose",
+        format = "boolean",
+        label = "Verbose output",
+        description = "If checked, expected and actual results of the XQuery will be displayed " +
+                      "to the student.",
         i18n_domain = "EC",
     ),
 ))
@@ -167,7 +179,7 @@ class XML(AbstractProgrammingBackend):
         inputFields = self.schema.filterFields(type='InputField')
         
         assert inputFields, 'No InputField found.'
-        assert len(inputFields) == 3, 'Did not find exactly 3 InputFields, as expected. (Found %s)' % len(inputFields)
+        assert len(inputFields) == 4, 'Did not find exactly 3 InputFields, as expected. (Found %s)' % len(inputFields)
         
         repeatFields = self.schema.filterFields(type='RepeatField')
         
@@ -248,7 +260,7 @@ class XML(AbstractProgrammingBackend):
                 return BackendResult(-230, msg)
             
             if exitcode != EX_OK:
-                result = "Your submission failed. It is not well-formed.\n\nRecieved result: %s" % result
+                result = "Your submission failed. It is not well-formed.\n\nReceived result: %s" % result
                 
                 return BackendResult(False, result)
             else:
@@ -300,7 +312,7 @@ class XML(AbstractProgrammingBackend):
                 return BackendResult(-230, msg)
             
             if exitcode != EX_OK:
-                result = "Your submission failed. It is not valid.\n\nRecieved result: %s" % result
+                result = "Your submission failed. It is not valid.\n\nReceived result: %s" % result
                 
                 return BackendResult(False, result)
             else:
@@ -349,7 +361,10 @@ class XML(AbstractProgrammingBackend):
                 # statements on both XML files indicating the test number. This number will later be
                 # used to determine which, if any, test failed, so that the user gets an appropriate
                 # feedback.
-                testSequence = ', '.join(['concat(%s = %s, "%s")' % (test.replace('${DOC}', modelSelector), test.replace('${DOC}', submissionSelector), testData.index(test)) for test in testData])
+                if job['verbose']:
+                    testSequence = ', '.join(['%s = %s, ";;%s;;", %s, ";;", %s, "||"' % (test.replace('${DOC}', modelSelector), test.replace('${DOC}', submissionSelector), testData.index(test), test.replace('${DOC}', modelSelector), test.replace('${DOC}', submissionSelector)) for test in testData])
+                else:
+                    testSequence = ', '.join(['%s = %s, ";;%s;;", "||"' % (test.replace('${DOC}', modelSelector), test.replace('${DOC}', submissionSelector), testData.index(test)) for test in testData])
                 
                 # Write the XQuery file and the model solution, as well as the submission:
                 xqlWrapperModule = self._writeModule('xqlWrapper', xqlWrapperTemplate % testSequence, self.xqlFileSuffix, job.getId())
@@ -372,16 +387,29 @@ class XML(AbstractProgrammingBackend):
                 return BackendResult(-230, msg)
             
             if exitcode != EX_OK:
-                result = "Your submission failed.\n\nRecieved result:\n%s" % result
+                result = "Your submission failed.\n\nReceived result:\n%s" % result
                 
                 return BackendResult(False, result)
             elif result.find('false') != -1:
-                # Ooops - we found that at least one test did not run correctly:
-                matcher = re.search('(?<=false)\d+', result)
+                # Ohoh, we found a failed test
+                pos = result.find('false')
                 
-                # Determine which test failed and return it, deleting ${DOC}.
-                falsePosition = int(matcher.group())
-                result = "Your submission failed. A XPath expression evaluated against a sample solution and compared to your submission yielded a different result.\nTest case was:\n\n%s" % testData[falsePosition].replace('${DOC}', '')
+                # Get the test number
+                matcher = re.search('.*?(\d+)', result[pos:])
+                falsePosition = int(matcher.group(1))
+
+                # Handle result message differently when in verbose mode
+                if(job['verbose']):
+                    # Get the first test's output
+                    testOutput = result[pos:].split('||')
+                    
+                    # Split the output according to the split item
+                    testOutputArtifacts = testOutput[0].split(';;')
+                    
+                    # Create feedback using expected and actual values
+                    result = "Your submission failed. A XPath expression evaluated against a sample solution and compared to your submission yielded a different result.\nTest case was: %s\nExpected:\n%s\n\nBut was:\n%s" % (testData[falsePosition].replace('${DOC}', ''), testOutputArtifacts[2], testOutputArtifacts[3])
+                else:
+                    result = "Your submission failed. A XPath expression evaluated against a sample solution and compared to your submission yielded a different result.\nTest case was:\n\n%s" % testData[falsePosition].replace('${DOC}', '')
                 
                 return BackendResult(False, result)
             else:
