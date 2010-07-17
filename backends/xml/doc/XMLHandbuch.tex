@@ -121,6 +121,15 @@
 	      \label{fig:xpath}
       \end{center}
       Sind sowohl eine Modelllösung als auch XPath-Ausdrücke angegeben, wird automatisch ein XQuery-Programm generiert, das die Anfragen an die Musterlösung und die studentische Einreichung stellt und die Ergebnisse dieser vergleicht.
+      
+      Durch Aktivieren des Feldes \anf{\texttt{Verbose output}} wird erzielt, dass dem Studenten im Fehlerfall, statt einer einfachen Meldung des Fehlschlags und des Testfalls, der Testfall, sowie das erwartete und tatsächliche Ergebnis angezeigt wird. Es gilt zu beachten, dass Ergebnisse bei großen XML-Dokumenten schnell sehr groß werden können.
+      
+      \begin{center}
+        \captionsetup{type=figure}
+	      \includegraphics[width=0.50\textwidth]{images/verbose.png}
+	      \captionof{figure}{Checkbox zum Aktivieren von ausführlichen Fehlermeldungen.}
+	      \label{fig:verbose}
+      \end{center}
   	  
 	\section{Beispiele}
 	  Die folgenden Beispiele geben einen kurzen Einblick in die Funktionsweise des XML-Backends.
@@ -173,7 +182,7 @@ ${DOC}/hallo
 	      \label{fig:notValid}
       \end{center}
       
-      \subsubsection{Dokumentunterschiede}
+      \subsubsection{Dokumentunterschiede (minimal)}
       Die Einreichung
   	  \begin{lstlisting}[language=XML, captionpos=b, frame=tlRB, caption={Beispiel für eine semantisch falsche XML-Datei.}]
 <?xml version="1.0" standalone="no"?>
@@ -186,6 +195,15 @@ ${DOC}/hallo
 	      \includegraphics[width=1\textwidth]{images/notSameDocument.png}
 	      \captionof{figure}{Rückmeldung bei Unterschieden in den verglichenen XML-Dateien nach einer XPath-Anfrage.}
 	      \label{fig:notSameDocument}
+      \end{center}
+      
+      \subsubsection{Dokumentunterschiede (verbose)}
+      Die Einreichung im Minimalbeispiel resultiert in der in Abbildung\ref{fig:notSameDocumentVerbose} dargestellten Weise, wenn \anf{\texttt{Verbose output}} aktiviert wurde.
+  	  \begin{center}
+        \captionsetup{type=figure}
+	      \includegraphics[width=1\textwidth]{images/notSameDocumentVerbose.png}
+	      \captionof{figure}{Ausführliche Rückmeldung bei Unterschieden in den verglichenen XML-Dateien nach einer XPath-Anfrage.}
+	      \label{fig:notSameDocumentVerbose}
       \end{center}
   	  
   	  \subsubsection{Fehlerfreie Einreichung}
