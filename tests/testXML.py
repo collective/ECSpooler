@@ -226,6 +226,34 @@ class testXML(BackendTestCase):
         else:
             self.assertEqual(feedbackLength, len(backend.feedback), 'Feedback was generated errornously.')
             
+            
+    def testVerbosity(self):
+        """When InputField 'verbose' is checked, a detailed feedback should be generated."""
+        
+        self.jobdata['modelSolution'] = r'''<?xml version="1.0" standalone="no"?>
+<hallo>Hallo Welt!</hallo>'''
+
+        self.jobdata['xpath'] = r'''${DOC}/hallo'''
+        
+        self.jobdata['submission'] = r'''<?xml version="1.0" standalone="no"?>
+<hallo>Guten Tag Welt!</hallo>'''
+
+        self.jobdata['verbose'] = True
+
+        job = BackendJob(data=self.jobdata)
+        
+        backend = XML.XML(self.params)
+        
+        # We do expect that with the given XPath expression both following tags are in the resulting feedback:
+        expectedFromModel = '<hallo>Hallo Welt!</hallo>'
+        expectedFromSubmission = '<hallo>Guten Tag Welt!</hallo>'
+        
+        result = backend._xPathCheck(job)
+        if result:
+            message = result.getMessage()
+            self.assertTrue(message.find(expectedFromModel) != -1, '"%s" or "%s" were not found in message "%s"' % (expectedFromModel, expectedFromSubmission, message))
+        else:
+            self.fail('No result: %s' % repr(result))
 
 
 def test_suite():
