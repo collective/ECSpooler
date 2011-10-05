@@ -1,6 +1,6 @@
 #! /bin/sh
 
-INTERPRETER=/Library/Frameworks/Python.framework/Versions/Current/bin/python
+INTERPRETER=/opt/python-2.6/bin/python
 
 trap 'kill $! && trap - TERM && kill $$' TERM
 
