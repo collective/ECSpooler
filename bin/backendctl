@@ -38,12 +38,14 @@ except os.error, e:
 # TODO: should be in config.py
 MAX_TRIALS = 15
 
+LOCALHOST = '0.0.0.0'#socket.getfqdn(name)
+
 def _startBackend(backendId, backendPort, spoolerHost, spoolerPort, 
                   spoolerAuth):
     """
     Starts a backend with the given parameters at localhost only.
     """
-    backendHost = socket.getfqdn()
+    backendHost = LOCALHOST
     version = ''
 
     try:
@@ -95,7 +97,7 @@ def _getBackendInstance(backendId, backendPort, spoolerHost, spoolerPort,
     """
     Returns an instance of the backend class if one could be created.
     """
-    backendHost = socket.getfqdn()
+    backendHost = LOCALHOST
     
     # put together the backend module and class name using backendId
     moduleName = '%s.%s' % (backendId, backendId,)
@@ -120,7 +122,7 @@ def _getBackendInstance(backendId, backendPort, spoolerHost, spoolerPort,
         else:
             time.sleep(0.1)
     
-    return None
+    return (None, 0)
     
 
 def _tryGetBackendInstance(backendId, instanceCreateStmt):
@@ -159,7 +161,7 @@ def _stopBackend(backendId, spoolerHost, spoolerPort, spoolerAuth):
     """
     exec 'from backends.%s import %s' % (backendId.lower(), backendId)
 
-    backendHost = socket.getfqdn()
+    backendHost = LOCALHOST
     version = ''
 
     exec 'from backends.%s import %s' % (backendId.lower(), backendId)
@@ -328,9 +330,9 @@ def main():
 
         auth = {"username":user, "password":password}
         
-        if not spoolerHost: spoolerHost = socket.getfqdn()
+        if not spoolerHost: spoolerHost = LOCALHOST
         if not spoolerPort: spoolerPort = 5050
-        if not backendHost: backendHost = socket.getfqdn()
+        if not backendHost: backendHost = LOCALHOST
         if not backendPort: backendPort = 5060
 
         if not user or not password:
@@ -367,10 +369,10 @@ def main():
             except Exception, e:
                 log.error("%s: %s" % (sys.exc_info()[0], e))
                 log.debug(traceback.print_exc())
-                    #print type(e)     # the exception instance
-                    #print e.args      # arguments stored in .args
-                    #print e           # __str__ allows args to printed directly
-                    #print sys.exc_info()[0]
+                #print type(e)     # the exception instance
+                #print e.args      # arguments stored in .args
+                #print e           # __str__ allows args to printed directly
+                #print sys.exc_info()[0]
 
                 print >> sys.stderr, "%s: %s" % (sys.exc_info()[0], e)
 

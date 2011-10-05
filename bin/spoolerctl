@@ -32,13 +32,14 @@ except os.error, e:
     log.warn("Cannot change uid: %s" % e)
     print >> sys.stderr, "Cannot change uid:", e
 
+LOCALHOST = '0.0.0.0'#socket.getfqdn(name)
 
 def _startSpooler(port, pwdFile):
     """
     Starts the spooler process at localhost only.
     """
     
-    host = socket.getfqdn()
+    host = LOCALHOST
     
     #log.info("Starting spooler on %s:%d..." % (host, port))
     print "Starting spooler on %s:%d..." % (host, port)
@@ -70,7 +71,7 @@ def _stopSpooler(port, auth):
     from the status information and then send a kill to this process.
     """
     try:
-        host = socket.getfqdn()
+        host = LOCALHOST
         
         #log.info("Stopping spooler on %s:%d..." % (host, port))
         print "Stopping spooler on %s:%d..." % (host, port)
@@ -215,7 +216,7 @@ def main():
     else:
         command = args[0]
         
-        if not host: host = socket.getfqdn()
+        if not host: host = LOCALHOST
         if not port: port = 5050
         
         if authfile and user:
@@ -270,11 +271,11 @@ def main():
 
         except Exception, e:
             log.error("%s: %s" % (sys.exc_info()[0], e))
-            #log.debug(traceback.print_exc())
-                #print type(e)     # the exception instance
-                #print e.args      # arguments stored in .args
-                #print e           # __str__ allows args to printed directly
-                #print sys.exc_info()[0]
+            log.debug(traceback.print_exc())
+            #print type(e)     # the exception instance
+            #print e.args      # arguments stored in .args
+            #print e           # __str__ allows args to printed directly
+            #print sys.exc_info()[0]
             print >> sys.stderr, "%s: %s" % (sys.exc_info()[0], e)
 
 
