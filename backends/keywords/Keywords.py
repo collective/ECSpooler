@@ -22,7 +22,7 @@ from lib.util.BackendSchema import TestEnvironment
 #from backends.keywords import config
 
 # set the logging environment
-log = logging.getLogger('backends.keywords')
+log = logging.getLogger('keywords')
 
 # input schema
 inputSchema = Schema((

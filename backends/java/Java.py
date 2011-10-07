@@ -21,8 +21,8 @@ from lib.util.BackendSchema import TestEnvironment
 
 from backends.java import config
 
-# enable logging
-log = logging.getLogger('backends.java')
+# define default logging
+LOG = logging.getLogger('java')
 
 
 # The packages that the model and student solution will be put in
@@ -195,7 +195,7 @@ class Java(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
+        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
 
 
     def getClassName(self, src):
@@ -266,7 +266,7 @@ class Java(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -281,7 +281,7 @@ class Java(AbstractProgrammingBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -306,7 +306,7 @@ class Java(AbstractProgrammingBackend):
 
             if not solved: break
 
-            log.debug('Running semantic check with test: %s' % test.getName())
+            LOG.debug('Running semantic check with test: %s' % test.getName())
 
             # compile the solutions
             compiler = test.compiler
@@ -343,7 +343,7 @@ class Java(AbstractProgrammingBackend):
             except AssertionError, err:
                 msg = 'Internal error during semantic check: %s: %s' % \
                       (sys.exc_info()[0], err)
-                log.error(msg)
+                LOG.error(msg)
                 return BackendResult(-230, msg)
 
             model   = compiled['model']
@@ -428,7 +428,7 @@ class Java(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    log.error(msg)
+                    LOG.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured
@@ -442,7 +442,7 @@ class Java(AbstractProgrammingBackend):
                         
                 # has the students' solution passed this tests?
                 else:
-                    log.debug(result)
+                    LOG.debug(result)
                     
                     msgItems = result.split(';;')
                     

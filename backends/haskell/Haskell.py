@@ -23,8 +23,6 @@ from os.path import join, dirname
 from types import StringTypes
 
 # local imports
-from backends.haskell import config
-
 from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -33,8 +31,11 @@ from lib.util.BackendSchema import TestEnvironment
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
 from lib.AbstractProgrammingBackend import EX_OK
 
+from backends.haskell import config
+
 # define default logging
-log = logging.getLogger('backends.haskell')
+log = logging.getLogger('haskell')
+
 
 # load Haskell function to do a simple test
 try:

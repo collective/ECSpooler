@@ -40,7 +40,7 @@ class AbstractServer:
         if logger:
             self.log = logger
         else:
-            self.log = logging.getLogger(config.PROJECTNAME)
+            self.log = logging.getLogger()
         
         # set server identification
         self._srvId = \
@@ -110,7 +110,6 @@ class AbstractServer:
             try:
                 # TODO: Green-IT: don't waste cpu cycles using while true: sleep(0.1)
                 #signal.pause()
-
                 while 1:
                     time.sleep(0.1)
 
@@ -129,7 +128,7 @@ class AbstractServer:
         @param: signal: the signal (TERM or KILL)
         @param: stack:
         """
-        self.log.info('Received signal %s, shutting down.' % (signal, ))
+        self.log.info('Received signal %s, shutting down...' % (signal, ))
 
         self._manageBeforeStop()
 

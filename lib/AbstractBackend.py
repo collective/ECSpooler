@@ -52,10 +52,13 @@ class AbstractBackend(AbstractServer):
         except IOError, ioe:
             # write warn message, but do nothing else
             self.log.warn(ioe)
-
+            
         assert self.id != '', 'A valid ID is required for this backend.'
         assert self.name != '', 'A valid name is required for this backend.'
         #assert self.version != '', 'A valid version is required for this backend.'
+
+        # we use current machine’s IP address
+        self.url = 'http://%s:%d' % (socket.gethostbyname(socket.gethostname()), self.port) #(self.host, self.port))
 
         assert self.schema != None, \
             'A input schema is required for this backend'
@@ -104,15 +107,14 @@ class AbstractBackend(AbstractServer):
         try:
             spooler = xmlrpclib.Server(self.spooler)
 
-            self.log.debug("Registering backend '%s (%s)' at spooler on '%s'" % 
+            self.log.debug("Registering backend '%s (%s)' on ECSpooler at '%s'" % 
                           (self.id, self.version, self.spooler))
 
             (code, msg) = spooler.addBackend(self.auth, 
                                              self.id, 
                                              self.name,
                                              self.version, 
-                                             'http://%s:%i' % 
-                                             (self.host, self.port))
+                                             self.url)
 
             if code != 1:
                 self.log.error("Can't add backend to spooler: %s (%i)" % 
@@ -128,6 +130,7 @@ class AbstractBackend(AbstractServer):
             self.log.error("Socket error: %s (%s)" % (serr, self.spooler))
 
         except xmlrpclib.Fault, err:
+            self.log.error("%s: %s" % (sys.exc_info()[0], err))
             self.log.error("XMLRPC error: %s (%s)" % (err, self.spooler,))
         
         
@@ -143,29 +146,30 @@ class AbstractBackend(AbstractServer):
         @see: AbstractServer._manageBeforeStop()
         """
         try:
-            self.log.debug("Removing backend '%s' from spooler '%s'" % 
-                          ('%s %s (%s)' % (self.name, self.version, self.id), 
-                           self.spooler,))
+            self.log.debug("Removing backend '%s (%s)' from ECSpooler '%s'" % 
+                          (self.id, self.url, self.spooler,))
 
             spooler = xmlrpclib.Server(self.spooler)
-            spooler.removeBackend(self.auth, self.id)
+            spooler.removeBackend(self.auth, self.id, self.url)
 
         except socket.error, serr:
             self.log.warn("Socket error: %s (%s)" % (serr, self.spooler))
+            #traceback.print_exc()
 
         except xmlrpclib.Fault, err:
             self.log.warn("XMLRPC error: %s (%s)" % (err, self.spooler,))
+            #traceback.print_exc()
 
 
-    def shutdown(self, auth):
+    def shutdown(self, auth=None):
         """
         Shutting down the backend.  This method is called from spooler or 
         another client. Authentication is required.
         
         @return: a tuple
         """
-        if not self._authenticate(auth):
-            return (-210, self.ERROR_AUTH_FAILED)
+        #if not self._authenticate(auth):
+        #    return (-210, self.ERROR_AUTH_FAILED)
         
         self.log.debug("Calling 'self._stop(%s, %s)'" % (signal.SIGTERM, None))
  
@@ -178,7 +182,7 @@ class AbstractBackend(AbstractServer):
 
 
     # -- public methods (for spoolers/frontends) ------------------------------
-    def getStatus(self, auth):
+    def getStatus(self, auth=None):
         """
         Returns a dictionary with some status information about 
         this backend. In case the authentication fails, a 
@@ -187,8 +191,8 @@ class AbstractBackend(AbstractServer):
         @param: auth authorization information
         @return: a dictionary with id, name, version, host, and port infos
         """
-        if not self._authenticate(auth):
-            return(-210, self.ERROR_AUTH_FAILED)
+        #if not self._authenticate(auth):
+        #    return(-210, self.ERROR_AUTH_FAILED)
 
         return (1, {
             'pid':     os.getpid(),
@@ -197,6 +201,7 @@ class AbstractBackend(AbstractServer):
             'version': self.version,
             'host':    self.host,
             'port':    self.port,
+            'spooler': self.spooler,
         })
 
 

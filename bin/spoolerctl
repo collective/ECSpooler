@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2007-2009 Otto-von-Guericke-Universität, Magdeburg
+# Copyright (c) 2007-2011 Otto-von-Guericke-Universität, Magdeburg
 #
 # This file is part of ECSpooler.
 #
@@ -12,25 +12,28 @@ information from the spooler.  __main__ reads the command line
 arguments and processes them.
 """
 
-import os, sys, time, signal, socket, xmlrpclib, getopt
+import os, sys, time, signal, socket, xmlrpclib, getopt, atexit
 import traceback
 import logging
 
 # add parent directory to the system path
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir))
 
+# local imports
 import config
-from lib.Spooler import Spooler
+from lib.util import settings
 
-# get logger
+settings.init_logging(format=config.LF_SHORT)
 log = logging.getLogger('spoolerctl')
+
+from lib.Spooler import Spooler
 
 # Run process as nobody
 try:
-    os.setuid(config.NOBODY_UID)
+    os.setuid(settings.NOBODY_UID)
 except os.error, e:
     log.warn("Cannot change uid: %s" % e)
-    print >> sys.stderr, "Cannot change uid:", e
+    #print >> sys.stderr, "Cannot change uid:", e
 
 LOCALHOST = '0.0.0.0'#socket.getfqdn(name)
 
@@ -41,8 +44,9 @@ def _startSpooler(port, pwdFile):
     
     host = LOCALHOST
     
-    #log.info("Starting spooler on %s:%d..." % (host, port))
-    print "Starting spooler on %s:%d..." % (host, port)
+    log.info("Starting spooler service at %s" % time.asctime()) 
+    log.info("    Hostname: %s" % host)
+    log.info("    Port: %i" % port)
 
     try:
         if sys.platform in ['unixware7']:
@@ -55,14 +59,22 @@ def _startSpooler(port, pwdFile):
 
     if cpid == 0:
         # child process
-        #import Spooler
-
+        for handler in logging._handlerList:
+            if not isinstance(handler, logging.FileHandler):
+                logging.getLogger().removeHandler(handler)
+            # end if
+        #end for
+        
         spooler = Spooler(host, int(port), pwdFile)
-        spooler.start()
+        __tmp = spooler.start() # blocks 'til shutdown
+        if __tmp:
+            log.error(__tmp)
+            
     else:
         # parent process
         time.sleep(1)
-        print 'pid=%d' % cpid
+        log.info('pid=%d' % cpid)
+        #print 'pid=%d' % cpid
 
 
 def _stopSpooler(port, auth):
@@ -73,41 +85,80 @@ def _stopSpooler(port, auth):
     try:
         host = LOCALHOST
         
-        #log.info("Stopping spooler on %s:%d..." % (host, port))
-        print "Stopping spooler on %s:%d..." % (host, port)
+        log.info("Stopping spooler service at %s:%d" % (host, port))
 
         spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
-        pid = spooler.getStatus(auth)[1]['pid']
+        status = spooler.getStatus(auth)
         
-        try:
-            # stops the spooler sending kill -15 process-id
-            os.kill(pid, signal.SIGTERM)
-        except AttributeError:
-            log.warn('os.kill and/or signal.SIGTERM not defined. '
-                     'Trying to stop spooler elsewhere.')
+        if status:
+            if status[0] > 0:
+
+                try:
+                    # stops the spooler sending kill -15 process-id
+                    pid = status[1]['pid']
+                    os.kill(pid, signal.SIGTERM)
+                except AttributeError:
+                    log.warn('os.kill and/or signal.SIGTERM not defined. '
+                             'Trying to stop spooler elsewhere.')
+
+            else:
+                log.warn(status[1])
+        else:
+            log.warn("ECSpooler not responding (%s:%s)" % (host, port))
 
     except Exception, e: 
-        log.warn("Unable to stop ECSpooler on %s:%d - %s:%s" % (host, port, sys.exc_info()[0], e))
-        log.debug(traceback.format_exc())
-        print "Unable to stop ECSpooler on %s:%d - %s:%s" % (host, port, sys.exc_info()[0], e)
+        log.warn("Unable to stop ECSpooler on %s:%d - %s:%s" % \
+                 (host, port, sys.exc_info()[0], e))
+        
+        #log.debug(traceback.format_exc())
+        #print "Unable to stop ECSpooler on %s:%d - %s:%s" % (host, port, sys.exc_info()[0], e)
 
 
 def _getSpoolerStatus(host, port, auth):
     """
     Returns status information from a running spooler
     """
-    spooler = xmlrpclib.Server("http://%s:%s" % (host, port))
-    return spooler.getStatus(auth)[1]
+    
+    try:
+        spooler = xmlrpclib.Server("http://%s:%s" % (host, port))
+        status = spooler.getStatus(auth)
+            
+        if status:
+            if status[0] > 0:
+                return status[1]
+            else:
+                log.warn(status[1])
+        else:
+            log.warn("ECSpooler not responding (%s:%s)" % (host, port))
+
+    except Exception, e: 
+        log.warn("Unable to get status information from ECSpooler (%s:%d) - %s:%s" % 
+                 (host, port, sys.exc_info()[0], e))
+    
+    return ''
 
 
-def _removeBackend(host, port, auth, backendId):
-    """
-    Remove a backend from the list of registered backends.  Does *not* stop
-    the backend.  This is only intended for situations where the backend is
-    unreachable (e.g., it crashed).
-    """
-    spooler = xmlrpclib.Server("http://%s:%s" % (host, port))
-    return spooler.removeBackend(auth, backendId.lower())
+#def _removeBackend(host, port, auth, backendId):
+#    """
+#    Remove a backend from the list of registered backends.  Does *not* stop
+#    the backend.  This is only intended for situations where the backend is
+#    unreachable (e.g., it crashed).
+#    """
+#    try:
+#        spooler = xmlrpclib.Server("http://%s:%s" % (host, port))
+#        result = spooler.removeBackend(auth, backendId.lower())
+#    
+#        if result:
+#            if result[0] > 0:
+#                return result[1]
+#            else:
+#                log.warn(result[1])
+#        else:
+#            log.warn("ECSpooler not responding (%s:%s)" % (host, port))
+#
+#    except Exception, e: 
+#        log.warn("Unable to remove backend from ECSpooler on %s:%d - %s:%s" % \
+#                 (host, port, sys.exc_info()[0], e))
     
 
 def usage():
@@ -153,7 +204,7 @@ def getPassFromFile(file, user):
         
     except IOError, ioe:
         log.warn("Error reading file '%s': %s" % (file, ioe));
-        print "Error reading file '%s': %s" % (file, ioe)
+        #print "Error reading file '%s': %s" % (file, ioe)
         return None
 
     for line in lines:
@@ -224,11 +275,11 @@ def main():
             if _pw:
                 password = _pw
 
-        pwdFile = os.path.join(os.path.dirname(__file__),
-                               '..', 'etc', 'passwd')
+        pwdFile = os.path.join(os.path.dirname(__file__), '..', 'etc', 'passwd')
         
         try:
             if command == 'start':
+                settings.init_logging(fname="spooler")
                 _startSpooler(port, pwdFile)
 
             else:
@@ -244,16 +295,17 @@ def main():
                     elif command == 'restart':
                         _stopSpooler(port, auth)
                         time.sleep(3)
+                        settings.init_logging(fname="spooler")
                         _startSpooler(port, pwdFile)
                     elif command == 'status':
                         print _getSpoolerStatus(host, port, auth)
 
-                    elif command == 'rmbackend':
-                        if len(args) < 2:
-                            print 'rmbackend needs a backend ID'
-                            sys.exit(2)
-                        print _removeBackend(host, port, auth, args[1])
-    
+                    #elif command == 'rmbackend':
+                    #    if len(args) < 2:
+                    #        print 'rmbackend needs a backend ID'
+                    #        sys.exit(2)
+                    #    _removeBackend(host, port, auth, args[1])
+                    
                     else:
                         print 'Unknown command %s' % command
                         usage()
@@ -261,22 +313,21 @@ def main():
 
         except (socket.error, xmlrpclib.Fault), exc:
             log.error("Server - %s: %s" % (sys.exc_info()[0], exc))
-            #log.debug(traceback.print_exc())
-                #print type(exc)     # the exception instance
-                #print exc.args      # arguments stored in .args
-                #print exc           # __str__ allows args to printed directly
-                #print sys.exc_info()[0]
-
-            print >> sys.stderr, "Server - %s: %s" % (sys.exc_info()[0], exc)
+            #traceback.print_exc()
+            #print type(exc)     # the exception instance
+            #print exc.args      # arguments stored in .args
+            #print exc           # __str__ allows args to printed directly
+            #print sys.exc_info()[0]
+            #print >> sys.stderr, "Server - %s: %s" % (sys.exc_info()[0], exc)
 
         except Exception, e:
             log.error("%s: %s" % (sys.exc_info()[0], e))
-            log.debug(traceback.print_exc())
+            #traceback.print_exc()
             #print type(e)     # the exception instance
             #print e.args      # arguments stored in .args
             #print e           # __str__ allows args to printed directly
             #print sys.exc_info()[0]
-            print >> sys.stderr, "%s: %s" % (sys.exc_info()[0], e)
+            #print >> sys.stderr, "%s: %s" % (sys.exc_info()[0], e)
 
 
 # -- Main ----------------------------------------------------------------------

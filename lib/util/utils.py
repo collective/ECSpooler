@@ -12,7 +12,6 @@ import time
 import random
 import socket
 import tempfile
-import logging
 import traceback
 
 try:
@@ -20,9 +19,7 @@ try:
 except ImportError:
     import md5 as hashlib
 
-# create logger with "lib.Spooler"
-log = logging.getLogger('lib.Spooler')
-
+from lib.Spooler import LOG
 
 def getUniqueModuleName(prefix=''):
     """ 
@@ -69,7 +66,7 @@ def writeFile(content, filename, encoding='utf-8'):
         return 1
     except Exception:
         # FIXME: return error message or through a special exception
-        log.error(traceback.format_exc())
+        LOG.error(traceback.format_exc())
         return 0
 
 
@@ -102,7 +99,7 @@ def delDir(path):
         return 1
         
     except Exception, e:
-        log.error(traceback.format_exc())
+        LOG.error(traceback.format_exc())
         # FIXME: return error message
         return e
 

@@ -23,7 +23,7 @@ from lib.util.BackendSchema import TestEnvironment
 from backends.python import config
 
 # enable logging
-log = logging.getLogger('backends.python')
+log = logging.getLogger('python')
 
 # load Haskell function to do a simple test
 try:

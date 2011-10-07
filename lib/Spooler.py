@@ -18,17 +18,18 @@ from types import StringTypes
 from types import DictionaryType
 
 # local imports
+import config
+
+# define a default logger for spooler classes
+LOG = logging.getLogger("spooler")
+
+
 from lib.AbstractServer import AbstractServer
 from lib.data.BackendJob import BackendJob
 from lib.data.BackendResult import BackendResult
 
-import lib.util.auth as auth
+from lib.util import auth as auth
 from lib.util.SpoolerQueue import SpoolerQueue
-
-import config
-
-# define a default logger
-logger = logging.getLogger('lib.Spooler')
 
 class Spooler(AbstractServer):
     """
@@ -38,7 +39,7 @@ class Spooler(AbstractServer):
 
     # resourcestring
     ERROR_AUTH_FAILED = "Authorization failed"
-    DEFAULT_DOQUEUE_WAKEUP = 2 # 1 == 1000 ms
+    DEFAULT_DOQUEUE_WAKEUP = 2 # 2 == 2000 ms
     
     def __init__(self, host, port, pwdFile):
         """
@@ -48,7 +49,7 @@ class Spooler(AbstractServer):
         @param: port: port number
         @param: pwdFile: absolute path to password file
         """
-        AbstractServer.__init__(self, host, port, logger)
+        AbstractServer.__init__(self, host, port, LOG)
 
         assert pwdFile and type(pwdFile) in StringTypes,\
             "%s requires a correct 'pwd_file' option" % self._className
@@ -63,6 +64,12 @@ class Spooler(AbstractServer):
         self.log.debug("Using result store %s" % config.RESULT_QUEUE_STORAGE)
         self._results = SpoolerQueue(config.RESULT_QUEUE_STORAGE)
         
+        # a queue for managing jobs which cannot executed because backend was busy
+        self.log.debug("Using retry store %s" % config.RETRY_QUEUE_STORAGE)
+        self._retries = SpoolerQueue(config.RETRY_QUEUE_STORAGE)
+        
+        self._restoreRetryJobs()
+
         # using md5 encrypted passwords in file etc/passwd for authentification
         self._auth = auth.UserAuthMD5(pwdFile)
 
@@ -80,7 +87,7 @@ class Spooler(AbstractServer):
         """
         self._server.register_function(self.addBackend)
         self._server.register_function(self.removeBackend)
-        self._server.register_function(self.stopBackend)
+        #self._server.register_function(self.stopBackend)
         self._server.register_function(self.appendJob)
         self._server.register_function(self.getResults)
         self._server.register_function(self.getResult)
@@ -119,9 +126,9 @@ class Spooler(AbstractServer):
         
         self.log.info('Stopping backends...')
         
-        # We make a copy of _backends because it will change during 
+        # We make a copy of self._backends because it will change during 
         # iteration: backends call removeBackend in their shutdown method,
-        # which will change _backends.
+        # which will change self._backends.
         backends = self._backends.copy()
         
         # TODO: Don't if SMF is enabled, since the backend would be respawned
@@ -129,38 +136,40 @@ class Spooler(AbstractServer):
         #       is an indicator, that the service is running under SMF
         # just unregister it and perhaps send a message to the backend to
         # give a hint to free resources/unbind
-        for backend in backends.itervalues():
-            self._callBackend(backend['url'], 'shutdown')
+        for grp in backends.itervalues():
+            for backend in grp:
+                self._callBackend(backend['url'], 'shutdown')
              
         # wait a moment so that backends have enough time to unregister 
-        time.sleep(0.5)
+        time.sleep(1.0)
 
 
-    def stopBackend(self, authdata, uid):
-        """
-        Stopps the backend with the given name by invoking the
-        shutdown method for this backend. The backend itself then 
-        invokes the removeBackend method in the spooler.
-        
-        @param: authdata: username and password for authentication
-        @param: uid: a backend's unique ID
-        @return: (code, msg) with
-            code == 1, stopping backend succeeded
-            code != 1, stopping backend failed; msg contains further information
-        """
-        if not self._auth.test(authdata, auth.STOP_BACKEND):
-            return (-110, self.ERROR_AUTH_FAILED)
-
-        if uid in self._backends:
-            chk = self._backends[uid]
-
-            self.log.info("Stopping backend '%s' at '%s'" % (uid, chk['url']))
-            # TODO: don't if SMF is enabled - self healing - see above
-            self._callBackend(chk["url"], "shutdown")
-
-            return (1, '')
-        else:
-            return (-120, "Backend '%s' is not registered" % uid)
+#    def stopBackend(self, authdata, uid):
+#        """
+#        Stopps the backend with the given name by invoking the
+#        shutdown method for this backend. The backend itself then 
+#        invokes the removeBackend method in the spooler.
+#        
+#        @param: authdata: username and password for authentication
+#        @param: uid: a backend's unique ID
+#        @return: (code, msg) with
+#            code == 1, stopping backend succeeded
+#            code != 1, stopping backend failed; msg contains further information
+#        """
+#        if not self._auth.test(authdata, auth.STOP_BACKEND):
+#            return (-110, self.ERROR_AUTH_FAILED)
+#
+#        if uid in self._backends:
+#            grp = self._backends[uid]
+#
+#            for backend in grp:
+#                self.log.info("Stopping backend '%s' at '%s'" % (uid, backend['url']))
+#                # TODO: don't if SMF is enabled - self healing - see above
+#                self._callBackend(backend["url"], "shutdown")
+#
+#            return (1, '')
+#        else:
+#            return (-120, "Backend '%s' is not registered" % uid)
 
 
     def addBackend(self, authdata, backendId, name, version, xmlrpc_url):
@@ -178,7 +187,7 @@ class Spooler(AbstractServer):
         @param: backendId: a backend's unique ID
         @param: name: a backend's name
         @param: version: a backend's version
-        @param: xmlr_url: a backend's URL
+        @param: xmlrpc_url: a backend's URL
         @return: a tuple of (code, msg) with
             code == 1, succeeded; msg is the server-id
             code != 1, failed; msg contains further information
@@ -186,24 +195,25 @@ class Spooler(AbstractServer):
         if not self._auth.test(authdata, auth.ADD_BACKEND):
             return (-110, self.ERROR_AUTH_FAILED)
 
-        if backendId in self._backends:
-            return (-121, "Backend '%s (%s)' is already registered" % 
-                        (name, backendId))
+        if backendId not in self._backends:
+            #return (-121, "Backend '%s (%s)' is already registered" % 
+            #            (name, backendId))
+            self._backends[backendId] = list()
 
-        self._backends[backendId] = {'id': backendId,
-                                     'name': name,
-                                     'version': version,
-                                     'url': xmlrpc_url,
-                                     'isBusy': False}
+        self._backends[backendId].append({'id': backendId,
+                                          'name': name,
+                                          'version': version,
+                                          'url': xmlrpc_url,
+                                          'isBusy': False})
 
-        self.log.info("Backend '%s %s (%s) (%s)' added" % (name, version,
-                                                          backendId,
-                                                          xmlrpc_url))
+
+        self.log.info("Backend '%s %s (%s) (%s)' registered" % 
+                      (name, version, backendId, xmlrpc_url))
 
         return (1, self._srvId)
 
 
-    def removeBackend(self, authdata, backendId):
+    def removeBackend(self, authdata, id, url):
         """
         Removes a backend from the list of available backends in this spooler.
 
@@ -213,18 +223,30 @@ class Spooler(AbstractServer):
             code == 1, removing backend succeeded
             code != 1, removing backend failed; msg contains further information
         """
+        
         if not self._auth.test(authdata, auth.REMOVE_BACKEND):
             return (-110, self.ERROR_AUTH_FAILED)
 
-        if backendId in self._backends:
-            backend = self._backends[backendId]
+        if id in self._backends:
+            grp = self._backends[id]
 
-            self.log.info("Removing backend '%s (%s)'" % (backendId, backend['url']))
-            del self._backends[backendId]
+            for backend in grp:
+                #backend = self._backends[backendId]
 
-            return (1, "Backend '%s' removed" % backendId)
+                if url == backend['url']:
+                    self.log.info("Unregistering backend '%s %s (%s) (%s)'..." % 
+                                  (backend['name'], backend['version'], backend['id'], backend['url']))
+                    #self._backends[id].remove(backend)
+                    grp.remove(backend)
+                # end if
+            # end for
+            
+            if len(grp) == 0:
+                self._backends.pop(id)
+
+            return (1, "Backend '%s (%s)' has been unregistered" % (id, url,))
         else:
-            return (-122, "Backend '%s' not found" % backendId)
+            return (-122, "No such backend '%s (%s)' at this ECSpooler" % (id, url,))
 
 
     def appendJob(self, authdata, jobdata):
@@ -247,10 +269,12 @@ class Spooler(AbstractServer):
             # get the backend from the job
             backenId = job['backend']
             
-            # if no backend with the backendId is currently registered to the
+            # if no backend with the backendId is currently registered to this
             # spooler an appropriate message will be returned
             if not backenId in self._backends.keys():
-                return (1, "No such backend: %s" % backenId)
+                msg = "No such backend: %s" % backenId
+                self.log.debug(msg)
+                return (-122, msg)
 
             # append the job
             self.log.info("Enqueueing job '%s'" % job.getId())
@@ -336,7 +360,7 @@ class Spooler(AbstractServer):
         
         return (1, {
             "pid":      os.getpid(),
-            "backends": self._backends.keys(),
+            "backends": ["%s:%s" % (key, len(self._backends[key])) for key in self._backends],
             "queue":    self._queue.getSize(),
             "results":  self._results.getSize(),
         })
@@ -354,8 +378,19 @@ class Spooler(AbstractServer):
 
         if not self._auth.test(authdata, auth.GET_STATUS):
             return (-110, self.ERROR_AUTH_FAILED)
+        
+        result = {}
 
-        return self._backends
+        for grpId in self._backends:
+            # get backend group
+            grp = self._backends[grpId]
+            
+            if len(grp) > 0:
+                # if group has at least one backend instance, add it
+                # to result
+                result[grpId] = grp[0]
+
+        return result
 
 
     def getBackendStatus(self, authdata, backendId):
@@ -374,9 +409,16 @@ class Spooler(AbstractServer):
         if not self._hasBackend(backendId):
             return (-112, "No such backend: %s" % backendId)
 
-        backend = self._backends.get(backendId)
-        return self._callBackend(backend['url'], 'getStatus')
-
+        grp = self._backends.get(backendId)
+        
+        if len(grp) > 0:
+            # if group has at least one backend instance, we will use the first entry
+            backend = grp[0]
+            return self._callBackend(backend['url'], 'getStatus')
+    
+        else:
+            return (-112, "No such backend: %s" % backendId)
+        
     
     def getBackendInputFields(self, authdata, backendId):
         """
@@ -396,8 +438,17 @@ class Spooler(AbstractServer):
         if not self._hasBackend(backendId):
             return (-112, "No such backend: %s" % backendId)
 
-        backend = self._backends.get(backendId)
-        return self._callBackend(backend['url'], 'getInputFields')
+        grp = self._backends.get(backendId)
+        
+        if len(grp) > 0:
+            # if group has at least one backend instance, add it
+            # to result
+            backend = grp[0]
+            return self._callBackend(backend['url'], 'getInputFields')
+    
+        else:
+            return (-112, "No such backend: %s" % backendId)
+
 
 
     def getBackendTestFields(self, authdata, backendId):
@@ -418,8 +469,16 @@ class Spooler(AbstractServer):
         if not self._hasBackend(backendId):
             return (-112, "No such backend: %s" % backendId)
 
-        backend = self._backends.get(backendId)
-        return self._callBackend(backend['url'], 'getTestFields')
+        grp = self._backends.get(backendId)
+
+        if len(grp) > 0:
+            # if group has at least one backend instance, add it
+            # to result
+            backend = grp[0]
+            return self._callBackend(backend['url'], 'getTestFields')
+    
+        else:
+            return (-112, "No such backend: %s" % backendId)
 
 
     def _hasBackend(self, backendId):
@@ -453,39 +512,50 @@ class Spooler(AbstractServer):
                 if not self._queue.isEmpty():
                     # get next job from the queue and the selected backend
                     job = self._queue.dequeue()
-                    backend = self._backends.get(job['backend'], None)
-    
-                    if not backend:
+                    
+                    backendId = job['backend']
+                    
+                    if backendId in self._backends:
+                        # backend groups
+                        grp = self._backends[backendId]
+                        
+                        backend = None
+
+                        for b in grp:
+                            # backend busy?
+                            if not b.get('isBusy', False):
+                                backend = b
+                                break
+                        # end for
+                        
+                        if backend == None:
+                            # backend is bussy, try again later
+                            self.log.info('Backend %s is busy (%s)' % 
+                                          (backendId, job.getId(),))
+                            # try later
+                            #self._queue.enqueue(job)
+                            
+                            # put this job in retry-queue
+                            self.log.info("Adding job to retry queue: %s" % job.getId())
+                            self._retries.enqueue(job)
+                            
+                    
+                        # process job
+                        else:
+                            # dont block - continue to service other backends
+                            threading.Thread(target=self._processJob, args=(backend, job)).start()
+                       
+                        # end if
+                    else:
                         self.log.warn("Job %s can not be executed, no such "
-                                     "backend: %s" % (job.getId(), backend['id']))
+                                     "backend: %s" % (job.getId(), backendId))
                                   
                         # enqueue the job so maybe later, if the backend
                         # is available, we can process it
                         self._queue.enqueue(job)
-    
-                    # backend is busy
-                    elif backend.get('isBusy', False):
-                        # backend is bussy, try again later
-                        self.log.info('Backend %s is busy (%s)' % 
-                                      (backend['id'], job,))
-                        # try later
-                        self._queue.enqueue(job)
                     
-                    # process job
-                    else:
-                        #backend['isBusy'] = True
-                        
-                        #result = self._processJob(backend, job)
-                        #self._results.enqueue(result)
-                        
-                        #self.log.info("Result of job '%s' added to result queue" 
-                        #             % (result.getId(),))
-                        
-                        # dont block - continue to service other backends
-                        threading.Thread(target=self._processJob, args=(backend, job)).start()
-                        
-        
-                        backend['isBusy'] = False
+                    # end if
+    
                 else:
                     #self.log.debug('_doqueue: self._queue is empty');
                     pass
@@ -537,14 +607,33 @@ class Spooler(AbstractServer):
             result = BackendResult(-153, msg, id=job.getId())
         
         self._results.enqueue(result)
-        self.log.info("Result of job '%s' added to result queue" 
-                                         % (result.getId(),))
+        self.log.info("Result of job '%s' added to result queue" % (result.getId(),))
+
         backend['isBusy'] = False
+
+        # move jobs from retry queue back to default queue
+        self._restoreRetryJobs()
 
         #self.log.debug('jobId: %s' % job.getId())
         #self.log.debug('data: %s' % result.getData())
             
         return result
+
+
+    def _restoreRetryJobs(self):
+        """
+        Move jobs from retry queue back to default queue
+        """
+        
+        size = self._retries.getSize()
+        
+        if size > 0:
+            self.log.debug("Moving %d job(s) back from 'retry queue' to 'default queue'." 
+                           % size)
+            
+            while not self._retries.isEmpty():
+                item = self._retries.dequeue()
+                self._queue.enqueue(item)
 
 
     def _callBackend(self, url, method, *kw, **args):

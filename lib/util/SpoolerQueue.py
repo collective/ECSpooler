@@ -8,12 +8,9 @@
 import os
 import sys
 import pickle
-import logging
 
+from lib.Spooler import LOG
 from lib.util.QueueItem import QueueItem
-
-# create logger with "lib.Spooler"
-log = logging.getLogger('lib.Spooler')
 
 class SpoolerQueue:
     """
@@ -48,7 +45,7 @@ class SpoolerQueue:
             self._queue = pickle.load(open(self._filename, 'r'))
         except Exception, e:
             msg = '%s: %s' % (sys.exc_info()[0], e)
-            log.warn(msg)
+            LOG.warn(msg)
 
 
     def _save(self):
@@ -59,7 +56,7 @@ class SpoolerQueue:
             pickle.dump(self._queue, open(self._filename, 'w'), pickle.HIGHEST_PROTOCOL)
         except Exception, e:
             msg = '%s: %s' % (sys.exc_info()[0], e)
-            log.error(msg)
+            LOG.error(msg)
 
 
     def isEmpty(self):
@@ -122,7 +119,7 @@ class SpoolerQueue:
             return item
 
         except KeyError, e :
-            log.warn(str(e))
+            LOG.warn(str(e))
             return None
 
 

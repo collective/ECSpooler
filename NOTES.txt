@@ -23,7 +23,7 @@ Spooler
   
   - normal progress: 
   
-     - get s spooler handle
+     - get spooler handle
      
      - append a job: use 'appendJob' (cf. 'BackendJob' for required 
        key-value-pairs) which will return a a job ID

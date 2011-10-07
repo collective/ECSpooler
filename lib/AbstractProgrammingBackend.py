@@ -345,16 +345,13 @@ class AbstractProgrammingBackend(AbstractBackend):
         
         #self.log.debug('commandLine: %s' % commandLine)
 
-        """
-        # Popen4 will provide both stdout and stderr on handle.fromchild
-        handle = popen2.Popen4(commandLine)
-        self.log.info('Started %s %s in %s with PID %d' % (command,
-                                                          fName,
-                                                          dir,
-                                                          handle.pid))
-        """
-        # Popen in will provide both stdout and stderr on handle.fromchild
-        handle = subprocess.Popen(commandLine, shell = False, close_fds = True,
+        if (sys.platform=="win32") or (sys.platform=="win64"):
+            close_fds = False
+        else:
+            close_fds = True
+
+        # we use subprocess
+        handle = subprocess.Popen(commandLine, shell = False, close_fds = close_fds,
                                   stdin = subprocess.PIPE,
                                   stdout = subprocess.PIPE,
                                   stderr = subprocess.STDOUT)
@@ -364,14 +361,8 @@ class AbstractProgrammingBackend(AbstractBackend):
                                                           dir,
                                                           handle.pid))
 
-        handle.fromchild = handle.stdout
-        handle.tochild = handle.stdin
-        handle.childerr = handle.stderr
-
-        # we don't expect to send on stdin; instead we just wait for the 
-        # process to end, or kill it.
-        handle.tochild.close()
-
+        # This method will be called in a timer thread to ensure that
+        # handle will be killed after PROCESS_WAIT_TIME
         def interruptProcess():
             self.log.debug('Killing %s %s: %d -> %i' %
                           (command, fName, SIGTERM, handle.pid))
@@ -385,10 +376,15 @@ class AbstractProgrammingBackend(AbstractBackend):
 
         timer = threading.Timer(self.PROCESS_WAIT_TIME, interruptProcess)
         timer.start()
-        exitcode = handle.wait()
+
+        # read stdout while communicating with process        
+        stdout, stderr = handle.communicate()
+        exitcode = abs(handle.returncode)
+
+        # cancel time; process has been finished normaly before PROCESS_WAIT_TIME 
         timer.cancel()
 
-
+        # check exitcode
         if exitcode == SIGTERM:
             # process has been interrupted by timer
             #os.remove(fName)
@@ -396,20 +392,12 @@ class AbstractProgrammingBackend(AbstractBackend):
                    'Check for infinite loops.' \
                    % (self.PROCESS_WAIT_TIME,)
             
-        buf = handle.fromchild.readlines()
-        handle.fromchild.close()
-                
-        exitcode = handle.poll()
-        response = buf
-        
         #self.log.debug('exitcode: %s' % repr(exitcode))
-        #self.log.debug('response: %s' % repr(response))
+        #self.log.debug('stdout: %s' % repr(stdout))
         
-        result = ''.join(response)
-
-
         # removing files will be done in _cleanup
-        return exitcode, result
+        #return exitcode, stdout
+        return exitcode, "%s\n%s" % (stdout, stderr)
 
 
     def _cleanup(self, dir):
