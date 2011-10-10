@@ -120,7 +120,7 @@ License
   The Java backend is licensed under the
   "GPL":http://opensource.org/licenses/gpl-license.
 
-  Copyright © 2007 Otto-von-Guericke-Universität Magdeburg
+  Copyright © 2007-2011 Otto-von-Guericke-Universität Magdeburg
 
   The Java backend is free software; you can redistribute it and/or 
   modify it under the terms of the GNU General Public License as

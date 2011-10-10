@@ -99,6 +99,7 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
             __tmp = backend.start()  # blocks here 'til shutdown
             if __tmp:
                 log.error(__tmp)
+                print >> sys.stderr, __tmp
     
         else:
             # parent process
@@ -250,9 +251,9 @@ OPTIONs are:
   -P port         Port to bind/connect  backend to, i.e. where to listen for 
                   new request.  Default: First free port in the range 
                   of 5060 .. 5074.
-  -SH host        Hostname or IP of the machine on which ECSpooler runs.  
+  -S host         Hostname or IP of the machine on which ECSpooler runs.  
                   Needed for registering a backend.  Default: localhost
-  -SP port        Port on which ECSpooler runs. Needed for registering a 
+  -B port         Port on which ECSpooler runs. Needed for registering a 
                   backend.  Default: 5050  
   -u user         Name of the user required for authentication when starting
                   and registering to ECSpooler
@@ -306,11 +307,9 @@ def main():
     """
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "H:P:u:p:a:B:p:h", 
-                               ["spoolerhost=", "spoolerport=", 
-                                "user=", "password=", "authfile=", 
-                                "backendport=", "backendhost=",
-                                "help"])
+        opts, args = getopt.getopt(sys.argv[1:], "S:B:P:u:p:a:h", 
+                               ["spoolerhost=", "spoolerport=", "backendport=", 
+                                "user=", "password=", "authfile=", "help"])
     except getopt.GetoptError:
         # print help information and exit:
         usage()
@@ -328,10 +327,10 @@ def main():
             usage()
             sys.exit()
 
-        if o in ("-SH", "--spoolerhost"):
+        if o in ("-S", "--spoolerhost"):
             spoolerHost = a
 
-        if o in ("-SP", "--spoolerport"):
+        if o in ("-B", "--spoolerport"):
             try:
                 spoolerPort = int(a)
             except ValueError:
@@ -414,8 +413,8 @@ def main():
                 
         except Exception, e:
             ret = 99
-            log.error("%s: %s" % (sys.exc_info()[0], e))
-            traceback.print_exc()
+            log.error("%s (%s)" % (e, sys.exc_info()[0]))
+            #traceback.print_exc()
             #print type(e)     # the exception instance
             #print e.args      # arguments stored in .args
             #print e           # __str__ allows args to printed directly

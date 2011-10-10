@@ -72,7 +72,7 @@ License
   The Keywords backend is licensed under the
   "GPL":http://opensource.org/licenses/gpl-license.
 
-  Copyright © 2007 by Mario Amelung and Michael Piotrowski
+  Copyright © 2007-2011 by Mario Amelung and Michael Piotrowski
 
   The Keywords backend is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License as

@@ -69,6 +69,7 @@ def _startSpooler(port, pwdFile):
         __tmp = spooler.start() # blocks 'til shutdown
         if __tmp:
             log.error(__tmp)
+            print >> sys.stderr, __tmp
             
     else:
         # parent process
@@ -222,15 +223,14 @@ def main():
     """
     """
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "H:P:u:p:a:h", 
-                                   ["host=", "port=", "user=", "password=",
+        opts, args = getopt.getopt(sys.argv[1:], "P:u:p:a:h", 
+                                   ["port=", "user=", "password=",
                                     "authfile=", "help"])
     except getopt.GetoptError:
         # print help information and exit:
         usage()
         sys.exit(2)
 
-    host = None
     port = None
     user = None
     password = None
@@ -240,9 +240,6 @@ def main():
         if o in ("-h", "--help"):
             usage()
             sys.exit()
-
-        if o in ("-H", "--host"):
-            host = a
 
         if o in ("-P", "--port"):
             try:
@@ -321,8 +318,8 @@ def main():
             #print >> sys.stderr, "Server - %s: %s" % (sys.exc_info()[0], exc)
 
         except Exception, e:
-            log.error("%s: %s" % (sys.exc_info()[0], e))
-            traceback.print_exc()
+            log.error("%s (%s)" % (e, sys.exc_info()[0]))
+            #traceback.print_exc()
             #print type(e)     # the exception instance
             #print e.args      # arguments stored in .args
             #print e           # __str__ allows args to printed directly

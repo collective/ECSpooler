@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2007-2009 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007-2011 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 #
@@ -21,7 +21,7 @@ except ImportError:
     import md5 as hashlib
 
 # local imports
-import config
+#import config
 
 class AbstractServer:
     """
@@ -118,7 +118,7 @@ class AbstractServer:
                 self._stop(signal.SIGTERM, None)
 
         else:
-            return "Couldn't start server thread. See log for more details"
+            return "Couldn't start server thread! See log for more details."
 
 
     def _stop(self, signal, stack):

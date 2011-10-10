@@ -101,7 +101,7 @@ License
   The Haskell QuickCheck backend is licensed under the
   "GPL":http://opensource.org/licenses/gpl-license.
 
-  Copyright © 2007,2008 Otto-von-Guericke-Universität Magdeburg
+  Copyright © 2007-2011 Otto-von-Guericke-Universität Magdeburg
 
   The Haskell QuickCheck backend is free software; you can redistribute 
   it and/or modify it under the terms of the GNU General Public License 
