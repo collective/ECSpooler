@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2007-2009 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007-2011 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 #
@@ -161,15 +161,21 @@ class AbstractBackend(AbstractServer):
             #traceback.print_exc()
 
 
-    def shutdown(self, auth=None):
+    def shutdown(self, auth, id):
         """
         Shutting down the backend.  This method is called from spooler or 
         another client. Authentication is required.
         
         @return: a tuple
         """
-        #if not self._authenticate(auth):
-        #    return (-210, self.ERROR_AUTH_FAILED)
+        if not self._authenticate(auth):
+            return (-210, self.ERROR_AUTH_FAILED)
+        
+        id = id.lower()
+        
+        if id != self.id:
+            return(-122, "No such backend '%s' at '%s:%d'" % (id, self.host, self.port))
+
         
         self.log.debug("Calling 'self._stop(%s, %s)'" % (signal.SIGTERM, None))
  
@@ -182,7 +188,7 @@ class AbstractBackend(AbstractServer):
 
 
     # -- public methods (for spoolers/frontends) ------------------------------
-    def getStatus(self, auth=None):
+    def getStatus(self, auth, id):
         """
         Returns a dictionary with some status information about 
         this backend. In case the authentication fails, a 
@@ -191,8 +197,14 @@ class AbstractBackend(AbstractServer):
         @param: auth authorization information
         @return: a dictionary with id, name, version, host, and port infos
         """
-        #if not self._authenticate(auth):
-        #    return(-210, self.ERROR_AUTH_FAILED)
+        # FIXME: dirty hack!
+        if auth and not self._authenticate(auth):
+            return(-210, self.ERROR_AUTH_FAILED)
+        
+        id = id.lower()
+        
+        if id != self.id:
+            return(-122, "No such backend '%s' at '%s:%d'" % (id, self.host, self.port))
 
         return (1, {
             'pid':     os.getpid(),
@@ -332,13 +344,17 @@ class AbstractBackend(AbstractServer):
         #return True
 
         if self._spoolerId == None: 
-            msg = "Authorization failed: Invalid spooler connection settings"
-            self.log.error(msg)
+            self.log.error("Authorization failed: Invalid spooler connection settings")
             return False
 
-        if not data or type(data) != dict or data['srv_id'] != self._spoolerId:
-            s = "Authorization failed: Invalid data"
-            self.log.error(s)
+        if not data or (type(data) != dict):
+            self.log.error("Authorization failed: Invalid data")
             return False
 
-        return True
+        if data.has_key('srv_id') and data['srv_id'] == self._spoolerId:  
+            return True
+        
+        if (data == self.auth):
+            return True
+
+        return False

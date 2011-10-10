@@ -17,7 +17,7 @@ portRange = range(15061,16060)
 class BackendTestCase(unittest.TestCase):
     """
     """
-    host = socket.getfqdn()
+    host = '0.0.0.0' #socket.getfqdn()
     port = 15060
     spooler = 'http://%s:%d' % (host, 15050)
     auth = {"username":"demo", "password":"foobar"}

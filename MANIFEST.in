@@ -1,14 +1,16 @@
-include		                    *.txt
-recursive-include var               *.txt *.py
-include           etc/passwd
-recursive-include backends/keywords *
-recursive-include lib		    *.txt *.py
-recursive-include log		    *.txt *.py
-include		  tests/readme.txt
-include		  tests/testSpooler.py
-include		  tests/testKeywords.py
-include		  tests/__init__.py
-include		  tests/BackendTestCase.py
-include		  tests/ProgrammingBackendTestCase.py
-include		  tests/testTestJob.py
-include		  tests/testTestResult.py
+include                                 *.txt
+recursive-include   backends/keywords   *
+recursive-include   var                 *.txt *.py
+include             etc/passwd
+recursive-include   lib                 *.txt *.py
+recursive-include   log                 *.txt *.py
+include             tests/__init__.py
+include             tests/BackendTestCase.py
+include             tests/ProgrammingBackendTestCase.py
+include             tests/README.txt
+include             tests/runalltests
+include             tests/runtests
+include             tests/testSpooler.py
+include             tests/testTestJob.py
+include             tests/testTestResult.py
+include             tests/testKeywords.py

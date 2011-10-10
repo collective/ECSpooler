@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2007 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007-2011 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 
@@ -17,6 +17,9 @@ import unittest
 
 # add parent directory to the system path
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir))
+
+import config
+from lib.util import settings
 
 # change dir to test dir
 os.chdir(os.path.join(os.path.abspath(os.path.dirname(__file__))))
@@ -46,13 +49,19 @@ def main():
         test = args[0]
 
         if test.startswith('test') and test.endswith('.py'):
-            m = __import__(test[:-3])
+            
+            mName = test[:-3]
+            m = __import__(mName)
+
+            settings.init_logging(fname=mName, format=config.LF_SHORT)
             
             if hasattr(m, 'test_suite'):
                 print >> sys.stdout, m.__name__
+                #log.info(m.__name__)
                 suite.addTest(m.test_suite())
             else:
                 print >> sys.stdout, m.__name__, ': no test suite found.'
+                #log.info('%s: no test suite found.' % m.__name__ )
             
             
             TestRunner().run(suite)

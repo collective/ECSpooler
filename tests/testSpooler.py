@@ -17,7 +17,7 @@ class testSpooler(unittest.TestCase):
     """
     _auth = {"username":"demo", "password":"foobar"}
     _pwdFile = os.path.join(os.path.dirname(__file__), '..', 'etc', 'passwd')
-    _host = socket.getfqdn()
+    _host = '0.0.0.0' #socket.getfqdn()
     _port = 15050
 
     spooler = Spooler(_host, _port, _pwdFile)

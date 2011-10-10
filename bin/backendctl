@@ -48,7 +48,7 @@ def _startBackend(backendId, backendPort, spoolerHost, spoolerPort,
     Starts a backend with the given parameters at localhost only.
     """
     backendHost = LOCALHOST
-    version = ''
+    #version = ''
 
     try:
         #print 'from backends.%s import %s' % (backendId.lower(), backendId)
@@ -176,7 +176,7 @@ def _tryGetBackendInstance(backendId, instanceCreateStmt):
         return None
         
 
-def _stopBackend(backendId, backendPort, spoolerHost, spoolerPort, spoolerAuth):
+def _stopBackend(backendId, backendPort, spoolerAuth):
     """
     Stops a backend at localhost only.
     """
@@ -186,7 +186,7 @@ def _stopBackend(backendId, backendPort, spoolerHost, spoolerPort, spoolerAuth):
              (backendId, backendHost, backendPort))
 
     backend = xmlrpclib.ServerProxy("http://%s:%d" % (backendHost, backendPort))
-    result = backend.shutdown()
+    result = backend.shutdown(spoolerAuth, backendId)
 
     if result and result[0]:
         log.info(result[1])
@@ -223,7 +223,7 @@ def _stopBackend(backendId, backendPort, spoolerHost, spoolerPort, spoolerAuth):
             print retval[1]
     """
 
-def _getStatus(backendId, backendPort):#, spoolerHost, spoolerPort, spoolerAuth):
+def _getStatus(backendId, backendPort, spoolerAuth):
     """
     Returns some status information of the backend.
     """
@@ -233,7 +233,7 @@ def _getStatus(backendId, backendPort):#, spoolerHost, spoolerPort, spoolerAuth)
     backendHost = LOCALHOST
     
     backend = xmlrpclib.ServerProxy("http://%s:%d" % (backendHost, backendPort))
-    result = backend.getStatus()
+    result = backend.getStatus(spoolerAuth, backendId)
     
     if result and result[0]:
         return result[1]
@@ -247,20 +247,21 @@ def usage():
 Usage: backendctl [OPTION ...] BACKEND {start|stop|restart|status}
 
 OPTIONs are:
-  -H host         Hostname or IP of the machine to use to connect to the
-                  spooler.  Default: localhost
-  -P port         Port of the spooler to connect to.  Default: 5050
-  -b hostname     Hostname or IP to connect to; for status command onyl.  Default: localhost
-  -B port         Port to bind/connect to, i.e. where to listen for new request.
-                  Default: First free port in the range of 5060 .. 5074.
-  -u user         Name of the user required for authentication when executing
-                  stop|restart|status command
+  -P port         Port to bind/connect  backend to, i.e. where to listen for 
+                  new request.  Default: First free port in the range 
+                  of 5060 .. 5074.
+  -SH host        Hostname or IP of the machine on which ECSpooler runs.  
+                  Needed for registering a backend.  Default: localhost
+  -SP port        Port on which ECSpooler runs. Needed for registering a 
+                  backend.  Default: 5050  
+  -u user         Name of the user required for authentication when starting
+                  and registering to ECSpooler
   -p password     Password of the user required for authentication when
-                  executing stop|restart|status command
+                  starting and registering to ECSpooler
   -a authfile     File to use to lookup the password for the given user.  The
                   file contains one 'user:password' entry per line.  This
                   option should be used instead of the -p option to avoid
-                  exposing the password to every user on the system (e.g. via
+                  exposing the password to every user on the system (e.g., via
                   ps -ef, pargs etc.).
   BACKEND         Name of the backend to start|stop|restart|status.
 """
@@ -319,7 +320,6 @@ def main():
     spoolerPort = None
     user = None
     password = None
-    backendHost = None
     backendPort = None
     authfile = None
     
@@ -328,10 +328,10 @@ def main():
             usage()
             sys.exit()
 
-        if o in ("-H", "--spoolerhost"):
+        if o in ("-SH", "--spoolerhost"):
             spoolerHost = a
 
-        if o in ("-P", "--spoolerport"):
+        if o in ("-SP", "--spoolerport"):
             try:
                 spoolerPort = int(a)
             except ValueError:
@@ -344,15 +344,12 @@ def main():
         if o in ("-p", "--password"):
             password = a
 
-        if o in ("-B", "--backendport"):
+        if o in ("-P", "--port"):
             try:
                 backendPort = int(a)
             except ValueError:
                 usage()
                 sys.exit(2)
-
-        if o in ("-b", "--backendhost"):
-            backendHost = a
 
         if o in ("-a", "--authfile"):
             authfile = a
@@ -374,7 +371,6 @@ def main():
         
         if not spoolerHost: spoolerHost = LOCALHOST
         if not spoolerPort: spoolerPort = 5050
-        if not backendHost: backendHost = LOCALHOST
         if not backendPort: backendPort = 5060
 
         ret = 0
@@ -391,10 +387,10 @@ def main():
                                   spoolerPort, auth)
 
             elif cmd == 'stop':
-                _stopBackend(backendId, backendPort, spoolerHost, spoolerPort, auth)
+                _stopBackend(backendId, backendPort, auth)
             
             elif cmd == 'restart':
-                _stopBackend(backendId, backendPort, spoolerHost, spoolerPort, auth)
+                _stopBackend(backendId, backendPort, auth)
                 time.sleep(2)
     
                 if not user or not password:
@@ -409,7 +405,7 @@ def main():
             elif cmd == 'status':
                 #raise NotImplementedError('Getting status information is ' +
                 #                          'not implemented yet.')
-                print _getStatus(backendId, backendPort)
+                print _getStatus(backendId, backendPort, auth)
 
             else:
                 log.error('Unknown command %s' % cmd)
@@ -419,7 +415,7 @@ def main():
         except Exception, e:
             ret = 99
             log.error("%s: %s" % (sys.exc_info()[0], e))
-            #traceback.print_exc()
+            traceback.print_exc()
             #print type(e)     # the exception instance
             #print e.args      # arguments stored in .args
             #print e           # __str__ allows args to printed directly

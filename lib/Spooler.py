@@ -414,7 +414,7 @@ class Spooler(AbstractServer):
         if len(grp) > 0:
             # if group has at least one backend instance, we will use the first entry
             backend = grp[0]
-            return self._callBackend(backend['url'], 'getStatus')
+            return self._callBackend(backend['url'], 'getStatus', backend['id'])
     
         else:
             return (-112, "No such backend: %s" % backendId)
