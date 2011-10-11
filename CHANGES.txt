@@ -8,6 +8,7 @@ History
 
 - Log files are written for each backend now (e.g., haskell.log, junit.log).  
 
+
 # Changes in release 1.1 (2009-08-25)
 
 - The file structure for backends has been changed.  The new 
