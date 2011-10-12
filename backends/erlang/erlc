@@ -1,4 +1,4 @@
-#! /opt/ast/bin/ksh
+#! /bin/ksh
 
 COMPILER=/opt/erlang/bin/erlc
 

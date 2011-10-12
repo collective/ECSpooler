@@ -1,6 +1,11 @@
 History
 =======
 
+# Changes in release 1.2.1 (2009-10-12)
+
+- Fixed issue: Stopping spooler does not stop all registered backends.
+
+
 # Changes in release 1.2 (2009-10-07)
 
 - Minor improvements regarding start scripts (spoolerctl, backendctl), 

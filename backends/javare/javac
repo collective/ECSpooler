@@ -1,4 +1,4 @@
-#! /opt/ast/bin/ksh
+#! /bin/ksh
 
 #JAVA_HOME=/opt/diablo-jdk1.5.0_07;	export JAVA_HOME
 JAVA_HOME=/usr/pkg/java/sun-1.5;  	export JAVA_HOME

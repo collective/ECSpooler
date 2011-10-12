@@ -83,7 +83,7 @@ class UserAuth(AuthorizationBackend):
             password = args.get("password")
 
             if level > REQUIRES_ROOT and username != ROOT_USER:
-                LOG.warn("Authorization failed: Root privileges " +
+                LOG.warn("Authorization failed: Root privileges "
                              "required for level %d operation" % level)
                 return False
         
@@ -155,7 +155,7 @@ class UserAuthMD5(AuthorizationBackend):
             password = args.get("password")
 
             if level > REQUIRES_ROOT and username != ROOT_USER:
-                LOG.warn("Authorization failed for %s: Root privileges " +
+                LOG.warn("Authorization failed for %s: Root privileges " 
                          "required for level %d operation" % (username, level))
                 return False
         

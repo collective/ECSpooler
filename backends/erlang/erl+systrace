@@ -1,4 +1,4 @@
-#! /opt/ast/bin/ksh
+#! /bin/ksh
 
 export PATH=$PATH:/opt/erlang/lib/erlang/erts-5.4.13/bin
 export ROOTDIR=/opt/erlang/lib/erlang

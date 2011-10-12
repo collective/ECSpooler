@@ -1,9 +1,13 @@
 include                                 *.txt
 recursive-include   backends/keywords   *
-recursive-include   var                 *.txt *.py
-include             etc/passwd
+recursive-include   backends/haskell    *
+recursive-include   backends/java       *
+recursive-include   backends/junit      *
+recursive-include   backends/python     *
+recursive-include   var                 *.txt
+recursive-include   var                 passwd *.txt
 recursive-include   lib                 *.txt *.py
-recursive-include   log                 *.txt *.py
+recursive-include   log                 *.txt
 include             tests/__init__.py
 include             tests/BackendTestCase.py
 include             tests/ProgrammingBackendTestCase.py
@@ -13,3 +17,7 @@ include             tests/testSpooler.py
 include             tests/testTestJob.py
 include             tests/testTestResult.py
 include             tests/testKeywords.py
+include             tests/testHaskell.py
+include             tests/testJava.py
+include             tests/testJUnit.py
+include             tests/testPython.py

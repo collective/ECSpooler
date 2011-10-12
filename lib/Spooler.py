@@ -92,6 +92,7 @@ class Spooler(AbstractServer):
         self._server.register_function(self.getResults)
         self._server.register_function(self.getResult)
         self._server.register_function(self.getStatus)
+        self._server.register_function(self.getPID)
         self._server.register_function(self.getBackends)
         self._server.register_function(self.getBackendStatus)
         self._server.register_function(self.getBackendInputFields)
@@ -138,7 +139,7 @@ class Spooler(AbstractServer):
         # give a hint to free resources/unbind
         for grp in backends.itervalues():
             for backend in grp:
-                self._callBackend(backend['url'], 'shutdown')
+                self._callBackend(backend['url'], 'shutdown', backend['id'])
              
         # wait a moment so that backends have enough time to unregister 
         time.sleep(1.0)
@@ -359,11 +360,27 @@ class Spooler(AbstractServer):
             return (-110, self.ERROR_AUTH_FAILED)
         
         return (1, {
-            "pid":      os.getpid(),
+            #"pid":      os.getpid(),
             "backends": ["%s:%s" % (key, len(self._backends[key])) for key in self._backends],
             "queue":    self._queue.getSize(),
             "results":  self._results.getSize(),
         })
+
+
+    def getPID(self, authdata):
+        """
+        Returns the process ID
+
+        @param: authdata: username and password for authentication
+        """
+
+        self.log.debug('Returning spooler PID')
+
+        if not self._auth.test(authdata, auth.SHUTDOWN):
+            return (-110, self.ERROR_AUTH_FAILED)
+        
+        return (1, os.getpid())
+
 
 
     def getBackends(self, authdata):

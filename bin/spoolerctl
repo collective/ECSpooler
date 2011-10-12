@@ -89,26 +89,26 @@ def _stopSpooler(port, auth):
         log.info("Stopping spooler service at %s:%d" % (host, port))
 
         spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
-        status = spooler.getStatus(auth)
+        result = spooler.getPID(auth)
         
-        if status:
-            if status[0] > 0:
+        if result:
+            if result[0] > 0:
 
                 try:
                     # stops the spooler sending kill -15 process-id
-                    pid = status[1]['pid']
+                    pid = result[1]
                     os.kill(pid, signal.SIGTERM)
                 except AttributeError:
                     log.warn('os.kill and/or signal.SIGTERM not defined. '
                              'Trying to stop spooler elsewhere.')
 
             else:
-                log.warn(status[1])
+                log.warn(result[1])
         else:
             log.warn("ECSpooler not responding (%s:%s)" % (host, port))
 
     except Exception, e: 
-        log.warn("Unable to stop ECSpooler on %s:%d - %s:%s" % \
+        log.error("Unable to stop ECSpooler on %s:%d - %s:%s" % \
                  (host, port, sys.exc_info()[0], e))
         
         #log.debug(traceback.format_exc())

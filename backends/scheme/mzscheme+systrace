@@ -1,4 +1,4 @@
-#! /opt/ast/bin/ksh
+#! /bin/ksh
 
 POLICYDIR=/opt/ECSpooler/systrace-policy
 INTERPRETER=/opt/mzscheme/bin/mzscheme

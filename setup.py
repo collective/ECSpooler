@@ -15,25 +15,21 @@ version = open('version.txt').readline()
 ###############################################################################
 
 #tests = glob.glob('tests/*')
-#tests.remove('tests/.svn')
 
 backends = ['backends/__init__.py']
 
 backend_keywords = glob.glob('backends/keywords/*')
-#backend_keywords.remove('backends/keywords/.svn')
 
 docs = glob.glob('*.txt')
 
 etc = glob.glob('etc/*')
-#etc.remove('etc/.svn')
 
 log = glob.glob('log/*')
-#log.remove('log/.svn')
 
 var = glob.glob('var/*')
-#var.remove('var/.svn')
 
 tests = ['tests/__init__.py',
+         'tests/testKeywords.py',
          'tests/BackendTestCase.py',
          'tests/ProgrammingBackendTestCase.py',
          'tests/README.txt',
@@ -41,7 +37,7 @@ tests = ['tests/__init__.py',
          'tests/testSpooler.py',
          'tests/testTestJob.py',
          'tests/testTestResult.py',
-         'tests/testKeywords.py']
+        ]
 
 ###############################################################################
 

@@ -1,0 +1,1 @@
+This is the directory used to hold passwd file by default.
