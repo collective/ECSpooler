@@ -12,6 +12,7 @@ from types import UnicodeType
 import sys, os, subprocess, tempfile, threading, signal, traceback
 
 import shutil
+import logging
 
 from lib.AbstractBackend import AbstractBackend
 from lib.util import utils
@@ -29,6 +30,7 @@ try:
 except AttributeError:
     SIGTERM = 15
 
+LOG = None
     
 class AbstractProgrammingBackend(AbstractBackend):
     """
@@ -52,6 +54,20 @@ class AbstractProgrammingBackend(AbstractBackend):
     # set default time (in seconds) before killing a test job's execution
     PROCESS_WAIT_TIME = 10
    
+    def __init__(self, params, versionFile=__file__, logger=None):
+        """
+        This constructor is needed to reset the logging environment.
+        """
+        global LOG
+
+        if logger:
+            LOG = logger
+        else:
+            LOG = logging.getLogger()
+
+        AbstractBackend.__init__(self, params, versionFile, LOG)
+    
+
     def _process_execute(self, job):
         """
         Executes a check job.
@@ -64,31 +80,31 @@ class AbstractProgrammingBackend(AbstractBackend):
 
         try:
             # invoke syntax check
-            self.log.info('Invoking syntax check (%s)' % job.getId())
+            LOG.info('Invoking syntax check (%s)' % job.getId())
             result = self._manage_checkSyntax(job) # returns a BackendResult
         
             # FIXME: If the returned value is always of typ
             #        BackendResult we could use isFailure!
             #if not result.hasFailed: 
             
-            self.log.debug('Result from syntax check: %s' % result.getData())
+            LOG.debug('Result from syntax check: %s' % result.getData())
             
             if result:
                 rValue = result.getValue()
                 
                 if (type(rValue) == BooleanType and rValue == True):
                     # invoke semantic check
-                    self.log.info('Invoking semantic check (%s)' % job.getId())
+                    LOG.info('Invoking semantic check (%s)' % job.getId())
                     result = self._manage_checkSemantics(job)
             
-                    self.log.debug('Result from semantic check: %s' % result.getData())
+                    LOG.debug('Result from semantic check: %s' % result.getData())
                 # end if
             # end if
 
         except Exception, e:
             msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
-            self.log.debug(traceback.format_exc())
-            self.log.error(msg)
+            LOG.debug(traceback.format_exc())
+            LOG.error(msg)
             result = BackendResult(-200, msg)
                 
 
@@ -114,7 +130,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         # test for available test specs
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            self.log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
                         
         # get the names of all test enrironments selected in this job
@@ -142,9 +158,9 @@ class AbstractProgrammingBackend(AbstractBackend):
         # get the compiler or if not available the interpreter
         compiler = testSpec.compiler or testSpec.interpreter
         
-        #self.log.debug("testSpec.compiler: %s" % repr(testSpec.compiler))
-        #self.log.debug("testSpec.interpreter: %s" % repr(testSpec.interpreter))
-        #self.log.debug("compiler: %s" % repr(compiler))
+        #LOG.debug("testSpec.compiler: %s" % repr(testSpec.compiler))
+        #LOG.debug("testSpec.interpreter: %s" % repr(testSpec.interpreter))
+        #LOG.debug("compiler: %s" % repr(compiler))
         
         if compiler:
             try:
@@ -154,7 +170,7 @@ class AbstractProgrammingBackend(AbstractBackend):
                 except AssertionError, ae:
                     return BackendResult(False, str(ae))
 
-                self.log.info('Running syntax check with test: %s' % 
+                LOG.info('Running syntax check with test: %s' % 
                              testSpec.getName())
                               
                 module = self._writeModule(mName, src, 
@@ -162,24 +178,24 @@ class AbstractProgrammingBackend(AbstractBackend):
                                            jobId,
                                            testSpec.encoding)
                 
-                #self.log.debug(repr(module))
+                #LOG.debug(repr(module))
                 
                 exitcode, result = \
                     self._runInterpreter(compiler, 
                                    os.path.dirname(module['file']),
                                    os.path.basename(module['file']))
                     
-                #self.log.debug('exitcode: %s' % repr(exitcode))
-                #self.log.debug('result: %s' % repr(result))
+                #LOG.debug('exitcode: %s' % repr(exitcode))
+                #LOG.debug('result: %s' % repr(result))
                 
             except Exception, e:
                 msg = 'Internal error during syntax check: %s: %s' % \
                         (sys.exc_info()[0], e)
-                self.log.debug(traceback.format_exc())
-                self.log.error(msg);
+                LOG.debug(traceback.format_exc())
+                LOG.error(msg);
                 return BackendResult(-220, msg)
             
-            self.log.debug('exitcode: %s' % repr(-exitcode))
+            LOG.debug('exitcode: %s' % repr(-exitcode))
     
             # consider exit code
             if exitcode != EX_OK:
@@ -191,7 +207,7 @@ class AbstractProgrammingBackend(AbstractBackend):
             msg = 'No compiler/interpreter defined (test spec: %s).' \
                     % testSpec.getName()
 
-            self.log.error(msg)
+            LOG.error(msg)
             return BackendResult(-221, msg)
 
         # everything seems to be ok
@@ -281,10 +297,10 @@ class AbstractProgrammingBackend(AbstractBackend):
         if not name:
             name = utils.getUniqueModuleName()
             
-        #self.log.debug('%s' % tempfile.gettempdir())
-        #self.log.debug('%s' % dir)
-        #self.log.debug('%s' % name)
-        #self.log.debug('%s' % suffix)
+        #LOG.debug('%s' % tempfile.gettempdir())
+        #LOG.debug('%s' % dir)
+        #LOG.debug('%s' % name)
+        #LOG.debug('%s' % suffix)
         
         # get file name
         fName = os.path.join(tempfile.gettempdir(), dir, name + suffix)
@@ -319,8 +335,8 @@ class AbstractProgrammingBackend(AbstractBackend):
         args_encoded = []
         options_encoded = []
 
-        #self.log.debug('args: %s' % repr(args))
-        #self.log.debug('options: %s' % repr(options))
+        #LOG.debug('args: %s' % repr(args))
+        #LOG.debug('options: %s' % repr(options))
         
         for arg in args:
             if type(arg) == UnicodeType:
@@ -334,8 +350,8 @@ class AbstractProgrammingBackend(AbstractBackend):
             else:
                 options_encoded.append(option)
 
-        #self.log.debug('args_encoded: %s' % repr(args_encoded))
-        #self.log.debug('options_encoded: %s' % repr(options_encoded))
+        #LOG.debug('args_encoded: %s' % repr(args_encoded))
+        #LOG.debug('options_encoded: %s' % repr(options_encoded))
 
         # create a list of alle command line elements
         commandLine = [command]
@@ -343,7 +359,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         commandLine.append(fName)
         commandLine.extend(args_encoded)
         
-        #self.log.debug('commandLine: %s' % commandLine)
+        #LOG.debug('commandLine: %s' % commandLine)
 
         if (sys.platform=="win32") or (sys.platform=="win64"):
             close_fds = False
@@ -356,7 +372,7 @@ class AbstractProgrammingBackend(AbstractBackend):
                                   stdout = subprocess.PIPE,
                                   stderr = subprocess.STDOUT)
 
-        self.log.info('Started %s %s in %s with PID %d' % (command,
+        LOG.info('Started %s %s in %s with PID %d' % (command,
                                                           fName,
                                                           dir,
                                                           handle.pid))
@@ -364,7 +380,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         # This method will be called in a timer thread to ensure that
         # handle will be killed after PROCESS_WAIT_TIME
         def interruptProcess():
-            self.log.debug('Killing %s %s: %d -> %i' %
+            LOG.debug('Killing %s %s: %d -> %i' %
                           (command, fName, SIGTERM, handle.pid))
 
             try:
@@ -392,8 +408,8 @@ class AbstractProgrammingBackend(AbstractBackend):
                    'Check for infinite loops.' \
                    % (self.PROCESS_WAIT_TIME,)
             
-        #self.log.debug('exitcode: %s' % repr(exitcode))
-        #self.log.debug('stdout: %s' % repr(stdout))
+        #LOG.debug('exitcode: %s' % repr(exitcode))
+        #LOG.debug('stdout: %s' % repr(stdout))
         
         # removing files will be done in _cleanup
         #return exitcode, stdout
@@ -416,12 +432,12 @@ class AbstractProgrammingBackend(AbstractBackend):
 
             path = os.path.join(tempfile.gettempdir(), dir)
 
-            self.log.debug('Deleting directory: %s' % path)
+            LOG.debug('Deleting directory: %s' % path)
 
             # delete the entire directory tree
             shutil.rmtree(path)
 
         except Exception, e:
-            self.log.debug(traceback.format_exc())
-            self.log.warn('Internal error during clean up: %s: %s' % \
+            LOG.debug(traceback.format_exc())
+            LOG.warn('Internal error during clean up: %s: %s' % \
                           (sys.exc_info()[0], e))

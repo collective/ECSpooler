@@ -27,8 +27,8 @@ SHUTDOWN         = 9
 ADD_BACKEND      = 9
 STOP_BACKEND     = 9
 REMOVE_BACKEND   = 9
-APPEND_JOB       = 1
-GET_RESULT       = 1
+PUT              = 1
+POP              = 1
 GET_STATUS       = 1
 GET_BACKEND_INFO = 1
 

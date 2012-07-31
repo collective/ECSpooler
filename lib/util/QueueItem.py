@@ -11,26 +11,26 @@ class QueueItem:
     An class which represents items for a queue.
     """
 
-    def __init__(self, data, id=None):
+    def __init__(self, data, oid=None):
         """
-        Creates a new QueueItem object with the given data. If id is None we
-        will create a new unique id using time.
+        Creates a new QueueItem object with the given data. If oid is None we
+        will create a new unique oid using time.
         
         @param: data a dictionary including job data, e.g. backend and students' solution
-        @param: id a unique ID; if not set, a unique ID will be created
+        @param: oid a unique ID; if not set, a unique ID will be created
         """
         assert type(data) == dict, 'data in QueueItem must be a dictionary.'
 
-        # if id is None...
-        if not id: 
-            # ...use id in data if available
+        # if oid is None...
+        if not oid: 
+            # ...use oid in data if available
             if data.has_key('id'):
-                id = data.get('id')
-            # ...or create a new unique id
+                oid = data.get('id')
+            # ...or create a new unique oid
             else:
-                id = str(uuid.uuid1())
+                oid = str(uuid.uuid1())
 
-        self._id = id
+        self._oid = oid
         self._data = {}
         
         self.setData(data)
@@ -39,7 +39,7 @@ class QueueItem:
     def getId(self):
         """
         """
-        return self._id
+        return self._oid
 
 
     def setData(self, data):
@@ -47,8 +47,8 @@ class QueueItem:
         Replaces the complete data with new ones.
         """
         self._data = data.copy()
-        # add id to the data dictionary because it will be used later
-        self._data['id'] = self._id
+        # add oid to the data dictionary because it will be used later
+        self._data['id'] = self._oid
 
         # valide the inputs; an exception can be thrown
         self._validate()
@@ -96,5 +96,5 @@ class QueueItem:
 #if __name__ == "__main__":
 #    """
 #    """
-#    id = uuid.uuid1()
-#    print id
+#    oid = uuid.uuid1()
+#    print oid

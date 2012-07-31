@@ -89,26 +89,17 @@ def _stopSpooler(port, auth):
         log.info("Stopping spooler service at %s:%d" % (host, port))
 
         spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
-        result = spooler.getPID(auth)
+        pid = spooler.getPID(auth)
         
-        if result:
-            if result[0] > 0:
-
-                try:
-                    # stops the spooler sending kill -15 process-id
-                    pid = result[1]
-                    os.kill(pid, signal.SIGTERM)
-                except AttributeError:
-                    log.warn('os.kill and/or signal.SIGTERM not defined. '
-                             'Trying to stop spooler elsewhere.')
-
-            else:
-                log.warn(result[1])
-        else:
-            log.warn("ECSpooler not responding (%s:%s)" % (host, port))
+        try:
+            # stops the spooler sending kill -15 process-id
+            os.kill(pid, signal.SIGTERM)
+        except AttributeError:
+            log.warn('os.kill and/or signal.SIGTERM not defined. '
+                     'Trying to stop spooler elsewhere.')
 
     except Exception, e: 
-        log.error("Unable to stop ECSpooler on %s:%d - %s:%s" % \
+        log.error("Could not stop ECSpooler (%s:%d) - %s:%s" % \
                  (host, port, sys.exc_info()[0], e))
         
         #log.debug(traceback.format_exc())
@@ -123,19 +114,11 @@ def _getSpoolerStatus(port, auth):
     host = LOCALHOST
     
     try:
-        spooler = xmlrpclib.Server("http://%s:%s" % (host, port))
-        status = spooler.getStatus(auth)
-            
-        if status:
-            if status[0] > 0:
-                return status[1]
-            else:
-                log.warn(status[1])
-        else:
-            log.warn("ECSpooler not responding (%s:%s)" % (host, port))
+        spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
+        return spooler.getStatus(auth)
 
-    except Exception, e: 
-        log.warn("Unable to get status information from ECSpooler (%s:%d) - %s:%s" % 
+    except Exception, e:
+        log.warn("No status information from ECSpooler (%s:%d) - %s:%s" % 
                  (host, port, sys.exc_info()[0], e))
     
     return ''
@@ -148,17 +131,9 @@ def _getSpoolerStatus(port, auth):
 #    unreachable (e.g., it crashed).
 #    """
 #    try:
-#        spooler = xmlrpclib.Server("http://%s:%s" % (host, port))
-#        result = spooler.removeBackend(auth, backendId.lower())
+#        spooler = xmlrpclib.ServerProxy("http://%s:%s" % (host, port))
+#        return = spooler.removeBackend(auth, backendId.lower())
 #    
-#        if result:
-#            if result[0] > 0:
-#                return result[1]
-#            else:
-#                log.warn(result[1])
-#        else:
-#            log.warn("ECSpooler not responding (%s:%s)" % (host, port))
-#
 #    except Exception, e: 
 #        log.warn("Unable to remove backend from ECSpooler on %s:%d - %s:%s" % \
 #                 (host, port, sys.exc_info()[0], e))

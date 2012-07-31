@@ -186,43 +186,14 @@ def _stopBackend(backendId, backendPort, spoolerAuth):
     log.info("Stopping backend service '%s' at %s:%d..." % 
              (backendId, backendHost, backendPort))
 
-    backend = xmlrpclib.ServerProxy("http://%s:%d" % (backendHost, backendPort))
-    result = backend.shutdown(spoolerAuth, backendId)
-
-    if result and result[0]:
-        log.info(result[1])
-    else:
-        log.error(result)
+    try:
+        backend = xmlrpclib.ServerProxy("http://%s:%d" % (backendHost, backendPort))
+        result = backend.shutdown(spoolerAuth, backendId)
+        log.info(result)
+        
+    except Exception, e:
+        log.error(e)
     
-    
-    """
-    exec 'from backends.%s import %s' % (backendId.lower(), backendId)
-
-    backendHost = LOCALHOST
-    version = ''
-
-    exec 'from backends.%s import %s' % (backendId.lower(), backendId)
-    exec 'id = %s.%s.id' % (backendId, backendId,)
-    exec 'version = %s.%s.version' % (backendId, backendId,)
-    
-    #log.info("Unregistering backend '%s %s (%s)' on %s:%s ..." % (backendId,
-    #         version, id, spoolerHost, spoolerPort))
-    #print "Unregistering backend '%s %s (%s)' on %s:%s ..." % (backendId,
-    #         version, id, spoolerHost, spoolerPort)
-
-    log.info("Stopping backend '%s %s (%s)' on %s:%d..." % 
-             (backendId, version, id, backendHost, backendPort))
-    #print "Stopping backend '%s %s (%s)' on %s..." % (backendId, version, id, backendHost)
-
-    spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost, spoolerPort))
-    retval = spooler.stopBackend(spoolerAuth, id, )
-    
-    if retval:
-        if retval[0]:
-            print 'Done.'
-        else:
-            print retval[1]
-    """
 
 def _getStatus(backendId, backendPort, spoolerAuth):
     """
@@ -233,22 +204,21 @@ def _getStatus(backendId, backendPort, spoolerAuth):
 
     backendHost = LOCALHOST
     
-    backend = xmlrpclib.ServerProxy("http://%s:%d" % (backendHost, backendPort))
-    result = backend.getStatus(spoolerAuth, backendId)
+    try:
+        backend = xmlrpclib.ServerProxy("http://%s:%d" % (backendHost, backendPort))
+        result = backend.getStatus(spoolerAuth, backendId)
+        return result
     
-    if result and result[0]:
-        return result[1]
-    else:
-        log.error(result)
-
-    return ''
+    except Exception, e:
+        log.error(e)
+        return e
 
 def usage():
     print """
 Usage: backendctl [OPTION ...] BACKEND {start|stop|restart|status}
 
 OPTIONs are:
-  -P port         Port to bind/connect  backend to, i.e. where to listen for 
+  -P port         Port to bind/connect backend to, i.e. where to listen for 
                   new request.  Default: First free port in the range 
                   of 5060 .. 5074.
   -S host         Hostname or IP of the machine on which ECSpooler runs.  
@@ -343,7 +313,7 @@ def main():
         if o in ("-p", "--password"):
             password = a
 
-        if o in ("-P", "--port"):
+        if o in ("-P", "--backendport"):
             try:
                 backendPort = int(a)
             except ValueError:

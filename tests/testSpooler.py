@@ -4,19 +4,18 @@
 # Copyright (c) 2007-2011 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
-from types import DictType
-import sys, os, socket, signal
+from types import DictType, IntType
+import os
 import unittest
-
-import xmlrpclib
 
 from lib.Spooler import Spooler
 
 class testSpooler(unittest.TestCase):
     """
     """
-    _auth = {"username":"demo", "password":"foobar"}
-    _pwdFile = os.path.join(os.path.dirname(__file__), '..', 'etc', 'passwd')
+    _userAuth = {"username":"test", "password":"foobar"}
+    _rootAuth = {"username":"root", "password":"foobar"}
+    _pwdFile = os.path.join(os.path.dirname(__file__), 'passwd')
     _host = '0.0.0.0' #socket.getfqdn()
     _port = 15050
 
@@ -25,35 +24,57 @@ class testSpooler(unittest.TestCase):
     def setUp(self):
         """
         """
-        self.spooler.start()
-       
         
     def tearDown(self):
         """
         """
-        spooler = xmlrpclib.ServerProxy("http://%s:%s" % (self._host, self._port))
-        pid = spooler.getStatus(self._auth)[1]['pid']
         
-        try:
-            # stops the spooler sending kill -15 process-id
-            os.kill(pid, signal.SIGTERM)         
-        except AttributeError:
-            print >> sys.stderr, 'os.kill and/or signal.SIGTERM not defined. ' \
-                                 'Trying to stop spooler elsewhere.'
+
+    def testAuthFail(self):
+        """
+        """
+        self.assertRaises(Exception, self.spooler.getPID, self._userAuth)
+
+    def testGetPID(self):
+        """
+        """
+        pid = self.spooler.getPID(self._rootAuth)
+        self.assertTrue(pid != None)
+        self.assertTrue(type(pid) == IntType)
+
     
     def testGetStatus(self):
-        """FIXME: """
-        status = self.spooler.getStatus(self._auth)
-        
+        """
+        """
+        status = self.spooler.getStatus(self._userAuth)
         self.assertTrue(type(status) == DictType)
 
+    def testGetBackends(self):
+        """
+        """
+        backends = self.spooler.getBackends(self._userAuth)
+        self.assertTrue(type(backends) == DictType)
 
-#def test_suite():
-#    """
-#    """
-#    from unittest import TestSuite, makeSuite
-#
-#    suite = TestSuite()
-#    suite.addTest(makeSuite(testSpooler))
-#    
-#    return suite
+    def testGetResults(self):
+        """
+        """
+        backends = self.spooler.getResults(self._userAuth)
+        self.assertTrue(type(backends) == DictType)
+
+
+def test_suite():
+    """
+    """
+    from unittest import TestSuite, makeSuite
+
+    suite = TestSuite()
+    suite.addTest(makeSuite(testSpooler))
+    
+    return suite
+
+# -- main ---------------------------------------------------------------------
+if __name__ == '__main__':
+    TestRunner = unittest.TextTestRunner
+    suite = test_suite()
+
+    TestRunner().run(suite)

@@ -22,6 +22,7 @@ except ImportError:
 
 # local imports
 #import config
+LOG = None
 
 class AbstractServer:
     """
@@ -36,11 +37,12 @@ class AbstractServer:
         @param: host: host name
         @param: port: port number
         """
+        global LOG
         
         if logger:
-            self.log = logger
+            LOG = logger
         else:
-            self.log = logging.getLogger()
+            LOG = logging.getLogger()
         
         # set server identification
         self._srvId = \
@@ -59,8 +61,8 @@ class AbstractServer:
         self.host = host
         self.port = port
         
-        #self.log.info('host: %s' % host)
-        #self.log.info('port: %d' % port)
+        #LOG.info('host: %s' % host)
+        #LOG.info('port: %d' % port)
 
         self._serverThread = None
 
@@ -88,7 +90,7 @@ class AbstractServer:
         
         if self._manageBeforeStart():
 
-            self.log.info('Starting server thread (%s)...' % (self._className, ))
+            LOG.info('Starting server thread (%s)...' % (self._className, ))
 
             self._serverThread = threading.Thread(target=self._XMLRPCThread)
             self._serverThread.setDaemon(1)
@@ -98,14 +100,14 @@ class AbstractServer:
                 signal.signal(signal.SIGTERM, self._stop)
                 #signal.signal(signal.SIGHUP, self._reconfig)
             except AttributeError:
-                self.log.warn("signal.SIGTERM is not defined - skipping it.")
+                LOG.warn("signal.SIGTERM is not defined - skipping it.")
     
             
             if os.name == 'nt':
                 try:
                     signal.signal(signal.SIGBREAK, signal.default_int_handler)
                 except AttributeError:
-                    self.log.warn('signal.SIGBREAK is not defined - skipping it.')
+                    LOG.warn('signal.SIGBREAK is not defined - skipping it.')
     
             try:
                 # TODO: Green-IT: don't waste cpu cycles using while true: sleep(0.1)
@@ -114,7 +116,7 @@ class AbstractServer:
                     time.sleep(0.1)
 
             except KeyboardInterrupt:
-                self.log.info('Received keyboard interrupt.')
+                LOG.info('Received keyboard interrupt.')
                 self._stop(signal.SIGTERM, None)
 
         else:
@@ -128,14 +130,14 @@ class AbstractServer:
         @param: signal: the signal (TERM or KILL)
         @param: stack:
         """
-        self.log.info('Received signal %s, shutting down...' % (signal, ))
+        LOG.info('Received signal %s, shutting down...' % (signal, ))
 
         self._manageBeforeStop()
 
         # stop server thread
-        self.log.info('Stopping server thread...')
+        LOG.info('Stopping server thread...')
         self._server.server_close()
-        self.log.info('Exiting.')
+        LOG.info('Exiting.')
         # TODO: os_exit doesn't clean up used sockets properly
         os._exit(0)
 
