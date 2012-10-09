@@ -157,7 +157,6 @@ class Keywords(AbstractBackend):
         # run selected tests (e.g., "simple", cf. schema definition)
         for test in testSpecs:
             log.debug('Running test: %s' % test.getName())
-
             # run with all test data
             for t in testdata:
                 try:
@@ -185,9 +184,9 @@ class Keywords(AbstractBackend):
             solved = int(round(matches/len(testdata) * 100))
 
         inverted = job['inverted']
-        if inverted:
+        if (inverted == True):
             solved = 100 - solved
-
+        
         feedback = '''\nYour automatically determined score: %d of 100.''' % solved
 
         return BackendResult(solved, feedback)
