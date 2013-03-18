@@ -12,8 +12,9 @@ information from the spooler.  __main__ reads the command line
 arguments and processes them.
 """
 
-import os, sys, time, signal, socket, xmlrpclib, getopt, atexit
-import traceback
+import os, sys, time, signal, socket, xmlrpclib, getopt 
+#import atexit
+#import traceback
 import logging
 
 # add parent directory to the system path
@@ -161,27 +162,28 @@ def authError(cmd):
     print "Command '%s' requires username and password." % cmd
 
 
-def getPassFromFile(file, user):
+def getPassFromFile(filename, user):
     """
     Read the given file of user:password entries and return the password
     for the given user if found.
-			@return: None if the given file does not exist or has no entry
+    
+    @return: None if the given file does not exist or has no entry
              for the given user, the users' password otherwise.
     """
 
-    if not os.path.exists(file):
-        log.warn("Unable to read '%s'" % (file))
+    if not os.path.exists(filename):
+        log.warn("Unable to read '%s'" % (filename))
         return None
 
     lines = []
     try:
-        pwdFile = open(file, "r")
+        pwdFile = open(filename, "r")
         lines = pwdFile.readlines()
         pwdFile.close()
         
     except IOError, ioe:
-        log.warn("Error reading file '%s': %s" % (file, ioe));
-        #print "Error reading file '%s': %s" % (file, ioe)
+        log.warn("Error reading file '%s': %s" % (filename, ioe));
+        #print "Error reading filename '%s': %s" % (file, ioe)
         return None
 
     for line in lines:
