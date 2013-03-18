@@ -412,25 +412,31 @@ class AbstractProgrammingBackend(AbstractBackend):
         #LOG.debug('stdout: %s' % repr(stdout))
         
         # removing files will be done in _cleanup
-        #return exitcode, stdout
-        return exitcode, "%s\n%s" % (stdout, stderr)
+        
+        # concat result message
+        if (stderr == None):
+            msg = "%s" % (stdout)
+        else:
+            msg = "%s\n%s" % (stdout, stderr)
+        
+        return exitcode, msg
 
 
-    def _cleanup(self, dir):
+    def _cleanup(self, directory):
         """
         Delete the entire directory tree for path.
         
-        @dir a directory in temporary path
+        @directory a directory in temporary path
         """
 
         if not config.CLEANUP:
             return
         
         try:
-            # change dir
+            # change directory
             os.chdir(tempfile.gettempdir())
 
-            path = os.path.join(tempfile.gettempdir(), dir)
+            path = os.path.join(tempfile.gettempdir(), directory)
 
             LOG.debug('Deleting directory: %s' % path)
 
