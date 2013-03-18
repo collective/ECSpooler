@@ -1,0 +1,5 @@
+#DROP TABLE Weine;
+--INSERT INTO menschen (Vorname, Nachname, Alter, Telefon)
+--VALUES ('Horse', 'Diddy', '53', '01766677');
+SELECT * FROM menschen;
+

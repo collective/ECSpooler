@@ -1,0 +1,4 @@
+INSERT INTO menschen (Vorname, Nachname, Alter, Telefon)
+VALUES ('Horse', 'Diddy', '53', '01766677');
+ALTER TABLE menschen DROP Telefon;
+SELECT * FROM menschen;

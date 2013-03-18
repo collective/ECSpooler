@@ -1,0 +1,53 @@
+CREATE TABLE menschen (Vorname char(50), Nachname char(50), Alter int, Telefon int);
+INSERT INTO menschen (Vorname, Nachname, Alter, Telefon)
+VALUES ('Volker', 'Putt', '27', '017777777');
+INSERT INTO menschen (Vorname, Nachname, Alter, Telefon)
+VALUES ('Biba', 'Butzemann', '16', '0900167123');
+INSERT INTO menschen (Vorname, Nachname, Alter, Telefon)
+VALUES ('Räuber', 'Hotzenplotz', '16', '0900167123');
+
+CREATE TABLE PCGames (Name char(50), Genre char(50), releaseDate date);
+INSERT INTO PCGames (Name, Genre, releaseDate)
+VALUES ('Doom', 'Shooter', '1992-01-01');
+
+CREATE TABLE Weine (Name char(50), Herkunft char(50), Winzer char(50));
+INSERT INTO Weine (Name, Herkunft, Winzer)
+VALUES ('Vino Skulare', 'Bulgarien', 'Frankenstein');
+INSERT INTO Weine (Name, Herkunft, Winzer)
+VALUES ('Vinoceros', 'Nigeria', 'Al Coholic');
+INSERT INTO Weine (Name, Herkunft, Winzer)
+VALUES ('Vindows 32', 'Redmond', 'Tom Gates');
+INSERT INTO Weine (Name, Herkunft, Winzer)
+VALUES ('Einöl', 'Alpen', 'Einöli');
+INSERT INTO Weine (Name, Herkunft, Winzer)
+VALUES ('Kerner Wein', 'Kernstadt', 'Johannes B. Kerner');
+INSERT INTO Weine (Name, Herkunft, Winzer)
+VALUES ('Scheurebe Wein', 'Rostock', 'Schäuble');
+
+CREATE TABLE Berufstätige (Bezeichnung char(50), Herkunft char(50), Einkommen char(50));
+INSERT INTO Berufstätige (Bezeichnung, Herkunft, Einkommen)
+VALUES ('Abutze', 'Bulgarien', '17.500');
+INSERT INTO Berufstätige (Bezeichnung, Herkunft, Einkommen)
+VALUES ('Al Coholic', 'Nigeria', '45.000');
+INSERT INTO Berufstätige (Bezeichnung, Herkunft, Einkommen)
+VALUES ('Vindows 32', 'Redmond', '104.000');
+
+CREATE TABLE menschen2 (Vorname char(50), Nachname char(50), Alter int, Telefon int);
+INSERT INTO menschen2 (Vorname, Nachname, Alter, Telefon)
+VALUES ('Volker', 'Putt', '27', '017777777');
+INSERT INTO menschen2 (Vorname, Nachname, Alter, Telefon)
+VALUES ('Trollolooo', 'Butzemann', '16', '0900167123');
+INSERT INTO menschen2 (Vorname, Nachname, Alter, Telefon)
+VALUES ('Don', 'Kanallje', '16', '0900167123');
+
+CREATE TABLE menschen3 (Vorname char(50), Nachname char(50), Alter int, Telefon int) ;
+INSERT INTO menschen3 (Vorname, Nachname, Alter, Telefon)
+VALUES ('Räuber', 'Hotzenplotz', '16', '0900167123');
+INSERT INTO menschen3 (Vorname, Nachname, Alter, Telefon)
+VALUES ('Volker', 'Putt', '27', '017777777');
+INSERT INTO menschen3 (Vorname, Nachname, Alter, Telefon)
+VALUES ('Biba', 'Butzemann', '16', '0900167123');
+INSERT INTO menschen3 (Vorname, Nachname, Alter, Telefon)
+VALUES ('Don', 'Kanallje', '16', '0900167123');
+
+CREATE TABLE emptyTable (Vorname char(50), Nachname char(50), Alter int, Telefon int);
