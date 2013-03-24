@@ -6,7 +6,6 @@
 # This file is part of ECSpooler.
 
 import sys, os, re, time
-import logging
 
 from types import StringType, UnicodeType
 from os.path import join, dirname
@@ -20,10 +19,7 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 from backends.java import config
-
-# define default logging
-LOG = logging.getLogger('java')
-
+from backends.java import LOG
 
 # The packages that the model and student solution will be put in
 NS_MODEL = 'ModelPackage'

@@ -6,7 +6,6 @@
 # This file is part of ECSpooler.
 
 import sys, os, re
-import logging
 
 from types import StringType, UnicodeType
 from os.path import join, dirname
@@ -21,22 +20,20 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 from backends.python import config
-
-# enable logging
-log = logging.getLogger('python')
+from backends.python import LOG
 
 # load Haskell function to do a simple test
 try:
     simpleTest = file(join(dirname(__file__), 'simpleTest.py'), 'r').read()
 except IOError, ioe:
-    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    LOG.warn('%s: %s' % (sys.exc_info()[0], ioe))
     simpleTest = ''
 
 # load Haskell function to do a test which allows permutation of list elems
 try:
     permTest = file(join(dirname(__file__), 'permTest.py'), 'r').read()
 except IOError, ioe:
-    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    LOG.warn('%s: %s' % (sys.exc_info()[0], ioe))
     permTest = ''
 
 WRAPPER_TEMPLATE = \
@@ -131,7 +128,7 @@ class Python(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
+        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
 
 
     def _postProcessCheckSyntax(self, test, message):
@@ -153,7 +150,7 @@ class Python(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -168,7 +165,7 @@ class Python(AbstractProgrammingBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -193,7 +190,7 @@ class Python(AbstractProgrammingBackend):
 
             if not solved: break
 
-            log.debug('Running semantic check with test: %s' % 
+            LOG.debug('Running semantic check with test: %s' % 
                           test.getName())
 
             # get the interpreter
@@ -240,7 +237,7 @@ class Python(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    log.error(msg)
+                    LOG.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured

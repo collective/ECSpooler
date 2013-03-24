@@ -5,6 +5,6 @@
 #
 # This file is part of ECSpooler.
 
-#subpackages
+from lib.util import settings
 
-#classes
+LOG = settings.getFileLogger('haskellqc')

@@ -17,7 +17,6 @@
 #       replaced re.sub with replace whereever possible.
 
 import sys, os, re
-import logging
 
 from os.path import join, dirname
 from types import StringTypes
@@ -32,30 +31,28 @@ from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
 from lib.AbstractProgrammingBackend import EX_OK
 
 from backends.haskell import config
-
-# define default logging
-log = logging.getLogger('haskell')
+from backends.haskell import LOG
 
 
 # load Haskell function to do a simple test
 try:
     simpleTest = file(join(dirname(__file__), 'simpleTest.hs'), 'r').read()
 except IOError, ioe:
-    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    LOG.warn('%s: %s' % (sys.exc_info()[0], ioe))
     simpleTest = ''
 
 # load Haskell function to do a test which allows permutation of list elems
 try:
     permTest = file(join(dirname(__file__), 'permTest.hs'), 'r').read()
 except IOError, ioe:
-    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    LOG.warn('%s: %s' % (sys.exc_info()[0], ioe))
     permTest = ''
 
 # load Haskell function to do a test which allows tolerance
 try:
     toleranceTest = file(join(dirname(__file__), 'toleranceTest.hs'), 'r').read()
 except IOError, ioe:
-    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    LOG.warn('%s: %s' % (sys.exc_info()[0], ioe))
     permTest = ''
 
 WRAPPER_TEMPLATE = \
@@ -180,7 +177,7 @@ class Haskell(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        if not logger: logger = log
+        if not logger: logger = LOG
 
         AbstractProgrammingBackend.__init__(self, params, versionFile, logger)
 

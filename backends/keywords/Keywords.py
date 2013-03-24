@@ -7,7 +7,8 @@
 
 from __future__ import division
 
-import sys, re, logging
+import sys, re
+#import logging
 
 from types import StringType, UnicodeType
 
@@ -20,9 +21,7 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 #from backends.keywords import config
-
-# set the logging environment
-log = logging.getLogger('keywords')
+from backends.keywords import LOG
 
 # input schema
 inputSchema = Schema((
@@ -80,7 +79,7 @@ class Keywords(AbstractBackend):
     def __init__(self, params, versionFile=__file__):
         """
         """
-        AbstractBackend.__init__(self, params, versionFile, log)
+        AbstractBackend.__init__(self, params, versionFile, LOG)
 
 
     # -- internal methods used by subclasses ----------------------------------
@@ -95,12 +94,12 @@ class Keywords(AbstractBackend):
         """
 
         try:
-            log.info('Executing tests (%s)' % job.getId())
+            LOG.info('Executing tests (%s)' % job.getId())
             result = self._process_doTests(job)
         
         except Exception, e:
             msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
-            log.error(msg)
+            LOG.error(msg)
             #log.error(traceback.format_exc())
             result = BackendResult(-200, msg)
 
@@ -120,7 +119,7 @@ class Keywords(AbstractBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -135,7 +134,7 @@ class Keywords(AbstractBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -156,7 +155,7 @@ class Keywords(AbstractBackend):
 
         # run selected tests (e.g., "simple", cf. schema definition)
         for test in testSpecs:
-            log.debug('Running test: %s' % test.getName())
+            LOG.debug('Running test: %s' % test.getName())
             # run with all test data
             for t in testdata:
                 try:
@@ -172,7 +171,7 @@ class Keywords(AbstractBackend):
                     msg = 'Internal error during test: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    log.error(msg)
+                    LOG.error(msg)
                     return BackendResult(-215, msg)
             # end inner for loop
         #end outer for loop 

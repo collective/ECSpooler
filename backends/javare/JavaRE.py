@@ -5,7 +5,6 @@
 #
 # This file is part of ECSpooler.
 import sys, os, re
-import logging
 import httplib
 import tempfile
 from urlparse import urlparse
@@ -22,9 +21,7 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 from backends.javare import config
-
-# enable logging
-log = logging.getLogger('backends.javare')
+from backends.javare import LOG
 
 
 # The name of the wrapper class that performs the syntactic check
@@ -158,7 +155,7 @@ class JavaRE(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
+        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
 
 
     def download(self, url):
@@ -255,7 +252,7 @@ class JavaRE(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -270,7 +267,7 @@ class JavaRE(AbstractProgrammingBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -309,7 +306,7 @@ class JavaRE(AbstractProgrammingBackend):
 
             if not solved: break
 
-            log.debug('Running semantic check with test: %s' % test.getName())
+            LOG.debug('Running semantic check with test: %s' % test.getName())
 
             # 4.1. set wrapper source
             src = test.semantic
@@ -350,7 +347,7 @@ class JavaRE(AbstractProgrammingBackend):
                 msg = 'Internal error during semantic check: %s: %s' % \
                       (sys.exc_info()[0], e)
                               
-                log.error(msg)
+                LOG.error(msg)
                 return BackendResult(-230, msg)
 
             # 4.4. run with all test data
@@ -368,7 +365,7 @@ class JavaRE(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
 
-                    log.error(msg)
+                    LOG.error(msg)
                     return BackendResult(-230, msg)
 
                 # write the test data to a file
@@ -397,7 +394,7 @@ class JavaRE(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
 
-                    log.error(msg)
+                    LOG.error(msg)
                     return BackendResult(-230, msg)
 
                 # execute wrapper
@@ -413,13 +410,13 @@ class JavaRE(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    log.error(msg)
+                    LOG.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured
                 if exitcode != EX_OK:
                     
-                    log.debug('exitcode: %s' % repr(exitcode))
+                    LOG.debug('exitcode: %s' % repr(exitcode))
                     
                     result = "\nYour submission failed. Test " \
                              "case was: '%s' (%s)" \
@@ -430,7 +427,7 @@ class JavaRE(AbstractProgrammingBackend):
                         
                 # has the student's solution passed this tests?
                 else:
-                    log.debug(result)
+                    LOG.debug(result)
                     
                     msgItems = result.split(';;', 2)
                     

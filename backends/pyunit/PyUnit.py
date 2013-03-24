@@ -6,12 +6,12 @@
 # This file is part of backend 'pyunit'.
 
 import sys, os, re
-import logging
 
 from types import StringType, UnicodeType
 
 # local imports
 from backends.pyunit import config
+from backends.pyunit import LOG
 
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
 from lib.AbstractProgrammingBackend import EX_OK
@@ -19,9 +19,6 @@ from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
-
-# enable logging
-log = logging.getLogger('backends.pyunit')
 
 WRAPPER_MODULE = \
 """# -*- coding: utf-8 -*-
@@ -71,7 +68,7 @@ testEnvs = Schema((
 
     TestEnvironment(
         'default',
-        label = 'PyUnitTests',
+        label = 'Default',
         description = 'Run PyUnit tests',
         semantic = WRAPPER_MODULE,
         compiler = config.INTERPRETER,
@@ -105,7 +102,7 @@ class PyUnit(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
+        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
 
 
     def _postProcessCheckSyntax(self, test, message):
@@ -127,7 +124,7 @@ class PyUnit(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # get additional imports
@@ -152,7 +149,7 @@ class PyUnit(AbstractProgrammingBackend):
         # run selected test specifications
         for test in self._getTests(job):
 
-            log.debug('Running semantic check with test: %s' % 
+            LOG.debug('Running semantic check with test: %s' % 
                           test.getName())
 
             # get the interpreter
@@ -194,7 +191,7 @@ class PyUnit(AbstractProgrammingBackend):
                 msg = 'Internal error during semantic check: %s: %s' % \
                       (sys.exc_info()[0], e)
                               
-                log.error(msg)
+                LOG.error(msg)
                 return BackendResult(-230, msg)
 
             # an error occured

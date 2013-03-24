@@ -13,7 +13,6 @@
 #       replaced re.sub with replace whereever possible.
 
 import sys, os, re
-import logging
 
 from types import StringTypes
 
@@ -28,9 +27,7 @@ from backends.haskell.Haskell import SYNTAX_TEMPLATE
 from backends.haskell.Haskell import RUNHUGS_RE
 
 from backends.haskellext import config
-
-# enable logging
-log = logging.getLogger('backends.haskellext')
+from backends.haskellext import LOG
 
 semanticCheckTemplate = \
 """module ${MODULE} where
@@ -91,7 +88,7 @@ class HaskellExt(Haskell):
     def __init__(self, params, versionFile=__file__):
         """
         """
-        Haskell.__init__(self, params, versionFile, log)
+        Haskell.__init__(self, params, versionFile, LOG)
 
     def _process_checkSemantics(self, job):
         """
@@ -105,7 +102,7 @@ class HaskellExt(Haskell):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -120,7 +117,7 @@ class HaskellExt(Haskell):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -158,7 +155,7 @@ class HaskellExt(Haskell):
 
             if not solved: break
 
-            log.debug('Running semantic check with test: %s' % test.getName())
+            LOG.debug('Running semantic check with test: %s' % test.getName())
 
             # set the interpreter
             interpreter = test.interpreter
@@ -228,7 +225,7 @@ class HaskellExt(Haskell):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    log.error(msg)
+                    LOG.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured

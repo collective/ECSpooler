@@ -6,7 +6,6 @@
 # This file is part of ECSpooler.
 
 import sys, os, re
-import logging
 
 from types import StringType, UnicodeType
 from os.path import join, dirname
@@ -21,22 +20,20 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 from backends.erlang import config
-
-# enable logging
-log = logging.getLogger('backends.erlang')
+from backends.erlang import LOG
 
 # load source for simple testing
 try:
     simpleTest = file(join(dirname(__file__), 'simpleTest.erl'), 'r').read()
 except IOError, ioe:
-    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    LOG.warn('%s: %s' % (sys.exc_info()[0], ioe))
     simpleTest = ''
 
 # load source for testing permutations
 try:
     permTest = file(join(dirname(__file__), 'permTest.erl'), 'r').read()
 except IOError, ioe:
-    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    LOG.warn('%s: %s' % (sys.exc_info()[0], ioe))
     permTest = ''
 
 
@@ -131,7 +128,7 @@ class Erlang(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
+        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
 
     # -- check syntax ---------------------------------------------------------
     def _preProcessCheckSyntax(self, test, src, **kwargs):
@@ -180,7 +177,7 @@ class Erlang(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -195,7 +192,7 @@ class Erlang(AbstractProgrammingBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -221,7 +218,7 @@ class Erlang(AbstractProgrammingBackend):
 
             if not solved: break
 
-            log.debug('Running semantic check with test: %s' % test.getName())
+            LOG.debug('Running semantic check with test: %s' % test.getName())
 
             # get the compiler
             compiler = test.compiler
@@ -264,7 +261,7 @@ class Erlang(AbstractProgrammingBackend):
             except AssertionError, err:
                 msg = 'Internal error during semantic check: %s: %s' % \
                       (sys.exc_info()[0], err)
-                log.error(msg)
+                LOG.error(msg)
                 return BackendResult(-230, msg)
 
            
@@ -319,7 +316,7 @@ class Erlang(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    log.error(msg)
+                    LOG.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured

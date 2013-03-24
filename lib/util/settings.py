@@ -64,3 +64,35 @@ def init_logging(level=None, fname=None, dir=None, fsize=None, fcount=None, form
     
     return __handler
 
+
+def getFileLogger(loggerName, logFormat=None):
+    """
+    """
+    return getLogger(loggerName, loggerName, logFormat)
+
+
+def getLogger(loggerName, logFilename=None, logFormat=None):
+    """
+    """
+    log = logging.getLogger(loggerName)
+    
+    # log level
+    log.setLevel(LOG_LEVEL)
+
+    # log file name and context
+    if logFilename:
+        if (not os.path.exists(LOG_DIR) and not os.path.isdir(LOG_DIR)):
+            os.makedirs(LOG_DIR)
+        logHandler = RotatingFileHandler(os.path.join(LOG_DIR, logFilename + '.log'), 'a', LOG_FILESIZE, LOG_FILES)
+    else:
+        logHandler = logging.StreamHandler(sys.stdout)
+
+    # log format
+    if logFormat:
+        logHandler.setFormatter(logFormat)
+    else:
+        logHandler.setFormatter(LF_LONG)
+
+    log.addHandler(logHandler)
+    
+    return log

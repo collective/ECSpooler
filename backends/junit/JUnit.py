@@ -39,7 +39,6 @@
 #       Some minor formattings.
 
 import sys, os, re
-import logging
 
 from os.path import join
 
@@ -48,9 +47,7 @@ from lib.AbstractProgrammingBackend import AbstractProgrammingBackend, EX_OK
 
 # import config file
 from backends.junit import config
-
-# define default logging
-LOG = logging.getLogger('junit')
+from backends.junit import LOG
 
 ## Regular expressions to extract certain information
 # CLASS_NAME_RE consists of ClassModifier? class Identifier Super? Interfaces? ClassBody

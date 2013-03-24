@@ -19,12 +19,12 @@
 #        Corrected spelling
 
 import sys, os, re
-import logging
 
 from types import UnicodeType
 
 # local imports
 from backends.xml import config
+from backends.xml import LOG
 
 from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import InputField
@@ -33,9 +33,6 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
 from lib.AbstractProgrammingBackend import EX_OK
-
-# define default logging
-log = logging.getLogger('backends.xml')
 
 # This is the name we use to store the dtd on the server:
 dtdName = 'dtd'
@@ -135,7 +132,7 @@ class XML(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        if not logger: logger = log
+        if not logger: logger = LOG
 
         AbstractProgrammingBackend.__init__(self, params, versionFile, logger)
         
@@ -147,11 +144,11 @@ class XML(AbstractProgrammingBackend):
         """
         
         try:
-            log.info('Executing tests (%s)' % job.getId())
+            LOG.info('Executing tests (%s)' % job.getId())
             result = self._process_doTests(job)
         except Exception, e:
             msg = 'Internal error: %s: %s' % (sys.exc_info()[0], e)
-            log.error(msg)
+            LOG.error(msg)
             
             result = BackendResult(-200, msg)
             
@@ -172,7 +169,7 @@ class XML(AbstractProgrammingBackend):
         
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # We ensure that we defined our schema correctly:
@@ -205,7 +202,7 @@ class XML(AbstractProgrammingBackend):
         else:
             return BackendResult(True, 'No test was run.')
     
-    def _writeXML(self, name, content, suffix, id, dtdName='dtd'):
+    def _writeXML(self, name, content, suffix, LOG, dtdName='dtd'):
         """
         Uses _writeModule to write an XML file, replacing all DOCTYPE declarations using SYSTEM that
         are not inside of comments.
@@ -235,7 +232,7 @@ class XML(AbstractProgrammingBackend):
         
         wellFormedCheck = job['wellFormed']
         if wellFormedCheck:
-            log.info('Testing well-formedness of XML file.')
+            LOG.info('Testing well-formedness of XML file.')
             
             submission = job['submission']
             
@@ -267,7 +264,7 @@ class XML(AbstractProgrammingBackend):
                 # This test was passed - append a success indicator to the global feedback:
                 self.feedback += "Your submission is well-formed.\n"
         else:
-            log.info('Not testing well-formedness of XML file.')
+            LOG.info('Not testing well-formedness of XML file.')
     
     
     def _validationCheck(self, job):
@@ -289,7 +286,7 @@ class XML(AbstractProgrammingBackend):
         "Tests require valid 'submission' (%s)" % submission
         
         if len(dtd) != 0:
-            log.info("Validating student's submission against a DTD.")
+            LOG.info("Validating student's submission against a DTD.")
             
             try:
                 dtdModule = self._writeModule(dtdName, dtd, '.dtd', job.getId())
@@ -319,7 +316,7 @@ class XML(AbstractProgrammingBackend):
                 # This test was passed - append a success indicator to the global feedback:
                 self.feedback += "Your submission was successfully validated.\n"
         else:
-            log.info('Not testing against a DTD, since it was not specified.')
+            LOG.info('Not testing against a DTD, since it was not specified.')
     
     
     def _xPathCheck(self, job):
@@ -344,7 +341,7 @@ class XML(AbstractProgrammingBackend):
             
         # Perform test only if modelSolution and xpath are non-empty:
         if len(modelSolution) != 0 and len(xpath) != 0:
-            log.info('Testing XPath expressions.')
+            LOG.info('Testing XPath expressions.')
             
             try:
                 # Get the testData:
@@ -416,7 +413,7 @@ class XML(AbstractProgrammingBackend):
                 # This test was passed - append a success indicator to the global feedback:
                 self.feedback += "Your submission was successfully tested.\n"
         else:
-            log.info('Not testing XPath expressions, since either modelSolution or xpath were empty.')
+            LOG.info('Not testing XPath expressions, since either modelSolution or xpath were empty.')
         
     
         

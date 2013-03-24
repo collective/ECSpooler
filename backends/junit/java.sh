@@ -1,7 +1,6 @@
 #! /bin/sh
 
-JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.5/Home; export JAVA_HOME
-#JAVA_HOME=/usr/pkg/java/sun-1.5/; export JAVA_HOME
+JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Home; export JAVA_HOME
 JAVA_BIN=${JAVA_HOME}/bin
 INTERPRETER=${JAVA_BIN}/java
 

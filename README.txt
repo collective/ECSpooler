@@ -24,6 +24,9 @@ Prerequisites
     "ECAutoAssessmentBox":http://plone.org/products/ecautoassessmentbox
     Plone product.  So you will normally have a Plone installation
     with ECAutoAssessmentBox.
+    
+  * For use of SOAPWrapper "Spyne":http://spyne.io and 
+    "Suds":https://fedorahosted.org/suds/
   
 Installation
 
@@ -34,7 +37,7 @@ Installation
     appropriate privileges for writing to the specified installation
     directory)
 
-  * Be sure that 'ECSpooler/var' and 'ECSpooler/log' are writeable by
+  * Be sure that 'ECSpooler/var' and 'ECSpooler/logs' are writeable by
     the user who is starting the spooler (cf. below if you run the spooler
     as root).
 

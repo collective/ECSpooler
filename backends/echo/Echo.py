@@ -7,6 +7,8 @@ from lib.AbstractBackend import AbstractBackend
 from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import Schema, TestEnvironment, InputField
 
+#from backends.echo import LOG
+
 # input schema
 inputSchema = Schema((
     InputField(

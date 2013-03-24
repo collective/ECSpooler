@@ -20,10 +20,6 @@ try:
 except ImportError:
     import md5 as hashlib
 
-# local imports
-#import config
-LOG = None
-
 class AbstractServer:
     """
     This is the abstract server class which will be used for spooler and 
@@ -61,8 +57,8 @@ class AbstractServer:
         self.host = host
         self.port = port
         
-        #LOG.info('host: %s' % host)
-        #LOG.info('port: %d' % port)
+        #log.info('host: %s' % host)
+        #log.info('port: %d' % port)
 
         self._serverThread = None
 

@@ -5,7 +5,6 @@
 #
 # This file is part of ECSpooler.
 import sys, os, re
-import logging
 import random
 
 from types import StringTypes
@@ -20,9 +19,7 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 from backends.cl import config
-
-# enable logging
-log = logging.getLogger('backends.cl')
+from backends.cl import LOG
 
 # The placeholder for the names of the packages that the model and
 # student solution will be put in
@@ -33,7 +30,7 @@ NS_STUDENT = 'studentPackage'
 try:
     simpleTest = file(join(dirname(__file__), 'simpleTest.lisp'), 'r').read()
 except IOError, ioe:
-    log.warn('%s: %s' % (sys.exc_info()[0], ioe))
+    LOG.warn('%s: %s' % (sys.exc_info()[0], ioe))
     simpleTest = ''
 
 # load Cl function to do a test which allows permutation of list elems
@@ -170,7 +167,7 @@ class Cl(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
+        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
 
 
     # -- syntax check ---------------------------------------------------------
@@ -247,7 +244,7 @@ class Cl(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -262,7 +259,7 @@ class Cl(AbstractProgrammingBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -298,7 +295,7 @@ class Cl(AbstractProgrammingBackend):
 
             if not solved: break
 
-            log.debug('Running semantic check with test: %s' % test.getName())
+            LOG.debug('Running semantic check with test: %s' % test.getName())
 
             # get the interpreter
             interpreter = test.interpreter
@@ -366,7 +363,7 @@ class Cl(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    log.error(msg)
+                    LOG.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured

@@ -6,8 +6,6 @@
 # This file is part of ECSpooler.
 
 import sys, os
-#import re
-import logging
 import tempfile
 
 #from os.path import join, dirname
@@ -26,9 +24,7 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 from backends.sql import config
-
-# enable logging
-log = logging.getLogger('sql')
+from backends.sql import LOG
 
 # input schema
 inputSchema = Schema((
@@ -137,7 +133,7 @@ class SQL(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
+        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
 
 
     def _process_execute(self, job):
@@ -149,7 +145,7 @@ class SQL(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
 
         # get submission
@@ -168,7 +164,7 @@ class SQL(AbstractProgrammingBackend):
         # run selected test specifications
         for test in self._getTests(job):
 
-            log.debug('Running SQL check with test: %s' % test.getName())
+            LOG.debug('Running SQL check with test: %s' % test.getName())
 
             # get the sql.bat
             interpreter = test.interpreter
@@ -199,7 +195,7 @@ class SQL(AbstractProgrammingBackend):
                 msg = 'Internal error during SQL tests: %s: %s' % \
                       (sys.exc_info()[0], e)
                               
-                log.error(msg)
+                LOG.error(msg)
                 return BackendResult(-230, msg)
 
             # an error occured
@@ -212,8 +208,8 @@ class SQL(AbstractProgrammingBackend):
 
         self._cleanup(job.getId())
         
-        log.debug(solved)
-        log.debug(feedback)
+        LOG.debug(solved)
+        LOG.debug(feedback)
 
         return BackendResult(solved, feedback)
 

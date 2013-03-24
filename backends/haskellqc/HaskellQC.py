@@ -18,17 +18,11 @@
 #       using HaskellQCConf.FAILED_TEST_MESSAGE and PASSED_ALL_TESTS_MESSAGE
 #       improved feedback (corporate design)
 
-import sys, os, re, logging
+import sys, os, re
 
 from types import StringTypes
 
 # local imports
-from backends.haskell.Haskell import Haskell
-from backends.haskell.Haskell import SYNTAX_TEMPLATE
-from backends.haskell.Haskell import GENERIC_TEMPLATE
-from backends.haskell.Haskell import RUNHUGS_RE
-from backends.haskellqc import config
-
 from lib.AbstractProgrammingBackend import EX_OK
 from lib.data.BackendJob import BackendJob
 from lib.data.BackendResult import BackendResult
@@ -36,8 +30,12 @@ from lib.util.BackendSchema import TestEnvironment
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import Schema
 
-# enable logging
-log = logging.getLogger('backends.haskellqc')
+from backends.haskellqc import config
+from backends.haskellqc import LOG
+from backends.haskell.Haskell import Haskell
+from backends.haskell.Haskell import SYNTAX_TEMPLATE
+from backends.haskell.Haskell import GENERIC_TEMPLATE
+from backends.haskell.Haskell import RUNHUGS_RE
 
 # regex to get all property names
 PROPERTIES_RE = re.compile(r'(?P<name>prop_[A-Z,a-z,0-9]+\w*)')
@@ -117,7 +115,7 @@ class HaskellQC(Haskell):
     def __init__(self, params, versionFile=__file__):
         """
         """
-        Haskell.__init__(self, params, versionFile, log)
+        Haskell.__init__(self, params, versionFile, LOG)
 
 
     def _postProcessCheckSemantic(self, test, message):
@@ -142,7 +140,7 @@ class HaskellQC(Haskell):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # get student's submission and QuickCheck properties
@@ -169,7 +167,7 @@ class HaskellQC(Haskell):
 
         if (not testdata) or (len(testdata) == 0):
             msg = 'No QuickCheck propeties defined.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
         submission = GENERIC_TEMPLATE % ('Student', submission)
@@ -185,7 +183,7 @@ class HaskellQC(Haskell):
 
             if not solved: break
 
-            log.debug('Running semantic check with test: %s' % test.getName())
+            LOG.debug('Running semantic check with test: %s' % test.getName())
 
             # get the interpreter
             interpreter = test.interpreter
@@ -220,7 +218,7 @@ class HaskellQC(Haskell):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    log.error(msg)
+                    LOG.error(msg)
                     return BackendResult(-230, msg)
 
                 # an error occured
@@ -236,7 +234,7 @@ class HaskellQC(Haskell):
                         
                 # has the students' solution passed this test?
                 else:
-                    #log.debug(result)
+                    #LOG.debug(result)
                     failed = FAILED_RE.search(result)
                     #passed = PASSED_RE.search(result)
                     

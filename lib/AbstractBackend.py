@@ -21,8 +21,6 @@ from lib.data.BackendResult import BackendResult
 
 from lib.util import errorcodes
 
-LOG = None
-
 class AbstractBackend(AbstractServer):
     """
     AbstractBackend is the basic class of all backends.  It implements an 
@@ -40,24 +38,23 @@ class AbstractBackend(AbstractServer):
     schema = None
     testSchema = None
     version = ''
-    log = None
     
     def __init__(self, params, versionFile=__file__, logger=None):
         """
         @params dict with all parameters which must be set for a backend
         """
-        AbstractServer.__init__(self,
-                                params.get('host', None),
-                                params.get('port', None),
-                                logger)
-        
         global LOG
-
         
         if logger:
             LOG = logger
         else:
-            LOG = logging.getLogger()
+            LOG = logging.getLogger(self.id)
+
+        AbstractServer.__init__(self,
+                                params.get('host', None),
+                                params.get('port', None),
+                                LOG)
+        
         
         try:
             # set version from backend's version.txt
@@ -255,10 +252,10 @@ class AbstractBackend(AbstractServer):
         result = {}
         
         for field in self.schema.fields():
-            #LOG.debug('Processing field: %s' % field)
+            #log.debug('Processing field: %s' % field)
             result[field.getName()] = field.getAllProperties()
 
-        #LOG.debug("Return value: %s" % result)
+        #log.debug("Return value: %s" % result)
         return result
 
 
@@ -328,7 +325,7 @@ class AbstractBackend(AbstractServer):
         """
         result = []
         
-        #LOG.debug('job: %s' % job.getData())
+        #log.debug('job: %s' % job.getData())
 
         if job.has_key('tests'):
             # user has selected one or more tests
@@ -340,7 +337,7 @@ class AbstractBackend(AbstractServer):
         #    # not tests selected by the user, taking all available
         #    result = self.testSchema.fields()
             
-        #LOG.debug('Following tests will be used %s: ' % result)
+        #log.debug('Following tests will be used %s: ' % result)
         return result
 
 

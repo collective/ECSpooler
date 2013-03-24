@@ -5,8 +5,7 @@
 #
 # This file is part of ECSpooler.
 
-from backends.haskell import config
+from os.path import join, dirname, abspath
 
-INTERPRETER = config.INTERPRETER
+INTERPRETER = join(abspath(dirname(__file__)), 'runhugs.sh')
 #INTERPRETER = join(abspath(dirname(__file__)), 'runhugs+systrace')
-#INTERPRETER = join(abspath(dirname(__file__)), 'runhugs.sh')

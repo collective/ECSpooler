@@ -12,16 +12,18 @@ import thread
 import threading
 import xmlrpclib
 import traceback
-import logging
+#import logging
 
 from types import StringTypes
 from types import DictionaryType
 
 # local imports
 import config
+from lib.util import settings
 
 # define a default logger for spooler classes
-LOG = logging.getLogger("spooler")
+#LOG = logging.getLogger("spooler")
+LOG = settings.getFileLogger('spooler')
 
 
 from lib.AbstractServer import AbstractServer

@@ -6,7 +6,6 @@
 # This file is part of ECSpooler.
 
 import sys, os, re
-import logging
 
 from types import StringType, UnicodeType
 from os.path import join, dirname
@@ -20,9 +19,7 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 from backends.prolog import config
-
-# enable logging
-log = logging.getLogger('backends.prolog')
+from backends.prolog import LOG
 
 # The packages that the model and student solution will be put in
 NS_MODEL   = 'model'
@@ -173,7 +170,7 @@ class Prolog(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, log)
+        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
 
 
     def cleanUpErrMsg(self, msg, path):
@@ -271,7 +268,7 @@ class Prolog(AbstractProgrammingBackend):
 
         if len(testSpecs) == 0:
             msg = 'No test specification selected.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-217, msg)
         
         # test for defined repeat fields in the schema definition
@@ -286,7 +283,7 @@ class Prolog(AbstractProgrammingBackend):
 
         if len(testdata) == 0:
             msg = 'No test data defined.'
-            log.warn('%s, %s' % (msg, job.getId()))
+            LOG.warn('%s, %s' % (msg, job.getId()))
             return BackendResult(-216, msg)
 
 
@@ -311,7 +308,7 @@ class Prolog(AbstractProgrammingBackend):
 
             if not solved: break
 
-            log.debug('Running semantic check with test: %s' % 
+            LOG.debug('Running semantic check with test: %s' % 
                           test.getName())
 
             # write solution to a file
@@ -392,7 +389,7 @@ class Prolog(AbstractProgrammingBackend):
                     msg = 'Internal error during semantic check: %s: %s' % \
                           (sys.exc_info()[0], e)
                                   
-                    log.error(msg)
+                    LOG.error(msg)
                     #return (0, msg)
                     return BackendResult(-230, msg)
 
@@ -413,7 +410,7 @@ class Prolog(AbstractProgrammingBackend):
                         
                 # has the students' solution passed this tests?
                 else:
-                    log.debug(result)
+                    LOG.debug(result)
                     
                     msgItems = result.split(';;')
                     
