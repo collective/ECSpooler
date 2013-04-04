@@ -39,15 +39,18 @@
 #       Some minor formattings.
 
 import sys, os, re
+import logging
 
 from os.path import join
 
 from lib.data.BackendResult import BackendResult
-from lib.AbstractProgrammingBackend import AbstractProgrammingBackend, EX_OK
+from lib.ProgrammingBackend import ProgrammingBackend, EX_OK
 
 # import config file
 from backends.junit import config
-from backends.junit import LOG
+
+LOG = logging.getLogger()
+
 
 ## Regular expressions to extract certain information
 # CLASS_NAME_RE consists of ClassModifier? class Identifier Super? Interfaces? ClassBody
@@ -88,7 +91,7 @@ IMPORT_NAME_NOT_JAVA_RE = re.compile('import\s+(?!java\.)(?P<name>.*);')
 FAILURE_TRACE_RE = re.compile('.*?%s.*?(?P<number>\d+).*?$' % config.NS_STUDENT, re.M | re.S)
 
     
-class JUnit(AbstractProgrammingBackend):
+class JUnit(ProgrammingBackend):
     """
     Backend class that determines whether a submission of java code 
     returns expected values which are defined in JUnit tests, or not.
@@ -113,7 +116,7 @@ class JUnit(AbstractProgrammingBackend):
         """
         This constructor is needed to set the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
+        ProgrammingBackend.__init__(self, params, versionFile)
 
 
 #--------  Methods for modifying incomming source code  ------------------------
@@ -266,7 +269,7 @@ class JUnit(AbstractProgrammingBackend):
         returned in its message.
         After that, every occurence of config.NS_STUDENT+'.' will be erased.
         
-        @see: AbstractProgrammingBackend._postProcessCheckSyntax
+        @see: ProgrammingBackend._postProcessCheckSyntax
         """
         matches = re.findall('\w+\.\w+:(?P<numbers>\d+):', message)
         
@@ -431,15 +434,16 @@ class JUnit(AbstractProgrammingBackend):
                 os.path.basename(wrapperModule['file']),
                 config.CLASSPATH_SETTINGS)
                 
-            assert exitcode == EX_OK, \
-                'Error in wrapper code during semantic check:\n\n%s' % result
+            #assert exitcode == EX_OK, \
+            #    'Error in wrapper code during semantic check:\n\n%s' % result
             
-            # run using java
-            exitcode, result = self._runInterpreter(
-                interpreter,
-                os.path.dirname(wrapperModule['file']),
-                config.CLASS_SEMANTIC_CHECK,
-                config.CLASSPATH_SETTINGS)
+            if exitcode == EX_OK:
+                # run using java
+                exitcode, result = self._runInterpreter(
+                    interpreter,
+                    os.path.dirname(wrapperModule['file']),
+                    config.CLASS_SEMANTIC_CHECK,
+                    config.CLASSPATH_SETTINGS)
                 
         except Exception, e:
             message = 'Internal error during semantic check: %s: %s' % \
@@ -473,7 +477,7 @@ class JUnit(AbstractProgrammingBackend):
         numbers.
         Second, every occurence of config.NS_STUDENT+'.' will be erased.
         
-        @see: AbstractProgrammingBackend._postProcessCheckSemantic
+        @see: ProgrammingBackend._postProcessCheckSemantic
         """
         # scan for Failure trace:
         matcher = FAILURE_TRACE_RE.search(message)
