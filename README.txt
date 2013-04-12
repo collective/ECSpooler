@@ -14,7 +14,7 @@ Prerequisites
 
   * "Python":http://python.org
 
-  * A UNIX or UNIX-like operating system, e.g., NetBSD, Solaris, Mac
+  * A UNIX or UNIX-like operating system, e. g., NetBSD, Solaris, Mac
     OS X, or Linux.
 
     ECSpooler does run on Windows (with some restrictions), but this
@@ -25,8 +25,8 @@ Prerequisites
     Plone product.  So you will normally have a Plone installation
     with ECAutoAssessmentBox.
     
-  * For use of SOAPWrapper "Spyne":http://spyne.io and 
-    "Suds":https://fedorahosted.org/suds/
+  * For use of SOAPWrapper for ECSpooler "Spyne":http://spyne.io and 
+    "Suds":https://fedorahosted.org/suds/ is needed
   
 Installation
 
@@ -143,6 +143,10 @@ Description
 
     python -c 'import md5; print md5.new("password").hexdigest()'
 
+SOAP Wrapper
+
+  TODO
+
 Support
 
   For questions and discussions about ECSpooler, please join the
@@ -156,7 +160,7 @@ Credits
   "Michael Piotrowski":http://wdok.cs.uni-magdeburg.de/Members/mxp.
   
   Additional programming by Wolfram Fenske.
-
+  
 License
 
   ECSpooler is licensed under the

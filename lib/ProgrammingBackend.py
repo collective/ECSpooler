@@ -14,7 +14,7 @@ import sys, os, subprocess, tempfile, threading, signal, traceback
 import shutil
 import logging
 
-from lib.AbstractBackend import AbstractBackend
+from lib.Backend import Backend
 from lib.util import utils
 from lib.data.BackendResult import BackendResult
 
@@ -30,11 +30,11 @@ try:
 except AttributeError:
     SIGTERM = 15
 
-LOG = None
+LOG = logging.getLogger()
     
-class AbstractProgrammingBackend(AbstractBackend):
+class ProgrammingBackend(Backend):
     """
-    AbstractProgrammingBackend is the basic class of all backends for
+    ProgrammingBackend is the basic class of all backends for
     programming exercises.
     
     Backend implementations *should* be derived from this class and must
@@ -54,18 +54,11 @@ class AbstractProgrammingBackend(AbstractBackend):
     # set default time (in seconds) before killing a test job's execution
     PROCESS_WAIT_TIME = 10
    
-    def __init__(self, params, versionFile=__file__, logger=None):
+    def __init__(self, params, versionFile=__file__):
         """
         This constructor is needed to reset the logging environment.
         """
-        global LOG
-
-        if logger:
-            LOG = logger
-        else:
-            LOG = logging.getLogger()
-
-        AbstractBackend.__init__(self, params, versionFile, LOG)
+        Backend.__init__(self, params, versionFile)
     
 
     def _process_execute(self, job):
@@ -75,7 +68,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         @param: job: a BackendJob with all relevant test data
         @return: a BackendResult
         @see: BackendJob, BackendResult
-        @see: AbstractBackend.execute, AbstractBackend._process_execute
+        @see: Backend.execute, Backend._process_execute
         """
 
         try:
@@ -359,7 +352,7 @@ class AbstractProgrammingBackend(AbstractBackend):
         commandLine.append(fName)
         commandLine.extend(args_encoded)
         
-        #LOG.debug('commandLine: %s' % commandLine)
+        LOG.debug('commandLine: %s' % commandLine)
 
         if (sys.platform=="win32") or (sys.platform=="win64"):
             close_fds = False

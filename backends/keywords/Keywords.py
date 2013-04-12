@@ -8,12 +8,12 @@
 from __future__ import division
 
 import sys, re
-#import logging
+import logging
 
 from types import StringType, UnicodeType
 
 # local imports
-from lib.AbstractBackend import AbstractBackend
+from lib.Backend import Backend
 from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -21,7 +21,7 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 #from backends.keywords import config
-from backends.keywords import LOG
+LOG = logging.getLogger()
 
 # input schema
 inputSchema = Schema((
@@ -59,7 +59,7 @@ tests = Schema((
     ),
 ))
 
-class Keywords(AbstractBackend):
+class Keywords(Backend):
     """
     The keywords backends was designed to give an example of how
     simple a backend can be implemented.  This backend checks wether
@@ -79,7 +79,7 @@ class Keywords(AbstractBackend):
     def __init__(self, params, versionFile=__file__):
         """
         """
-        AbstractBackend.__init__(self, params, versionFile, LOG)
+        Backend.__init__(self, params, versionFile)
 
 
     # -- internal methods used by subclasses ----------------------------------
@@ -89,7 +89,7 @@ class Keywords(AbstractBackend):
 
         @param: job: a BackendJob
         @return: a BackendResult
-        @see: lib.AbstractBackend._process_execute
+        @see: lib.Backend._process_execute
         @see: lib.data.BackendJob, lib.data.BackendResult
         """
 

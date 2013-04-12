@@ -4,13 +4,16 @@
 # Copyright (c) 2007-2011 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
+import logging
 
 # local imports
 from backends.haskell.Haskell import Haskell
 from backends.haskell.Haskell import tests
 
 from backends.haskellio import config
-from backends.haskellio import LOG
+
+LOG = logging.getLogger()
+
 
 # set a modified wrapper code for the semantic check
 WRAPPER_TEMPLATE = \
@@ -53,4 +56,4 @@ class HaskellIO(Haskell):
     def __init__(self, params, versionFile=__file__):
         """
         """
-        Haskell.__init__(self, params, versionFile, LOG)
+        Haskell.__init__(self, params, versionFile)

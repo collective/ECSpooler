@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # $Id$
 #
-# Copyright (c) 2007-2011 Otto-von-Guericke-Universität Magdeburg
+# Copyright (c) 2007-2013 Otto-von-Guericke-Universität Magdeburg
 #
 # This file is part of ECSpooler.
 #
@@ -21,78 +21,46 @@ except ImportError:
 
 
 # init logging
-def init_logging(level=None, fname=None, dir=None, fsize=None, fcount=None, format=None):
-    """Initialize logging.
+def init_logging(name=None):
+    """
+    Initialize logging using root logger and specified name for log file.
     
+    @param name: specified logger name which will be used as basename for log file.
+    """
+    
+    # use root logger
+    get_logger(None, name)
+
+
+def get_logger(name, filename=None, level=LOG_LEVEL, maxBytes=LOG_FILESIZE, backupCount=LOG_FILES, fmt=LF_LONG):
+    """
+    Return logger with the given parameters
+    
+    @param name: specified logger name which will be used as basename of the logfile.
     @param level: log level to set.  Default: LOG_LEVEL
-    @param fname: basename of the logfile. If None, stdout will be used instead.
-    @param dir: directory, where to store the log.  Default: LOG_DIR
-    @param fsize: max. size of the rotating logfile. 
-    @param fcount: max. number of logfiles.  Default: LOG_FILES
-    @param format: log format to use.  Default: LOG_FORMAT
+    @param maxBytes: max. size of the rotating logfile.  Default: LOG_FILESIZE
+    @param backupCount: max. number of rotating logfiles.  Default: LOG_FILES
+    @param fmt: log format to use.  Default: LOG_FORMAT
     @return:  the log handler used
     """
+    log = logging.getLogger(name)
     
-    # get logger
-    __log = logging.getLogger()
+    # set log level
+    log.setLevel(level)
 
-    # log level
-    if not level: level = LOG_LEVEL
-    __log.setLevel(level)
-
-    # log dir
-    if not dir: dir = LOG_DIR
-
-    # get directory for log files and create it if necessary
-    if (not os.path.exists(dir) and not os.path.isdir(dir)):
-        print "Log directory '%s' does not exist - trying to create it." % (dir)
-        os.makedirs(dir)
-
-    # size, count, format
-    if not fsize: fsize = LOG_FILESIZE
-    if not fcount: fcount = LOG_FILES
-    if not format: format = LF_LONG
-
-    # log file name and context
-    if fname:
-        __handler = RotatingFileHandler(os.path.join(dir, fname + '.log'), 'a', fsize, fcount)
-    else:
-        __handler = logging.StreamHandler(sys.stdout)
-
-    __handler.setFormatter(format)
-    __log.addHandler(__handler)
-    
-    return __handler
-
-
-def getFileLogger(loggerName, logFormat=None):
-    """
-    """
-    return getLogger(loggerName, loggerName, logFormat)
-
-
-def getLogger(loggerName, logFilename=None, logFormat=None):
-    """
-    """
-    log = logging.getLogger(loggerName)
-    
-    # log level
-    log.setLevel(LOG_LEVEL)
-
-    # log file name and context
-    if logFilename:
+    # set log file
+    if filename:
         if (not os.path.exists(LOG_DIR) and not os.path.isdir(LOG_DIR)):
             os.makedirs(LOG_DIR)
-        logHandler = RotatingFileHandler(os.path.join(LOG_DIR, logFilename + '.log'), 'a', LOG_FILESIZE, LOG_FILES)
+        path = os.path.join(LOG_DIR, filename + '.log')
+        hdlr = RotatingFileHandler(path, maxBytes=maxBytes, backupCount=backupCount)
     else:
-        logHandler = logging.StreamHandler(sys.stdout)
+        hdlr = logging.StreamHandler(sys.stdout)
 
-    # log format
-    if logFormat:
-        logHandler.setFormatter(logFormat)
-    else:
-        logHandler.setFormatter(LF_LONG)
-
-    log.addHandler(logHandler)
+    # set log format
+    hdlr.setFormatter(fmt)
+    
+    # add handler
+    log.addHandler(hdlr)
     
     return log

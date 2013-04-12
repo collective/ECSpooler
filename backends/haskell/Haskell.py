@@ -27,8 +27,8 @@ from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
 from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
-from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
-from lib.AbstractProgrammingBackend import EX_OK
+from lib.ProgrammingBackend import ProgrammingBackend
+from lib.ProgrammingBackend import EX_OK
 
 from backends.haskell import config
 from backends.haskell import LOG
@@ -159,7 +159,7 @@ tests = Schema((
 #runhugsRegEx = 'Type checking\n?|Parsing\n?|[Parsing]*[Dependency analysis]*[Type checking]*[Compiling]*\x08 *'
 RUNHUGS_RE = re.compile(r'Type checking\n?|Parsing\n?|[Parsing]*[Dependency analysis]*[Type checking]*[Compiling]*\x08 *')
 
-class Haskell(AbstractProgrammingBackend):
+class Haskell(ProgrammingBackend):
     """
     A backend for checking Haskell programs by comparing
     student and model solution on given test data.
@@ -173,13 +173,11 @@ class Haskell(AbstractProgrammingBackend):
     schema = inputSchema
     testSchema = tests
     
-    def __init__(self, params, versionFile=__file__, logger = None):
+    def __init__(self, params, versionFile=__file__):
         """
         This constructor is needed to reset the logging environment.
         """
-        if not logger: logger = LOG
-
-        AbstractProgrammingBackend.__init__(self, params, versionFile, logger)
+        ProgrammingBackend.__init__(self, params, versionFile)
 
 
     def _preProcessCheckSyntax(self, test, src, **kwargs):

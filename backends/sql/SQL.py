@@ -7,13 +7,14 @@
 
 import sys, os
 import tempfile
+import logging
 
 #from os.path import join, dirname
 #from types import StringType, UnicodeType
 
 # local imports
-from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
-from lib.AbstractProgrammingBackend import EX_OK
+from lib.ProgrammingBackend import ProgrammingBackend
+from lib.ProgrammingBackend import EX_OK
 
 from lib.data.BackendResult import BackendResult
 
@@ -24,7 +25,8 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 from backends.sql import config
-from backends.sql import LOG
+
+LOG = logging.getLogger()
 
 # input schema
 inputSchema = Schema((
@@ -115,7 +117,7 @@ def getNumForBool(boolVal):
         return 0
 
 
-class SQL(AbstractProgrammingBackend):
+class SQL(ProgrammingBackend):
     """
     Backend for checking SQL assignments.
     """
@@ -133,7 +135,7 @@ class SQL(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
+        ProgrammingBackend.__init__(self, params, versionFile)
 
 
     def _process_execute(self, job):

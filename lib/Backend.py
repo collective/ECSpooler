@@ -15,15 +15,17 @@ from os.path import join, dirname, abspath
 from types import StringTypes, DictionaryType
 
 # local imports
-from lib.AbstractServer import AbstractServer
+from lib.Service import Service
 from lib.data.BackendJob import BackendJob
 from lib.data.BackendResult import BackendResult
 
 from lib.util import errorcodes
 
-class AbstractBackend(AbstractServer):
+LOG = logging.getLogger()
+
+class Backend(Service):
     """
-    AbstractBackend is the basic class of all backends.  It implements an 
+    Backend is the basic class of all backends.  It implements an 
     XMLRPC server, which is waiting for test jobs.
 
     Backend implementations should be derived from this class by implementing 
@@ -39,21 +41,13 @@ class AbstractBackend(AbstractServer):
     testSchema = None
     version = ''
     
-    def __init__(self, params, versionFile=__file__, logger=None):
+    def __init__(self, params, versionFile=__file__):
         """
         @params dict with all parameters which must be set for a backend
         """
-        global LOG
-        
-        if logger:
-            LOG = logger
-        else:
-            LOG = logging.getLogger(self.id)
 
-        AbstractServer.__init__(self,
-                                params.get('host', None),
-                                params.get('port', None),
-                                LOG)
+        Service.__init__(self, params.get('host', None),
+                               params.get('port', None))
         
         
         try:

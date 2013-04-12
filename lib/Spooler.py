@@ -12,21 +12,19 @@ import thread
 import threading
 import xmlrpclib
 import traceback
-#import logging
+import logging
 
 from types import StringTypes
 from types import DictionaryType
 
 # local imports
 import config
-from lib.util import settings
 
 # define a default logger for spooler classes
-#LOG = logging.getLogger("spooler")
-LOG = settings.getFileLogger('spooler')
+LOG = logging.getLogger()
 
 
-from lib.AbstractServer import AbstractServer
+from lib.Service import Service
 from lib.data.BackendJob import BackendJob
 from lib.data.BackendResult import BackendResult
 
@@ -34,7 +32,7 @@ from lib.util import auth
 from lib.util import errorcodes
 from lib.util.SpoolerQueue import SpoolerQueue
 
-class Spooler(AbstractServer):
+class Spooler(Service):
     """
     The Spooler manages incomming jobs and backends. Each job will be turned 
     over to a backend.
@@ -43,17 +41,19 @@ class Spooler(AbstractServer):
     # resourcestring
     DEFAULT_DOQUEUE_WAKEUP = 2 # 2 == 2000 ms
     
-    def __init__(self, host, port, pwdFile):
+    def __init__(self, host, port):
         """
         Creates a new spooler instance at the given host and port.
         
         @param: host: host name
         @param: port: port number
-        @param: pwdFile: absolute path to password file
+        @param: pwd_file: absolute path to password file
         """
-        AbstractServer.__init__(self, host, port, LOG)
+        Service.__init__(self, host, port)
+        
+        pwd_file = config.PASSWD_FILE
 
-        assert pwdFile and type(pwdFile) in StringTypes,\
+        assert pwd_file and type(pwd_file) in StringTypes,\
             "%s requires a correct 'pwd_file' option" % self._className
 
         # a dictionary for backends
@@ -73,7 +73,7 @@ class Spooler(AbstractServer):
         self._restoreRetryJobs()
 
         # using md5 encrypted passwords in file etc/passwd for authentification
-        self._auth = auth.UserAuthMD5(pwdFile)
+        self._auth = auth.UserAuthMD5(pwd_file)
 
         # doqueue thread (we will use only one thread)
         self._doqueueThread = None
@@ -91,8 +91,10 @@ class Spooler(AbstractServer):
         self._server.register_function(self.removeBackend)
         #self._server.register_function(self.stopBackend)
         self._server.register_function(self.appendJob)
+        self._server.register_function(self.push)
         self._server.register_function(self.getResults)
         self._server.register_function(self.getResult)
+        self._server.register_function(self.pull)
         self._server.register_function(self.getStatus)
         self._server.register_function(self.getPID)
         self._server.register_function(self.getBackends)
@@ -258,9 +260,16 @@ class Spooler(AbstractServer):
             raise Exception(errorcodes.NO_SUCH_BACKEND)
 
 
+    def push(self, authdata, jobdata):
+        """
+        @see: appendJob
+        """
+        return self.appendJob(authdata, jobdata)
+    
+        
     def appendJob(self, authdata, jobdata):
         """
-        Adds a new CheckJob to the queue
+        Adds a new test to the queue
 
         @param: authdata: username and password for authentication
         @param: jobdata: relevant job data (see also class CheckJob)
@@ -322,6 +331,13 @@ class Spooler(AbstractServer):
         return result
 
 
+    def pull(self, authdata, jobId):
+        """
+        @see: getResult
+        """
+        return self.getResult(authdata, jobId)
+    
+        
     def getResult(self, authdata, jobId):
         """
         Returns a dictionary { jobID: QueueItem.getData() } with 
@@ -461,7 +477,7 @@ class Spooler(AbstractServer):
         @param: authdata: username and password for authentication
         @param: backendId: a backend's unique ID
 
-        @see: AbstractBackend.getInputFields
+        @see: Backend.getInputFields
         """
         
         LOG.debug("Trying to return input fields for backend '%s'" % backendId)
@@ -495,7 +511,7 @@ class Spooler(AbstractServer):
         @param: authdata: username and password for authentication
         @param: backendId: a backend's unique ID
 
-        @see. AbstractBackend.getTestFields
+        @see. Backend.getTestFields
         """
         
         LOG.debug("Trying to return test specs for backend '%s'" % backendId)

@@ -15,205 +15,30 @@ for the backend. If a port is already in use, we will try another one.
 """
 
 import os, sys, time, socket, xmlrpclib
-#import traceback
 import getopt
-import logging
+from getpass import getpass
 
 # add parent directory to the system path
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir))
 
 # local imports
-import config
 from lib.util import settings
-
-log = settings.getLogger('backendctl', logFormat=config.LF_MESSAGE_ONLY)
+from lib.util.servicecontrol import ServiceControl
 
 from backends import *
 
-# Run process as nobody
-try:
-    os.setuid(settings.NOBODY_UID)
-except os.error, e:
-    log.warn("Cannot change uid: %s" % e)
-    #print >> sys.stderr, "Cannot change uid:", e
-
 # TODO: should be in config.py
 MAX_TRIALS = 15
-LOCALHOST = '0.0.0.0'#socket.getfqdn(name)
 
-def _startBackend(backendId, backendPort, spoolerHost, spoolerPort, 
-                  spoolerAuth):
+class BackendControl(ServiceControl):
     """
-    Starts a backend with the given parameters at localhost only.
     """
-    backendHost = LOCALHOST
-    #version = ''
 
-    try:
-        #print 'from backends.%s import %s' % (backendId.lower(), backendId)
-        exec 'from backends.%s import %s' % (backendId.lower(), backendId)
-        exec 'id = %s.%s.id' % (backendId, backendId,)
-    except NameError, ne:
-        #print >> sys.stderr, "No such backend: '%s'" % (backendId,)
-        log.error("No such backend: '%s'" % backendId)
-        raise ne
-    except AttributeError, ae:
-        #print >> sys.stderr, "No such backend: '%s'.  Did you mean '%s'?" \
-        #      % (backendId, backendId.capitalize(),)
-        log.error("No such backend: '%s'.  Did you mean '%s'?" % 
-                  (backendId, backendId.capitalize(),))
-        raise ae
-    
-    exec 'version = %s.%s.version' % (backendId, backendId,)
-
-    (backend, p)= _getBackendInstance(backendId, backendPort, 
-                                      spoolerHost, spoolerPort, spoolerAuth)
-
-    if backend:
-        log.info("Starting %s backend service at %s" % (backendId, time.asctime()))
-        log.info("    Hostname: %s" % backendHost)
-        log.info("    Port: %i" % p)
-
-        
-        log.info("Registering on ECSpooler at '%s:%s'..." % 
-                 (spoolerHost, spoolerPort))
-
-        try:
-            if sys.platform in ['unixware7']:
-                cpid = os.fork1()
-            else:
-                cpid = os.fork()
-        except AttributeError:
-            log.warn('os.fork not defined - skipping.')
-            cpid = 0
-    
-        if cpid == 0:
-            # child process
-            for handler in logging._handlerList:
-                if not isinstance(handler, logging.FileHandler):
-                    logging.getLogger().removeHandler(handler)
-                # end if
-            #end for
-            
-            __tmp = backend.start()  # blocks here 'til shutdown
-            if __tmp:
-                log.error(__tmp)
-                print >> sys.stderr, __tmp
-    
-        else:
-            # parent process
-            time.sleep(1)
-            #print 'pid=%d' % cpid
-            log.info('pid=%d' % cpid)
-            return 0
-
-    else:
-        #print 'Backend start failed. See log for more information.'
-        log.error('Backend start failed. See log for more information.')
-        return 1
-
-
-def _getBackendInstance(backendId, backendPort, spoolerHost, spoolerPort, 
-                        spoolerAuth):
-    """
-    Returns an instance of the backend class if one could be created.
-    """
-    backendHost = LOCALHOST
-    
-    # put together the backend module and class name using backendId
-    moduleName = '%s.%s' % (backendId, backendId,)
-    
-    for port in range(backendPort, backendPort + MAX_TRIALS, 1):
-    
-        # get a instance, e.g., Python-Backend
-        # FIXME: use spooler instead of spooler
-        instanceCreateStmt = \
-        "backend = %s({ \
-                    'host': '%s', \
-                    'port': %d, \
-                    'spooler': 'http://%s:%d', \
-                    'auth': %s}, %s.__file__)" \
-                % (moduleName, backendHost, port, \
-                   spoolerHost, spoolerPort, repr(spoolerAuth), backendId)
-                
-        retval = _tryGetBackendInstance(backendId, instanceCreateStmt)
-        
-        if retval: 
-            return (retval, port)
-        else:
-            time.sleep(0.1)
-    
-    return (None, 0)
-    
-
-def _tryGetBackendInstance(backendId, instanceCreateStmt):
-    """
-    Executes the import statement for the backend class, creates an instance 
-    and returns this instance.
-    
-    An exception is thrown if the port is already in use. In this case we will
-    return None.
-
-    @param: backendId ID of the backend
-    @param: instanceCreateStmt Statement which will be executed to create a new
-                               instance of the backend class.
-    @return: The backend instance or None if the instance couldn't be created.
-    """
-    try:
-        backend = None
-        
-        log.debug("Trying to create instance of backend '%s'" % backendId)
-        #log.debug(instanceCreateStmt)
-
-        exec 'from backends.%s import %s' % (backendId.lower(), backendId)
-        exec(instanceCreateStmt)
-
-        return backend
-
-    # FIXME: This doesn't work on Windows -> no socket.error is thrown if
-    #        port is already in use!
-    except socket.error:
-        return None
-        
-
-def _stopBackend(backendId, backendPort, spoolerAuth):
-    """
-    Stops a backend at localhost only.
-    """
-    backendHost = LOCALHOST
-    
-    log.info("Stopping backend service '%s' at %s:%d..." % 
-             (backendId, backendHost, backendPort))
-
-    try:
-        backend = xmlrpclib.ServerProxy("http://%s:%d" % (backendHost, backendPort))
-        result = backend.shutdown(spoolerAuth, backendId)
-        log.info(result)
-        
-    except Exception, e:
-        log.error(e)
-    
-
-def _getStatus(backendId, backendPort, spoolerAuth):
-    """
-    Returns some status information of the backend.
-    """
-    #spooler = xmlrpclib.ServerProxy("http://%s:%d" % (spoolerHost, spoolerPort))
-    #result = spooler.getBackendStatus(spoolerAuth, backendId.lower())
-
-    backendHost = LOCALHOST
-    
-    try:
-        backend = xmlrpclib.ServerProxy("http://%s:%d" % (backendHost, backendPort))
-        result = backend.getStatus(spoolerAuth, backendId)
-        return result
-    
-    except Exception, e:
-        log.error(e)
-        return e
-
-def usage():
-    print """
+    @staticmethod
+    def usage():
+        """
+        """
+        print """
 Usage: backendctl [OPTION ...] BACKEND {start|stop|restart|status}
 
 OPTIONs are:
@@ -228,168 +53,226 @@ OPTIONs are:
                   and registering to ECSpooler
   -p password     Password of the user required for authentication when
                   starting and registering to ECSpooler
-  -a authfile     File to use to lookup the password for the given user.  The
-                  file contains one 'user:password' entry per line.  This
-                  option should be used instead of the -p option to avoid
-                  exposing the password to every user on the system (e.g., via
-                  ps -ef, pargs etc.).
   BACKEND         Name of the backend to start|stop|restart|status.
 """
 
-def authError(cmd):
-    print "%s requires username and password" % cmd
+    def __init__(self, name, spooler_host, spooler_port, backend_port, username=None, password=None):
+        """
+        """
+        ServiceControl.__init__(self, name, backend_port, username=username, password=password)
+        
+        self.spooler_host = spooler_host
+        self.spooler_port = spooler_port
 
 
-def getPassFromFile(file, user):
-    """
-    Read the given file of user:password entries and return the password
-    for the given user if found.
-    @return: None if the given file does not exist or has no entry
-             for the given user, the users' password otherwise.
-    """
+    def start(self):
+        """
+        @see: ServiceControl.start()
+        """
+        # Run backend as nobody
+        try:
+            os.setuid(settings.NOBODY_UID)
+        except os.error, e:
+            print >> sys.stderr, "Cannot change uid:", e
 
-    if not os.path.exists(file):
-        log.warn("Unable to read '%s'" % file)
-        return None
+        try:
+            exec 'from backends.%s import %s' % (self.name.lower(), self.name)
+            exec 'id = %s.%s.id' % (self.name, self.name,)
+        except NameError, ne:
+            print >> sys.stderr, "No such backend: '%s'" % self.name
+            raise ne
+        except AttributeError, ae:
+            print >> sys.stderr, "No such backend: '%s'.  Did you mean '%s'?" \
+                  % (self.name, self.name.capitalize(),)
+            raise ae
+        
+        exec 'version = %s.%s.version' % (self.name, self.name,)
+    
+        (backend, p)= self.__get_backend_instance()
+    
+        if backend:
+            print >> sys.stdout, "Starting %s backend at %s" % (self.name, time.asctime())
+            print >> sys.stdout, "    Hostname: %s" % self.host
+            print >> sys.stdout, "    Port: %i" % p
+            
+            print >> sys.stdout, "Registering to ECSpooler at '%s:%s'..." % (self.spooler_host, self.spooler_port)
+    
+            try:
+                if sys.platform in ['unixware7']:
+                    cpid = os.fork1()
+                else:
+                    cpid = os.fork()
+            except AttributeError:
+                print >> sys.stdout, 'os.fork not defined - skipping.'
+                cpid = 0
+        
+            if cpid == 0:
+                # child process
+                # blocks here 'til shutdown
+                err_msg = backend.start()  
+                if err_msg:
+                    print >> sys.stderr, err_msg
+        
+            else:
+                # parent process
+                time.sleep(1)
+                print >> sys.stdout, 'pid=%d' % cpid
+    
+        else:
+            #print 'Backend start failed. See log for more information.'
+            print >> sys.stderr, 'Backend start failed. See log for more information.'
 
-    lines = []
-    try:
-        pwdFile = open(file, "r")
-        lines = pwdFile.readlines()
-        pwdFile.close()
-    except IOError, ioe:
-        log.warn("Error when reading file '%s': %s" % (file, ioe))
-        return None
 
-    for line in lines:
-        if line.startswith("#"): continue
-        line = line.strip()
-        if not line: continue
-        __tmp = line.split(':', 2)
-        if len(__tmp) == 2 and __tmp[0] == user:
-            return __tmp[1]
+    def __get_backend_instance(self):
+        """
+        Returns an instance of the backend class if one could be created.
+        """
+        # put together the backend module and class name using backend_id
+        moduleName = '%s.%s' % (self.name, self.name,)
+        
+        for port in range(self.port, self.port + MAX_TRIALS, 1):
+        
+            # get a instance, e.g., Python-Backend
+            # FIXME: use spooler instead of spooler
+            instance_create_stmt = \
+            "backend = %s({ \
+                        'host': '%s', \
+                        'port': %d, \
+                        'spooler': 'http://%s:%d', \
+                        'auth': %s}, %s.__file__)" \
+                    % (moduleName, self.host, port, \
+                       self.spooler_host, self.spooler_port, \
+                       repr(self._get_auth()), self.name)
+                    
+            retval = self.__try_get_backend_instance(instance_create_stmt)
+            
+            if retval: 
+                return (retval, port)
+            else:
+                time.sleep(0.1)
+        
+        return (None, 0)
 
-    return None
 
+    def __try_get_backend_instance(self, instance_create_stmt):
+        """
+        Executes the import statement for the backend class, creates an  
+        instance and returns this instance.
+        
+        An exception is thrown if the port is already in use. In this case we
+        will return None.
+    
+        @param: instance_create_stmt Statement which will be executed to create
+                                     a new instance of the backend class.
+        @return: The backend instance or None if the instance couldn't be created.
+        """
+        try:
+            backend = None
+            
+            #log.debug("Trying to create instance of backend '%s'" % self.name)
+            #log.debug(instance_create_stmt)
+    
+            exec 'from backends.%s import %s' % (self.name.lower(), self.name)
+            exec(instance_create_stmt)
+    
+            return backend
+    
+        # FIXME: This doesn't work on Windows -> no socket.error is thrown if
+        #        port is already in use!
+        except socket.error:
+            return None
+
+    def _process_stop(self):
+        """
+        @see ServiceControl.stop
+        @see ServiceControl._process_stop
+        """
+        backend = xmlrpclib.ServerProxy("http://%s:%d" % (self.host, self.port))
+        result = backend.shutdown(self._get_auth(), self.name)
+        print >> sys.stdout, result
+
+    def _process_status(self):
+        """
+        @see ServiceControl.status
+        @see ServiceControl._process_status
+        """
+        server = xmlrpclib.ServerProxy("http://%s:%d" % (self.host, self.port))
+        return server.getStatus(self._get_auth(), self.name)
+
+
+# -----------------------------------------------------------------------------
 def main():
     """
     """
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "S:B:P:u:p:a:h", 
-                               ["spoolerhost=", "spoolerport=", "backendport=", 
-                                "user=", "password=", "authfile=", "help"])
+        opts, args = getopt.getopt(sys.argv[1:], "S:B:P:u:p:h", 
+                                   ["spoolerhost=", "spoolerport=", 
+                                    "backendport=", "user=", "password=", 
+                                    "help"])
     except getopt.GetoptError:
         # print help information and exit:
-        usage()
+        BackendControl.usage()
         sys.exit(2)
 
-    spoolerHost = None
-    spoolerPort = None
-    user = None
-    password = None
-    backendPort = None
-    authfile = None
-    
-    for o, a in opts:
-        if o in ("-h", "--help"):
-            usage()
-            sys.exit()
-
-        if o in ("-S", "--spoolerhost"):
-            spoolerHost = a
-
-        if o in ("-B", "--spoolerport"):
-            try:
-                spoolerPort = int(a)
-            except ValueError:
-                usage()
-                sys.exit(2)
-                
-        if o in ("-u", "--user"):
-            user = a
-
-        if o in ("-p", "--password"):
-            password = a
-
-        if o in ("-P", "--backendport"):
-            try:
-                backendPort = int(a)
-            except ValueError:
-                usage()
-                sys.exit(2)
-
-        if o in ("-a", "--authfile"):
-            authfile = a
-
-    
     if len(args) != 2:
-        usage()
+        BackendControl.usage()
         sys.exit(2)
-
     else:
-        backendId, cmd = args
-
-        if authfile and user:
-            __pw = getPassFromFile(authfile, user)
-            if __pw:
-                password = __pw
-
-        auth = {"username":user, "password":password}
+        spooler_host = 'localhost'
+        spooler_port = 5050
+        backend_port = 5060
+        user = None
+        password = None
         
-        if not spoolerHost: spoolerHost = LOCALHOST
-        if not spoolerPort: spoolerPort = 5050
-        if not backendPort: backendPort = 5060
-
-        ret = 0
-        try:
-            # check cmd option and do the indicated action
-            if cmd == 'start':
-                if not user or not password:
-                    authError(cmd)
-                    usage()
-                    ret = 2
-                else:
-                    ret = _startBackend(backendId, backendPort, spoolerHost, 
-                                  spoolerPort, auth)
-
-            elif cmd == 'stop':
-                _stopBackend(backendId, backendPort, auth)
-            
-            elif cmd == 'restart':
-                _stopBackend(backendId, backendPort, auth)
-                time.sleep(2)
+        for o, a in opts:
+            if o in ("-h", "--help"):
+                BackendControl.usage()
+                sys.exit()
     
-                if not user or not password:
-                    authError(cmd)
-                    usage()
-                    ret = 2
-                else:
-                    ret = _startBackend(backendId, backendPort, spoolerHost, 
-                                        spoolerPort, auth)
+            if o in ("-S", "--spoolerhost"):
+                spooler_host = a
+    
+            if o in ("-B", "--spoolerport"):
+                try:
+                    spooler_port = int(a)
+                except ValueError:
+                    BackendControl.usage()
+                    sys.exit(2)
+                    
+            if o in ("-u", "--user"):
+                user = a
+    
+            if o in ("-p", "--password"):
+                password = a
+    
+            if o in ("-P", "--backendport"):
+                try:
+                    backend_port = int(a)
+                except ValueError:
+                    BackendControl.usage()
+                    sys.exit(2)
 
-            elif cmd == 'status':
-                #raise NotImplementedError('Getting status information is ' +
-                #                          'not implemented yet.')
-                print _getStatus(backendId, backendPort, auth)
+    
+        backend_id, cmd = args
 
-            else:
-                log.error('Unknown command %s' % cmd)
-                usage()
-                ret = 99
+        settings.init_logging(backend_id.lower())
+
+        if not user:
+            user = raw_input("Username for ECSpooler: ")
+        
+        if not password:
+            password = getpass("Password for ECSpooler: ")
+
+        if not user or not password:
+            print "%s requires username and password." % cmd
+            BackendControl.usage()
+            sys.exit(2)
+
+        backendctl = BackendControl(backend_id, spooler_host, spooler_port, backend_port, user, password)
+        backendctl.process(cmd)
+        
                 
-        except Exception, e:
-            ret = 99
-            log.error("%s (%s)" % (e, sys.exc_info()[0]))
-            #traceback.print_exc()
-            #print type(e)     # the exception instance
-            #print e.args      # arguments stored in .args
-            #print e           # __str__ allows args to printed directly
-            #print sys.exc_info()[0]
-            #print >> sys.stderr, "%s: %s" % (sys.exc_info()[0], e)
-            
-        return ret
-
 # -- Main ----------------------------------------------------------------------
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

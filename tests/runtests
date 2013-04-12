@@ -18,7 +18,6 @@ import unittest
 # add parent directory to the system path
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir))
 
-import config
 from lib.util import settings
 
 # change dir to test dir
@@ -53,7 +52,7 @@ def main():
             mName = test[:-3]
             m = __import__(mName)
 
-            settings.init_logging(fname=mName, format=config.LF_SHORT)
+            settings.init_logging(mName)
             
             if hasattr(m, 'test_suite'):
                 print >> sys.stdout, m.__name__

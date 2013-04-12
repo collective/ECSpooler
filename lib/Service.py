@@ -14,31 +14,28 @@ import logging
 
 from types import IntType, StringTypes
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
+from SecureXMLRPCServer import SecureXMLRPCServer, SecureXMLRpcRequestHandler
 
 try:
     import hashlib
 except ImportError:
     import md5 as hashlib
 
-class AbstractServer:
+LOG = logging.getLogger()
+
+class Service:
     """
     This is the abstract server class which will be used for spooler and 
     backend implementation.
     """
 
-    def __init__(self, host, port, logger=None):
+    def __init__(self, host, port):
         """
         Creates a new XML-RPC server instance at the given host and port.
         
         @param: host: host name
         @param: port: port number
         """
-        global LOG
-        
-        if logger:
-            LOG = logger
-        else:
-            LOG = logging.getLogger()
         
         # set server identification
         self._srvId = \
@@ -63,9 +60,18 @@ class AbstractServer:
         self._serverThread = None
 
         # create a server instance, but do not run it
-        self._server = SimpleXMLRPCServer((self.host, self.port), 
-                                           SimpleXMLRPCRequestHandler, False)
-                                           
+        server_class = SimpleXMLRPCServer 
+        handler_class = SimpleXMLRPCRequestHandler
+        # use SSL
+        #server_class = SecureXMLRPCServer
+        #handler_class = SecureXMLRpcRequestHandler
+
+        server_address = (self.host, self.port)
+        
+        self._server = server_class(server_address, handler_class, False)
+        
+        LOG.debug(self._server)
+
         # register functions (must be implemented in subclasses)
         self._registerFunctions()
 

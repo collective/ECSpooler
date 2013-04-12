@@ -13,11 +13,12 @@
 #       replaced re.sub with replace whereever possible.
 
 import sys, os, re
+import logging
 
 from types import StringTypes
 
 from lib.data.BackendResult import BackendResult
-from lib.AbstractProgrammingBackend import EX_OK
+from lib.ProgrammingBackend import EX_OK
 
 # local imports
 from backends.haskell.Haskell import Haskell
@@ -27,7 +28,8 @@ from backends.haskell.Haskell import SYNTAX_TEMPLATE
 from backends.haskell.Haskell import RUNHUGS_RE
 
 from backends.haskellext import config
-from backends.haskellext import LOG
+
+LOG = logging.getLogger()
 
 semanticCheckTemplate = \
 """module ${MODULE} where
@@ -88,7 +90,7 @@ class HaskellExt(Haskell):
     def __init__(self, params, versionFile=__file__):
         """
         """
-        Haskell.__init__(self, params, versionFile, LOG)
+        Haskell.__init__(self, params, versionFile)
 
     def _process_checkSemantics(self, job):
         """

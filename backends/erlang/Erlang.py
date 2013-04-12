@@ -6,13 +6,14 @@
 # This file is part of ECSpooler.
 
 import sys, os, re
+import logging
 
 from types import StringType, UnicodeType
 from os.path import join, dirname
 
 # local imports
-from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
-from lib.AbstractProgrammingBackend import EX_OK
+from lib.ProgrammingBackend import ProgrammingBackend
+from lib.ProgrammingBackend import EX_OK
 from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -20,7 +21,9 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 from backends.erlang import config
-from backends.erlang import LOG
+
+LOG = logging.getLogger()
+
 
 # load source for simple testing
 try:
@@ -110,7 +113,7 @@ tests = Schema((
 ))
 
 
-class Erlang(AbstractProgrammingBackend):
+class Erlang(ProgrammingBackend):
     """
     A simple checker class for checking Haskell programs by comparing
     student and model solution on given test data.
@@ -128,14 +131,14 @@ class Erlang(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
+        ProgrammingBackend.__init__(self, params, versionFile)
 
     # -- check syntax ---------------------------------------------------------
     def _preProcessCheckSyntax(self, test, src, **kwargs):
         """
         Replace module name in students' submission.
         
-        @see: AbstractProgrammingBackend._preProcessCheckSyntax
+        @see: ProgrammingBackend._preProcessCheckSyntax
         @return: modified source code and new module name
         """
 

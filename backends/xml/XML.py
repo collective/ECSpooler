@@ -19,20 +19,23 @@
 #        Corrected spelling
 
 import sys, os, re
+import logging
 
 from types import UnicodeType
 
 # local imports
 from backends.xml import config
-from backends.xml import LOG
+
+LOG = logging.getLogger()
+
 
 from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
 from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
-from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
-from lib.AbstractProgrammingBackend import EX_OK
+from lib.ProgrammingBackend import ProgrammingBackend
+from lib.ProgrammingBackend import EX_OK
 
 # This is the name we use to store the dtd on the server:
 dtdName = 'dtd'
@@ -106,7 +109,7 @@ tests = Schema((
     ),
 ))
 
-class XML(AbstractProgrammingBackend):
+class XML(ProgrammingBackend):
     """
     A backend for checking XML programs by comparing
     student and model solution on given test data.
@@ -128,19 +131,17 @@ class XML(AbstractProgrammingBackend):
     # String used to store the test stage outcomes:
     feedback = ''
     
-    def __init__(self, params, versionFile=__file__, logger = None):
+    def __init__(self, params, versionFile=__file__):
         """
         This constructor is needed to reset the logging environment.
         """
-        if not logger: logger = LOG
-
-        AbstractProgrammingBackend.__init__(self, params, versionFile, logger)
+        ProgrammingBackend.__init__(self, params, versionFile)
         
         
     def _process_execute(self, job):
         """
-        Overriding AbstractBackend._process_execute
-        @see: AbstractBackend._process_execute(self, job)
+        Overriding Backend._process_execute
+        @see: Backend._process_execute(self, job)
         """
         
         try:

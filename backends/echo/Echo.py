@@ -3,11 +3,13 @@ Created on 28.02.2012
 
 @author: amelung
 '''
-from lib.AbstractBackend import AbstractBackend
+from lib.Backend import Backend
 from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import Schema, TestEnvironment, InputField
 
-#from backends.echo import LOG
+import logging
+
+LOG = logging.getLogger()
 
 # input schema
 inputSchema = Schema((
@@ -29,7 +31,7 @@ tests = Schema((
     ),
 ))
 
-class Echo(AbstractBackend):
+class Echo(Backend):
     """
     Class comment
     """

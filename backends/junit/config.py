@@ -74,7 +74,7 @@ JUNIT_LIBS = 'junit_libs'
 CURRENT_PATH = abspath(dirname(__file__))
 
 # Library path
-LIBRARY_PATH = join(CURRENT_PATH,JUNIT_LIBS)
+LIBRARY_PATH = join(CURRENT_PATH, JUNIT_LIBS)
 
 # Library content
 LIBRARIES = os.listdir(LIBRARY_PATH)

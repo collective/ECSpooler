@@ -19,11 +19,12 @@
 #       improved feedback (corporate design)
 
 import sys, os, re
+import logging
 
 from types import StringTypes
 
 # local imports
-from lib.AbstractProgrammingBackend import EX_OK
+from lib.ProgrammingBackend import EX_OK
 from lib.data.BackendJob import BackendJob
 from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import TestEnvironment
@@ -31,11 +32,12 @@ from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import Schema
 
 from backends.haskellqc import config
-from backends.haskellqc import LOG
 from backends.haskell.Haskell import Haskell
 from backends.haskell.Haskell import SYNTAX_TEMPLATE
 from backends.haskell.Haskell import GENERIC_TEMPLATE
 from backends.haskell.Haskell import RUNHUGS_RE
+
+LOG = logging.getLogger()
 
 # regex to get all property names
 PROPERTIES_RE = re.compile(r'(?P<name>prop_[A-Z,a-z,0-9]+\w*)')
@@ -115,7 +117,7 @@ class HaskellQC(Haskell):
     def __init__(self, params, versionFile=__file__):
         """
         """
-        Haskell.__init__(self, params, versionFile, LOG)
+        Haskell.__init__(self, params, versionFile)
 
 
     def _postProcessCheckSemantic(self, test, message):

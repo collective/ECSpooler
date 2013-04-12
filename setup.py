@@ -21,7 +21,7 @@ docs = glob.glob('*.txt')
 
 etc = glob.glob('etc/*')
 
-log = glob.glob('logs/*')
+logs = glob.glob('logs/*')
 
 var = glob.glob('var/*')
 
@@ -54,12 +54,13 @@ setup (name="ECSpooler",
             ('backends/keywords', backend_keywords),
             ('doc', docs),
             ('etc', etc),
-            ('log', log),
+            ('logs', logs),
             ('var', var),
             ('tests', tests)],
        install_requires=[
             'setuptools',
             'spyne',
             'suds',
+            #'pyOpenSSL'
        ],
        )

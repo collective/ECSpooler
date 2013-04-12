@@ -6,12 +6,13 @@
 # This file is part of ECSpooler.
 
 import sys, os, re, time
+import logging
 
 from types import StringType, UnicodeType
 from os.path import join, dirname
 
 # local imports
-from lib.AbstractProgrammingBackend import AbstractProgrammingBackend, EX_OK
+from lib.ProgrammingBackend import ProgrammingBackend, EX_OK
 from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -19,7 +20,9 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 from backends.java import config
-from backends.java import LOG
+
+LOG = logging.getLogger()
+
 
 # The packages that the model and student solution will be put in
 NS_MODEL = 'ModelPackage'
@@ -173,7 +176,7 @@ def non_null_str(s):
     return s and type(s) in (StringType, UnicodeType)
 
 
-class Java(AbstractProgrammingBackend):
+class Java(ProgrammingBackend):
     """
     A simple backend for testing Java programs by comparing
     student and model solution on a given set of test data.
@@ -191,7 +194,7 @@ class Java(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
+        ProgrammingBackend.__init__(self, params, versionFile)
 
 
     def getClassName(self, src):
@@ -213,7 +216,7 @@ class Java(AbstractProgrammingBackend):
         """
         Replace module name in students' submission.
         
-        @see: AbstractProgrammingBackend._preProcessCheckSyntax
+        @see: ProgrammingBackend._preProcessCheckSyntax
         @return: modified source code and new module name
         """
         

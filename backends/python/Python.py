@@ -6,13 +6,14 @@
 # This file is part of ECSpooler.
 
 import sys, os, re
+import logging
 
 from types import StringType, UnicodeType
 from os.path import join, dirname
 
 # local imports
-from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
-from lib.AbstractProgrammingBackend import EX_OK
+from lib.ProgrammingBackend import ProgrammingBackend
+from lib.ProgrammingBackend import EX_OK
 from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -20,7 +21,8 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 from backends.python import config
-from backends.python import LOG
+
+LOG = logging.getLogger()
 
 # load Haskell function to do a simple test
 try:
@@ -109,7 +111,7 @@ tests = Schema((
 ))
     
     
-class Python(AbstractProgrammingBackend):
+class Python(ProgrammingBackend):
     """
     Backend for checking Python programs. This class is inherited 
     from AbstractFPBackend.
@@ -128,7 +130,7 @@ class Python(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
+        ProgrammingBackend.__init__(self, params, versionFile)
 
 
     def _postProcessCheckSyntax(self, test, message):

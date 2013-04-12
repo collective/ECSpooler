@@ -6,15 +6,18 @@
 # This file is part of backend 'pyunit'.
 
 import sys, os, re
+import logging
 
 from types import StringType, UnicodeType
 
 # local imports
 from backends.pyunit import config
-from backends.pyunit import LOG
 
-from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
-from lib.AbstractProgrammingBackend import EX_OK
+LOG = logging.getLogger()
+
+
+from lib.ProgrammingBackend import ProgrammingBackend
+from lib.ProgrammingBackend import EX_OK
 from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import Schema
@@ -84,7 +87,7 @@ RE_CLASSNAME = re.compile('(?<=^class\s).+?(?=:|\()', re.M)
 RE_OK = re.compile('^Ran\s\d+.*OK', re.M | re.DOTALL)
 
 
-class PyUnit(AbstractProgrammingBackend):
+class PyUnit(ProgrammingBackend):
     """
     Backend for testing Python programs using PyUnit.
     """
@@ -102,7 +105,7 @@ class PyUnit(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
+        ProgrammingBackend.__init__(self, params, versionFile)
 
 
     def _postProcessCheckSyntax(self, test, message):

@@ -7,13 +7,14 @@
 import sys, os, re
 import httplib
 import tempfile
+import logging
 from urlparse import urlparse
 
 from types import StringType, UnicodeType
 from os.path import join, dirname
 
 # local imports
-from lib.AbstractProgrammingBackend import AbstractProgrammingBackend, EX_OK
+from lib.ProgrammingBackend import ProgrammingBackend, EX_OK
 from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -21,7 +22,8 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 from backends.javare import config
-from backends.javare import LOG
+
+LOG = logging.getLogger()
 
 
 # The name of the wrapper class that performs the syntactic check
@@ -109,7 +111,7 @@ def string_p(s):
     #log.debug('(2a): %s' % repr(ret))
     return ret
 
-class JavaRE(AbstractProgrammingBackend):
+class JavaRE(ProgrammingBackend):
     """
     A backend class for checking regulare expressions using Java.
     
@@ -155,7 +157,7 @@ class JavaRE(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
+        ProgrammingBackend.__init__(self, params, versionFile)
 
 
     def download(self, url):
@@ -193,7 +195,7 @@ class JavaRE(AbstractProgrammingBackend):
         """
         Replace module name in students' submission.
         
-        @see: AbstractProgrammingBackend._preProcessCheckSyntax
+        @see: ProgrammingBackend._preProcessCheckSyntax
         @return: modified source code and new module name
         """
         
@@ -204,7 +206,7 @@ class JavaRE(AbstractProgrammingBackend):
 
         # FIXME: It'd be nice to be able to throw a 'SyntaxError' or
         # someething here.  We'd have to modify
-        # AbstractProgrammingBackend._preProcessCheckSyntax for that.
+        # ProgrammingBackend._preProcessCheckSyntax for that.
         assert string_p(src), "Not a string: %s" % repr(src)[1:-1]
         
         #log.debug('(3): %s ' % src)

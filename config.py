@@ -24,6 +24,8 @@ JOB_QUEUE_STORAGE = os.path.join(DATA_DIR, 'data.fs')
 RESULT_QUEUE_STORAGE = os.path.join(DATA_DIR, 'result.fs')
 RETRY_QUEUE_STORAGE = os.path.join(DATA_DIR, 'retry.fs')
 
+ETC_DIR = os.path.join(os.path.dirname(__file__), 'etc')
+PASSWD_FILE = os.path.join( ETC_DIR, 'passwd')
 
 # -- log properties -----------------------------------------------------------
 # Set log dir and format
@@ -32,12 +34,14 @@ LF_LONG  = logging.Formatter('%(asctime)s %(levelname)-7s: [%(name)s] %(message)
 LF_SHORT = logging.Formatter('%(asctime)s %(levelname)-7s: %(message)s')
 LF_MESSAGE_ONLY = logging.Formatter('%(message)s')
 
-LOG_LEVEL = logging.DEBUG#logging.INFO
+#LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.INFO
 LOG_FILES = 7
 LOG_FILESIZE = 1024 * 1024 
 
 
 # -- additional properties ----------------------------------------------------
 # Remove temporary files and directories created by some backends [True|False]
-CLEANUP = True 
+#CLEANUP = False 
+CLEANUP = True
 

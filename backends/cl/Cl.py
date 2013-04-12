@@ -6,12 +6,13 @@
 # This file is part of ECSpooler.
 import sys, os, re
 import random
+import logging
 
 from types import StringTypes
 from os.path import join, dirname
 
 # local imports
-from lib.AbstractProgrammingBackend import AbstractProgrammingBackend
+from lib.ProgrammingBackend import ProgrammingBackend
 from lib.data.BackendResult import BackendResult
 from lib.util.BackendSchema import InputField
 from lib.util.BackendSchema import RepeatField
@@ -19,7 +20,9 @@ from lib.util.BackendSchema import Schema
 from lib.util.BackendSchema import TestEnvironment
 
 from backends.cl import config
-from backends.cl import LOG
+
+LOG = logging.getLogger()
+
 
 # The placeholder for the names of the packages that the model and
 # student solution will be put in
@@ -147,7 +150,7 @@ tests = Schema((
 ))
     
 
-class Cl(AbstractProgrammingBackend):
+class Cl(ProgrammingBackend):
     """
     This backend tests Common Lisp programs by comparing student and 
     model solution on given test data.
@@ -167,7 +170,7 @@ class Cl(AbstractProgrammingBackend):
         """
         This constructor is needed to reset the logging environment.
         """
-        AbstractProgrammingBackend.__init__(self, params, versionFile, LOG)
+        ProgrammingBackend.__init__(self, params, versionFile)
 
 
     # -- syntax check ---------------------------------------------------------
@@ -224,7 +227,7 @@ class Cl(AbstractProgrammingBackend):
         Checks semantic of a Haskell programs.
         
         @return: a BackendResult object with result value and message
-        @see: lib.AbstractProgrammingBackend._process_checkSemantics
+        @see: lib.ProgrammingBackend._process_checkSemantics
         """
         random.seed(self)
         def mk_pkg_name():
