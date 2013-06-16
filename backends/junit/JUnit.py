@@ -148,7 +148,7 @@ class JUnit(ProgrammingBackend):
             
             
             
-    def grantValidPackage(self, source):
+    def ensureValidPackage(self, source):
         """
         Determines whether source already has a package declaration.
         If yes, it will be overwritten with a new declaration.
@@ -204,44 +204,24 @@ class JUnit(ProgrammingBackend):
             
     def handleStudentsImports(self, source):
         """
-        Student's imports could be located in a package that will not be found on server-side.
-        This method scans a given java source and searches for imports that are located in a package which is not "java".
-        If import packages are found they will be renamed to the config.JUNIT_LIBS package.
+        Student's imports should be included by packages which are set
+        set in Java classpath command line option. Single Java classes
+        in junit_libs will be included by this method.
         
         @param source: Java source code.
-        @return: source with valid import declarations.
+        @return: source with special import declarations for junit_libs
         """
-        folder = config.JUNIT_LIBS
-        importsArray = IMPORT_NAME_NOT_JAVA_RE.findall(source)
-        libraries = config.LIBRARIES
 
-        for libs in libraries:
-            libName = libs.split('.')[0]
-            libExtension = libs.split('.')[-1]
-            for imports in importsArray:
-                # find libName in imports.
-                pos = self.getLibInImportPos(libName, imports)
-
-                # if libs is in importsArray
-                if pos != -1:
-                    package = imports[pos:]
-                    # if libExtension is an archive, do NOT paste config.JUNIT_LIBS in front of import declaration
-                    if libExtension in config.ARCHIVES:
-                        source = source.replace(imports, package, 1)
-                    else:
-                        source = source.replace(imports, folder + '.' + package, 1)
-                    break
-                    
-        # if no imports are present, import junit_libs for safety.
-        # classes with no import declarations tend to expect all classes to be in the same folder, why junit_libs should be included:
-        if len(importsArray) == 0:
-            # since a valid package is already written, we can access it:
-            packageDeclaration = 'package %s;' % config.NS_STUDENT
-            replacement = packageDeclaration + '\n\n' + 'import %s.*;' % config.JUNIT_LIBS
-            source = source.replace(packageDeclaration, replacement, 1)
-            
-            # by adding the new import declaration, line_offset increases by 2:
-            self.line_offset += 2
+        # since a valid package is already written, we can access it:
+        packageDeclaration = 'package %s;' % config.NS_STUDENT
+        replacement = '%s\n\nimport %s.*;' % (packageDeclaration, 
+                                              config.JUNIT_LIBS)
+        
+        source = source.replace(packageDeclaration, replacement, 1)
+        
+        # by adding the new import declaration, line_offset 
+        # increases by 2:
+        self.line_offset += 2
             
         return source
             
@@ -254,9 +234,9 @@ class JUnit(ProgrammingBackend):
         # accumulation of offsets if a sumbission is syntactically incorrect.
         self.line_offset = 0
         
-        validPackages = self.grantValidPackage(src)
-        #logging.debug(validPackages)
-        preProcessedSource = self.handleStudentsImports(validPackages)
+        srcWithValidPackages = self.ensureValidPackage(src)
+        #logging.debug(srcWithValidPackages)
+        preProcessedSource = self.handleStudentsImports(srcWithValidPackages)
         #logging.debug(preProcessedSource)
         className = self.getClassName(src)
         

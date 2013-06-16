@@ -5,6 +5,7 @@
 #
 # This file is part of ECSpooler.
 import unittest
+import re
 
 from backends.junit import JUnit
 from lib.data.BackendJob import BackendJob
@@ -197,6 +198,45 @@ public class Caesar
         else:
             self.assertFalse('No result: %s' % repr(result))
 
+
+    def testEnsureValuePackage(self):
+        """
+        """
+        backend = JUnit.JUnit(self.params)
+        
+        src = backend.ensureValidPackage(self.submission)
+        match = JUnit.PACKAGE_NAME_RE.search(src)
+
+        self.assertTrue((match is not None))
+        self.assertEqual(match.group(), "package %s;" % JUnit.config.NS_STUDENT)
+
+    def testHandleStudentsImports(self):
+        """"handleStudentsImports should return"""
+        
+        submission = \
+"""
+package %s;
+
+import org.educomponents.test.TestClassWithPackage;
+
+public class TestHandleStudentsImports
+{
+    public TestHandleStudentsImports()
+    {
+        final TestClassWithoutPackage testClassWithoutPackage;
+        final TestClassWithPackage testClassWithPackage;
+    }
+}
+""" % JUnit.config.NS_STUDENT
+
+        backend = JUnit.JUnit(self.params)
+
+        src = backend.handleStudentsImports(submission)
+        match = re.search("import %s\.\*;" % JUnit.config.JUNIT_LIBS, src)
+        
+        self.assertTrue((match is not None), 
+                        "Import declaration for %s is missing." % 
+                            JUnit.config.JUNIT_LIBS)
 
 
 def test_suite():
